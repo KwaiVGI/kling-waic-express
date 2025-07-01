@@ -1,0 +1,9 @@
+.gradle
+.kotlin
+.vscode
+.idea
+build
+gradle
+.DS_Store
+gradlew
+gradlew.bat
