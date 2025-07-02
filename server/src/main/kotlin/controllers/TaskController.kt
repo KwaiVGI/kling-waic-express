@@ -20,5 +20,4 @@ class TaskController {
         @RequestParam("file") file: MultipartFile): Result {
         return Result(null)
     }
-
 }
