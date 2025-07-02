@@ -2,11 +2,10 @@ package com.klingai.express.entities
 
 import java.time.Instant
 
-data class Task (
+data class Token (
     val id: Long,
     val name: String,
     val createTime: Instant,
-    val status: TaskStatus,
-    val input: TaskInput,
-    val outputs: TaskOutput?
+    val refreshTime: Instant,
+    val expireTime: Instant
 )

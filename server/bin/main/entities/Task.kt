@@ -6,7 +6,6 @@ data class Task (
     val id: Long,
     val name: String,
     val createTime: Instant,
-    val status: TaskStatus,
     val input: TaskInput,
-    val outputs: TaskOutput?
+    val outputs: List<TaskOutput>
 )
