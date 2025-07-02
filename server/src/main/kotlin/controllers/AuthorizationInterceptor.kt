@@ -36,12 +36,12 @@ class AuthorizationInterceptor @Autowired constructor (
     }
 
     private fun validateToken(token: String, type: AuthorizationType): Boolean {
-        if (type == AuthorizationType.CREATE_TASK) {
-            return this.tokenRepository.validate(token)
+        return if (type == AuthorizationType.CREATE_TASK) {
+            this.tokenRepository.validate(token)
         } else if (type == AuthorizationType.MANAGEMENT) {
-            return token == this.configuration.managementAccessKey
+            token == this.configuration.managementAccessKey
         } else {
-            return false
+            false
         }
     }
 }

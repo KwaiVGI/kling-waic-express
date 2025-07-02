@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository
 open class ConfigurationRepository(
     val openApiAccessKey: String = "",
     val openApiSecretKey: String = "",
-    val castingAccessKey: String = "",
     val managementAccessKey: String = ""
 ) {
 }
