@@ -36,4 +36,11 @@ class TaskController {
         @PathVariable name: String): Result<Printing> {
         return Result(null)
     }
+
+    @PostMapping("{name}/delete")
+    fun deleteTask(
+        @PathVariable name: String): Result<Boolean> {
+        return Result(null)
+    }
+
 }

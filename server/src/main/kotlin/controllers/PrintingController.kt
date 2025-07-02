@@ -19,9 +19,9 @@ class PrintingController {
         return Result(null)
     }
 
-    @PostMapping("dequeue")
+    @PostMapping("fetch")
     @Authorization(AuthorizationType.MANAGEMENT)
-    fun dequeuePrinting(): Result<Printing> {
+    fun fetchPrinting(): Result<Printing> {
         // TODO:
         return Result(null)
     }

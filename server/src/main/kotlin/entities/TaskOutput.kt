@@ -1,6 +1,6 @@
 package com.klingai.express.entities
 
 data class TaskOutput (
-    val type: String,
+    val type: TaskOutputType,
     val url: String
 )
