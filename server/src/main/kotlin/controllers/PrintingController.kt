@@ -24,4 +24,18 @@ class PrintingController {
         return Result(null)
     }
 
+    @PostMapping("dequeue")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun dequeuePrinting(): Result<Printing> {
+        // TODO:
+        return Result(null)
+    }
+
+    @PostMapping("{name}/complete")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun completePrinting(): Result<Printing> {
+        // TODO:
+        return Result(null)
+    }
+
 }

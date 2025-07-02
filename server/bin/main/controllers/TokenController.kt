@@ -1,6 +1,7 @@
 package com.klingai.express.controllers
 
 import com.klingai.express.entities.Result
+import com.klingai.express.entities.Token
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.GetMapping
@@ -14,12 +15,13 @@ class TokenController @Autowired constructor (
     private val tokenRepository: TokenRepository
 ) {
     @GetMapping("latest")
-    fun getLatest(): Result {
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun getLatestToken(): Result<Token> {
         return Result(tokenRepository.getLatest())
     }
 
     @GetMapping("{name}")
-    fun getToken(@PathVariable name: String): Result {
+    fun getToken(@PathVariable name: String): Result<Token> {
         return Result(tokenRepository.getByName(name))
     }
 }
