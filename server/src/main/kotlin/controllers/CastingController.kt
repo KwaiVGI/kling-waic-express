@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 class CastingController {
 
     @GetMapping("{type}/{num}")
+    @Authorization(AuthorizationType.MANAGEMENT)
     fun getNext(@PathVariable type: TaskType, @PathVariable num: Long): Result<List<TaskOutput>> {
         // TODO:
         return Result(null)

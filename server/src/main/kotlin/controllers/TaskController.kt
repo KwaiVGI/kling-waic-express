@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile
 class TaskController {
 
     @PostMapping("new")
+    @Authorization(AuthorizationType.CREATE_TASK)
     fun newTask(
         @RequestBody input: TaskInput,
         @RequestParam("file") file: MultipartFile): Result<Task> {

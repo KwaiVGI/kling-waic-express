@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile
 class PrintingController {
 
     @GetMapping("{name}")
+    @Authorization(AuthorizationType.MANAGEMENT)
     fun getPrinting(@PathVariable name: String): Result<Printing> {
         // TODO:
         return Result(null)

@@ -15,6 +15,7 @@ class TokenController @Autowired constructor (
     private val tokenRepository: TokenRepository
 ) {
     @GetMapping("latest")
+    @Authorization(AuthorizationType.MANAGEMENT)
     fun getLatestToken(): Result<Token> {
         return Result(tokenRepository.getLatest())
     }
