@@ -1,5 +1,7 @@
 package com.klingai.express.controllers
 
+import com.klingai.express.auth.Authorization
+import com.klingai.express.auth.AuthorizationType
 import com.klingai.express.entities.Printing
 import com.klingai.express.entities.Result
 import com.klingai.express.entities.Task

@@ -1,9 +1,9 @@
 package com.klingai.express.controllers
 
-import com.klingai.express.entities.Printing
+import com.klingai.express.auth.Authorization
+import com.klingai.express.auth.AuthorizationType
 import com.klingai.express.entities.Result
 import com.klingai.express.entities.Task
-import com.klingai.express.entities.TaskInput
 import com.klingai.express.entities.TaskOutput
 import com.klingai.express.entities.TaskType
 import org.springframework.web.bind.annotation.GetMapping

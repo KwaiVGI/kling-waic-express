@@ -1,4 +1,4 @@
-package com.klingai.express.controllers
+package com.klingai.express.auth
 
 annotation class Authorization(
     val type: AuthorizationType

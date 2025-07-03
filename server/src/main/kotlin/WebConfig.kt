@@ -1,14 +1,13 @@
 package com.klingai.express
 
-import com.klingai.express.controllers.AuthorizationInterceptor
-import org.springframework.beans.factory.annotation.Autowired
+import com.klingai.express.auth.AuthorizationInterceptor
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
-open class WebConfig @Autowired constructor(
-    val authorizationInterceptor: AuthorizationInterceptor
+open class WebConfig (
+    private val authorizationInterceptor: AuthorizationInterceptor
 ) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(this.authorizationInterceptor)

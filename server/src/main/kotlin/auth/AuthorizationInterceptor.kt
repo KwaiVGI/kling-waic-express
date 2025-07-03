@@ -1,16 +1,15 @@
-package com.klingai.express.controllers
+package com.klingai.express.auth
 
 import com.klingai.express.repositories.ConfigurationRepository
 import com.klingai.express.repositories.TokenRepository
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
 
 @Component
-class AuthorizationInterceptor @Autowired constructor (
+open class AuthorizationInterceptor (
     val configuration: ConfigurationRepository,
     val tokenRepository: TokenRepository
 ) : HandlerInterceptor {
