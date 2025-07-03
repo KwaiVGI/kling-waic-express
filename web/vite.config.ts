@@ -10,7 +10,7 @@ export default ({ mode }: ConfigEnv): UserConfig => {
   const env = loadEnv(mode, root)
 
   return {
-    base: env.VITE_APP_PUBLIC_PATH,
+    base: env.VITE_APP_BASE_URL || '/',
     plugins: createVitePlugins(mode),
 
     server: {
