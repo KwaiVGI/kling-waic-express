@@ -1,6 +1,8 @@
 #!/bin/bash
 source ~/.nvm/nvm.sh
-nvm use 20
+nvm install 20.19.0
+nvm use 20.19.0
+node -v
 
 pnpm -g add pnpm@10
 
