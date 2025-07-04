@@ -33,9 +33,7 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-import { showToast } from "vant";
-</script>
+<script lang="ts" setup></script>
 
 <style scoped>
 .creation-index {
