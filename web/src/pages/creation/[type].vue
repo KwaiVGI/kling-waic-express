@@ -183,7 +183,7 @@
           <van-button
             v-if="type === 'image'"
             icon="print"
-            type="info"
+            type="default"
             @click="printImage"
             :loading="isPrinting"
             class="action-btn h-50px text-16px font-500 rounded-12px shadow-sm"
