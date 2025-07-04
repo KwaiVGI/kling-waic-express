@@ -1,36 +1,36 @@
 <script setup lang="ts">
-import { useRouteCacheStore } from '@/stores'
+import { useRouteCacheStore } from "@/stores";
 
-useHead({
-  title: 'Vue3 Vant Mobile',
-  meta: [
-    {
-      name: 'description',
-      content: 'An mobile web apps template based on the Vue 3 ecosystem',
-    },
-    {
-      name: 'theme-color',
-      content: () => isDark.value ? '#00aba9' : '#ffffff',
-    },
-  ],
-  link: [
-    {
-      rel: 'icon',
-      type: 'image/svg+xml',
-      href: () => preferredDark.value ? '/favicon-dark.svg' : '/favicon.svg',
-    },
-  ],
-})
+// useHead({
+//   title: "Vue3 Vant Mobile",
+//   meta: [
+//     {
+//       name: "description",
+//       content: "An mobile web apps template based on the Vue 3 ecosystem",
+//     },
+//     {
+//       name: "theme-color",
+//       content: () => (isDark.value ? "#00aba9" : "#ffffff"),
+//     },
+//   ],
+//   link: [
+//     {
+//       rel: "icon",
+//       type: "image/svg+xml",
+//       href: () => (preferredDark.value ? "/favicon-dark.svg" : "/favicon.svg"),
+//     },
+//   ],
+// });
 
-const routeCacheStore = useRouteCacheStore()
+const routeCacheStore = useRouteCacheStore();
 
 const keepAliveRouteNames = computed(() => {
-  return routeCacheStore.routeCaches
-})
+  return routeCacheStore.routeCaches;
+});
 
 const mode = computed(() => {
-  return isDark.value ? 'dark' : 'light'
-})
+  return isDark.value ? "dark" : "light";
+});
 </script>
 
 <template>
