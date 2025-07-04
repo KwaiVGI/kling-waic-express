@@ -45,7 +45,6 @@
           reupload
           :preview-image="false"
           accept="image/*"
-          capture="camera"
           :max-size="maxFileSize"
           @oversize="onOversize"
         >

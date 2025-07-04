@@ -65,7 +65,7 @@ const initQrCode = () => {
 const updateQrCode = () => {
   if (!qrCode.value || !token.value) return;
 
-  const url = `${window.location.origin}/creation?type=${route.params.type}&token=${token.value}`;
+  const url = `${window.location.origin}/creation/${route.params.type}?token=${token.value}`;
   qrCode.value.update({
     data: url,
   });

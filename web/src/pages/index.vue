@@ -1,90 +1,99 @@
-<script setup lang="ts">
-import type { PickerColumn } from "vant";
-import { languageColumns, locale } from "@/utils/i18n";
-
-const { t } = useI18n();
-
-const checked = computed({
-  get: () => isDark.value,
-  set: () => toggleDark(),
-});
-
-const menuItems = computed(() => [
-  { title: "QR Code", route: "qr" },
-  { title: "扫码落地页", route: "creation" },
-  { title: "实时大屏", route: "screen" },
-  { title: "大屏控制台", route: "admin" },
-  { title: t("menus.mockGuide"), route: "mock" },
-  // { title: t('menus.echartsDemo'), route: 'charts' },
-  { title: t("menus.unocssExample"), route: "unocss" },
-  { title: t("menus.persistPiniaState"), route: "counter" },
-  { title: t("menus.keepAlive"), route: "keepalive" },
-  { title: t("menus.scrollCache"), route: "scroll-cache" },
-  { title: t("menus.404Demo"), route: "unknown" },
-]);
-
-const showLanguagePicker = ref(false);
-const languageValues = ref<Array<string>>([locale.value]);
-const language = computed(
-  () => languageColumns.find((l) => l.value === locale.value).text
-);
-
-function onLanguageConfirm(event: { selectedOptions: PickerColumn }) {
-  locale.value = event.selectedOptions[0].value as string;
-  showLanguagePicker.value = false;
-}
-</script>
-
 <template>
-  <van-cell-group
-    :title="$t('menus.basicSettings')"
-    :border="false"
-    :inset="true"
-  >
-    <van-cell center :title="$t('menus.darkMode')">
-      <template #right-icon>
-        <van-switch
-          v-model="checked"
-          size="20px"
-          aria-label="on/off Dark Mode"
-        />
-      </template>
-    </van-cell>
-
-    <van-cell
-      is-link
-      :title="$t('menus.language')"
-      :value="language"
-      @click="showLanguagePicker = true"
-    />
-  </van-cell-group>
-
-  <van-cell-group
-    :title="$t('menus.exampleComponents')"
-    :border="false"
-    :inset="true"
-  >
-    <template v-for="item in menuItems" :key="item.route">
-      <van-cell :title="item.title" :to="item.route" is-link />
-    </template>
-  </van-cell-group>
-
-  <van-popup v-model:show="showLanguagePicker" position="bottom">
-    <van-picker
-      v-model="languageValues"
-      :columns="languageColumns"
-      @confirm="onLanguageConfirm"
-      @cancel="showLanguagePicker = false"
-    />
-  </van-popup>
+  <div class="container">
+    <div
+      v-for="(item, index) in navItems"
+      :key="index"
+      class="card"
+      @click="navigateTo(item.path)"
+    >
+      <div class="card-content">
+        <div class="card-icon">
+          <!-- 这里可以放置图标 -->
+          <div class="icon-placeholder"></div>
+        </div>
+        <h3 class="card-title">{{ item.title }}</h3>
+      </div>
+    </div>
+  </div>
 </template>
 
-<route lang="json5">
-{
-  name: "home",
-  meta: {
-    title: "主页",
-    i18n: "menus.home",
-  },
+<script setup lang="ts">
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+interface NavItem {
+  title: string;
+  path: string;
 }
-</route>
+
+const navItems = ref<NavItem[]>([
+  { title: "二维码", path: "/qr" },
+  { title: "生图/生视频", path: "/creation" },
+  { title: "实时大屏", path: "/screen" },
+  { title: "大屏控制台", path: "/admin" },
+]);
+
+const navigateTo = (path: string) => {
+  router.push(path);
+};
+</script>
+
+<style scoped>
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-content {
+  text-align: center;
+  padding: 20px;
+}
+
+.card-icon {
+  margin-bottom: 16px;
+}
+
+.icon-placeholder {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  border-radius: 50%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+</style>
