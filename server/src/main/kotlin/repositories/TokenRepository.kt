@@ -2,14 +2,14 @@ package com.klingai.express.repositories
 
 import com.klingai.express.entities.Token
 import org.springframework.stereotype.Repository
-import redis.clients.jedis.JedisCluster
+import redis.clients.jedis.Jedis
 import utils.ObjectMapperUtils
 import java.time.Instant
 import java.util.*
 
 @Repository
 class TokenRepository(
-    private val jedisCluster: JedisCluster
+    private val jedis: Jedis
 ) {
     var latestToken: Token? = null
 
@@ -30,22 +30,19 @@ class TokenRepository(
                     Instant.now().plusSeconds(60 * 10)
                 )
                 this.latestToken = newToken
-                jedisCluster.set(newToken.name, ObjectMapperUtils.toJSON(newToken))
+                jedis.set(newToken.name, ObjectMapperUtils.toJSON(newToken))
             }
             return this.latestToken!!
         }
     }
 
     fun getByName(name: String): Token? {
-        val valueStr = jedisCluster.get(name)
+        val valueStr = jedis.get(name)
         return ObjectMapperUtils.fromJSON(valueStr, Token::class.java)
     }
 
     fun validate(token: String): Boolean {
-        val t = this.getByName(token)
-        if (t == null) {
-            return false
-        }
+        val t = this.getByName(token) ?: return false
         return Instant.now() < t.expireTime
     }
 }

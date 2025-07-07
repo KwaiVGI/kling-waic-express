@@ -15,6 +15,7 @@ dependencies {
     implementation("redis.clients:jedis:6.0.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava:2.9.10")
     implementation("org.apache.commons:commons-lang3:3.10")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3")
     testImplementation(kotlin("test"))
 }
 

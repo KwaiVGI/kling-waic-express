@@ -13,6 +13,7 @@ import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.Map;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -40,6 +41,7 @@ public class ObjectMapperUtils {
         MAPPER.enable(ALLOW_UNQUOTED_CONTROL_CHARS);
         MAPPER.enable(ALLOW_COMMENTS);
         MAPPER.registerModule(new ParameterNamesModule());
+        MAPPER.registerModule(new JavaTimeModule());
     }
 
     public static String toJSON(Object obj) {

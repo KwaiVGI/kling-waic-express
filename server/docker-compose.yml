@@ -9,7 +9,7 @@ services:
       - ~/.gradle:/home/gradle/.gradle
       - ./:/app
     ports:
-      - "8080:8080"
+      - "10238:8080"
     command: gradle bootRun
     restart: unless-stopped
     extra_hosts:
