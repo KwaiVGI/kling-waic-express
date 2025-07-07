@@ -13,6 +13,8 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web:3.4.5")
     implementation("redis.clients:jedis:6.0.0")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava:2.9.10")
+    implementation("org.apache.commons:commons-lang3:3.10")
     testImplementation(kotlin("test"))
 }
 

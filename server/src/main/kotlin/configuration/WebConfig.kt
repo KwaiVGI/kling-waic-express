@@ -1,4 +1,4 @@
-package com.klingai.express
+package com.klingai.express.configuration
 
 import com.klingai.express.auth.AuthorizationInterceptor
 import org.springframework.context.annotation.Configuration

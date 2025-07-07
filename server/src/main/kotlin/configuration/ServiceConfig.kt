@@ -1,16 +1,18 @@
-package com.klingai.express.redis
+package com.klingai.express.configuration
 
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import redis.clients.jedis.ConnectionPoolConfig
 import redis.clients.jedis.DefaultJedisClientConfig
 import redis.clients.jedis.HostAndPort
 import redis.clients.jedis.JedisClientConfig
 import redis.clients.jedis.JedisCluster
 
+@Configuration
+open class ServiceConfig {
 
-class JedisClient {
-
-    fun test() {
-
+    @Bean
+    open fun getJedisCluster(): JedisCluster {
         val maxAttempts = 5
 
         val clientConfig: JedisClientConfig = DefaultJedisClientConfig.builder()
@@ -18,13 +20,12 @@ class JedisClient {
             .build()
 
         val jedisCluster = JedisCluster(
-            HostAndPort("kling-waic-fblxb2.serverless.cnn1.cache.amazonaws.com.cn", 6379),
+            HostAndPort("localhost", 6379),
             clientConfig,
             maxAttempts,
             ConnectionPoolConfig()
         )
 
-        jedisCluster.set("key", "value")
-
+        return jedisCluster
     }
 }

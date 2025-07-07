@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+  kling-waic-express:
+    image: gradle:8.5-jdk21
+    container_name: kling-waic-express
+    working_dir: /app
+    volumes:
+      - ~/.gradle:/home/gradle/.gradle
+      - ./:/app
+    ports:
+      - "8080:8080"
+    command: gradle bootRun
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

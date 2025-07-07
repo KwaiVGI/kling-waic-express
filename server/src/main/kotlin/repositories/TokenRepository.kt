@@ -2,15 +2,17 @@ package com.klingai.express.repositories
 
 import com.klingai.express.entities.Token
 import org.springframework.stereotype.Repository
+import redis.clients.jedis.JedisCluster
+import utils.ObjectMapperUtils
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 
 @Repository
-class TokenRepository (
-    val tokens: MutableMap<String, Token> = ConcurrentHashMap(),
-    var latestToken: Token? = null
+class TokenRepository(
+    private val jedisCluster: JedisCluster
 ) {
+    var latestToken: Token? = null
+
     fun getLatest(): Token {
         val current = this.latestToken
         if (current != null && current.refreshTime > Instant.now()) {
@@ -28,14 +30,15 @@ class TokenRepository (
                     Instant.now().plusSeconds(60 * 10)
                 )
                 this.latestToken = newToken
-                this.tokens[newToken.name] = newToken
+                jedisCluster.set(newToken.name, ObjectMapperUtils.toJSON(newToken))
             }
             return this.latestToken!!
         }
     }
 
     fun getByName(name: String): Token? {
-        return this.tokens[name]
+        val valueStr = jedisCluster.get(name)
+        return ObjectMapperUtils.fromJSON(valueStr, Token::class.java)
     }
 
     fun validate(token: String): Boolean {
