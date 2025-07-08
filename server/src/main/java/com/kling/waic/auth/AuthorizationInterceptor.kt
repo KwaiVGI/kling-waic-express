@@ -11,7 +11,7 @@ import org.springframework.web.servlet.HandlerInterceptor
 @Component
 open class AuthorizationInterceptor (
     val tokenRepository: TokenRepository,
-    @Value("\${waic.management.access-key}") val accessKey: String,
+    @param:Value("\${waic.management.access-key}") val accessKey: String,
 ) : HandlerInterceptor {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {

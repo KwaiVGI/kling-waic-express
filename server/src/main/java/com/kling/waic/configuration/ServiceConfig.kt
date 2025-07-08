@@ -1,14 +1,18 @@
 package com.kling.waic.configuration
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import redis.clients.jedis.Jedis
 
 @Configuration
-open class ServiceConfig {
+open class ServiceConfig(
+    @param:Value("\${jedis.host}") private val host: String,
+    @param:Value("\${jedis.port}") private val port: Int,
+) {
 
     @Bean
     open fun jedis(): Jedis {
-        return Jedis("172.17.0.1", 6379)
+        return Jedis(host, port)
     }
 }
