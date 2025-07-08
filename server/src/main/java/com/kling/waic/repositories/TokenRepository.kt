@@ -2,6 +2,7 @@ package com.kling.waic.repositories
 
 import com.kling.waic.entities.Token
 import com.kling.waic.utils.ObjectMapperUtils
+import com.kuaishou.m2v.kling.component.config.Slf4j.Companion.log
 import org.springframework.stereotype.Repository
 import redis.clients.jedis.Jedis
 import java.time.Instant
@@ -22,6 +23,7 @@ class TokenRepository(
         synchronized(this) {
             val recheck = this.latestToken
             if (recheck == null || recheck.refreshTime <= Instant.now()) {
+                log.info("Generate new token, recheck: {}", recheck)
                 val newToken = Token(
                     (recheck?.id ?: 0) + 1,
                     UUID.randomUUID().toString(),
