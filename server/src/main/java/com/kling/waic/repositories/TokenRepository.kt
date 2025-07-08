@@ -12,27 +12,31 @@ import java.util.*
 class TokenRepository(
     private val jedis: Jedis
 ) {
-    var latestToken: Token? = null
+    @Volatile
+    private var latestToken: Token? = null
 
     fun getLatest(): Token {
+        val now = Instant.now()
         val current = latestToken
-        if (current != null && current.refreshTime > Instant.now()) {
+        if (current != null && current.refreshTime > now) {
             return current
         }
 
         synchronized(this) {
-            val recheck = latestToken
-            if (recheck == null || recheck.refreshTime <= Instant.now()) {
-                log.info("Generate new token, recheck: {}", recheck)
+            val previous = latestToken
+            val nowInLock = Instant.now()
+
+            if (previous == null || previous.refreshTime <= nowInLock) {
                 val newToken = Token(
-                    (recheck?.id ?: 0) + 1,
+                    (previous?.id ?: 0) + 1,
                     UUID.randomUUID().toString(),
-                    Instant.now(),
-                    Instant.now().plusSeconds(5),
-                    Instant.now().plusSeconds(EXPIRE_IN_SECONDS)
+                    nowInLock,
+                    nowInLock.plusSeconds(5),
+                    nowInLock.plusSeconds(EXPIRE_IN_SECONDS)
                 )
                 latestToken = newToken
                 jedis.setex(newToken.name, EXPIRE_IN_SECONDS, ObjectMapperUtils.toJSON(newToken))
+                log.info("Generated and saved new token: id={}, name={}", newToken.id, newToken.name)
             }
             return latestToken!!
         }
@@ -44,8 +48,8 @@ class TokenRepository(
     }
 
     fun validate(token: String): Boolean {
-        val t = getByName(token) ?: return false
-        return Instant.now() < t.expireTime
+        val storedToken = getByName(token)
+        return storedToken?.let { Instant.now().isBefore(it.expireTime) } ?: false
     }
 
     companion object {

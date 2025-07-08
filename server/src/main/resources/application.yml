@@ -6,6 +6,6 @@ jedis:
   port: 6379
 
 waic:
-  open-api:
-    access-key: e8f7adc2-aea4-4b60-ba82-4ee85fdbCK2p
-    secret-key: Twc8Q~XEjw1dV9OzkTBpOC7czyeJTG-WJtISROsk
+  jwt:
+    expireAtInSeconds: 1800
+    notBeforeInSeconds: -5
