@@ -1,7 +1,7 @@
 package com.kling.waic.repositories
 
-import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.entities.Token
+import com.kling.waic.utils.ObjectMapperUtils
 import org.springframework.stereotype.Repository
 import redis.clients.jedis.Jedis
 import java.time.Instant
@@ -27,10 +27,10 @@ class TokenRepository(
                     UUID.randomUUID().toString(),
                     Instant.now(),
                     Instant.now().plusSeconds(5),
-                    Instant.now().plusSeconds(60 * 10)
+                    Instant.now().plusSeconds(EXPIRE_IN_SECONDS)
                 )
                 this.latestToken = newToken
-                jedis.set(newToken.name, ObjectMapperUtils.toJSON(newToken))
+                jedis.setex(newToken.name, EXPIRE_IN_SECONDS, ObjectMapperUtils.toJSON(newToken))
             }
             return this.latestToken!!
         }
@@ -44,5 +44,9 @@ class TokenRepository(
     fun validate(token: String): Boolean {
         val t = this.getByName(token) ?: return false
         return Instant.now() < t.expireTime
+    }
+
+    companion object {
+        const val EXPIRE_IN_SECONDS: Long = 60 * 10
     }
 }
