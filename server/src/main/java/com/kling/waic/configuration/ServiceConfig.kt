@@ -20,4 +20,14 @@ open class ServiceConfig(
     open fun waicManagementToken(jedis: Jedis): String {
         return jedis.get("waic.management.token")
     }
+
+    @Bean
+    open fun waicOpenApiAccessKey(jedis: Jedis): String {
+        return jedis.get("waic.open-api.access-key")
+    }
+
+    @Bean
+    open fun waicOpenApiSecretKey(jedis: Jedis): String {
+        return jedis.get("waic.open-api.secret-key")
+    }
 }
