@@ -13,7 +13,10 @@ open class ServiceConfig(
 
     @Bean
     open fun jedis(): Jedis {
-        return Jedis(host, port)
+        val password = System.getenv("REDIS_PASS_WAIC")
+        val jedis = Jedis(host, port)
+        jedis.auth(password)
+        return jedis
     }
 
     @Bean
