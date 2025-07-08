@@ -15,4 +15,9 @@ open class ServiceConfig(
     open fun jedis(): Jedis {
         return Jedis(host, port)
     }
+
+    @Bean
+    open fun waicManagementToken(jedis: Jedis): String {
+        return jedis.get("waic.management.token")
+    }
 }
