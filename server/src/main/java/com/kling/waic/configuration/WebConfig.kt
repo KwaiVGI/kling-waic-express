@@ -10,7 +10,7 @@ open class WebConfig (
     private val authorizationInterceptor: AuthorizationInterceptor
 ) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(this.authorizationInterceptor)
+        registry.addInterceptor(authorizationInterceptor)
             .addPathPatterns("/**") // Intercept all requests
             .excludePathPatterns(
                 "/**/*.html", // Exclude static HTML files

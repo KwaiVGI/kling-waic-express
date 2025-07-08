@@ -1,17 +1,17 @@
 package com.kling.waic.auth
 
-import com.kling.waic.repositories.ConfigurationRepository
 import com.kling.waic.repositories.TokenRepository
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
 
 @Component
 open class AuthorizationInterceptor (
-    val configuration: ConfigurationRepository,
-    val tokenRepository: TokenRepository
+    val tokenRepository: TokenRepository,
+    @Value("\${waic.management.access-key}") val accessKey: String,
 ) : HandlerInterceptor {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
@@ -36,9 +36,9 @@ open class AuthorizationInterceptor (
 
     private fun validateToken(token: String, type: AuthorizationType): Boolean {
         return if (type == AuthorizationType.CREATE_TASK) {
-            this.tokenRepository.validate(token)
+            tokenRepository.validate(token)
         } else if (type == AuthorizationType.MANAGEMENT) {
-            token == this.configuration.managementAccessKey
+            token == accessKey
         } else {
             false
         }

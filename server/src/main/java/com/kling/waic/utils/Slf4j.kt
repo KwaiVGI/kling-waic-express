@@ -1,4 +1,4 @@
-package com.kuaishou.m2v.kling.component.config
+package com.kling.waic.utils
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
