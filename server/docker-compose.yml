@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   kling-waic-express:
-    image: gradle:8.5-jdk21
+    image: maven:3.9.9-amazoncorretto-21
     container_name: kling-waic-express
     working_dir: /app
     volumes:
