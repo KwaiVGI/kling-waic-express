@@ -9,6 +9,6 @@ open class ServiceConfig {
 
     @Bean
     open fun jedis(): Jedis {
-        return Jedis("host.docker.internal", 6379)
+        return Jedis("172.17.0.1", 6379)
     }
 }
