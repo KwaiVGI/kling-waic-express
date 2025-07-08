@@ -7,7 +7,7 @@ import 'nprogress/nprogress.css'
 import type { EnhancedRouteLocation } from './types'
 import { useRouteCacheStore } from '@/stores'
 
-// import { isLogin } from '@/utils/auth'
+// import { isLogin } from '@/utils/com.kling.waic.auth'
 import setPageTitle from '@/utils/set-page-title'
 
 NProgress.configure({ showSpinner: true, parent: '#app' })

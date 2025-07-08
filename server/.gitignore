@@ -2,6 +2,7 @@
 .kotlin
 .vscode
 .idea
+.mvn
 build
 gradle
 .DS_Store

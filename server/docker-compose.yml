@@ -6,11 +6,11 @@ services:
     container_name: kling-waic-express
     working_dir: /app
     volumes:
-      - ~/.gradle:/home/gradle/.gradle
+      - ~/.m2:/root/.m2
       - ./:/app
     ports:
       - "10238:8080"
-    command: gradle bootRun
+    command: mvn spring-boot:run
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
