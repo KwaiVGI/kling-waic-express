@@ -3,6 +3,7 @@ package com.kling.waic.utils
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.guava.GuavaModule
@@ -41,6 +42,14 @@ class ObjectMapperUtils {
             try {
                 return MAPPER.readValue<T>(json, valueType)
             } catch (e: IOException) {
+                throw WAICJsonProcessingException(e)
+            }
+        }
+
+        inline fun <reified T> fromJSON(json: String, typeRef: TypeReference<T>): T? {
+            return try {
+                MAPPER.readValue(json, typeRef)
+            } catch (e: Exception) {
                 throw WAICJsonProcessingException(e)
             }
         }

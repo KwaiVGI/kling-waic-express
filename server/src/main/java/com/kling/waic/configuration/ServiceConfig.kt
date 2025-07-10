@@ -1,5 +1,7 @@
 package com.kling.waic.configuration
 
+import com.kling.waic.utils.FileUtils
+import okhttp3.OkHttpClient
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -32,5 +34,26 @@ open class ServiceConfig(
     @Bean
     open fun waicOpenApiSecretKey(jedis: Jedis): String {
         return jedis.get("waic.open-api.secret-key")
+    }
+
+    @Bean
+    open fun okHttpClient(): OkHttpClient {
+        return OkHttpClient()
+    }
+
+    @Bean
+    open fun styleImagePrompts(): List<String> {
+        return FileUtils.readFileFromResources("style-image-prompts.txt")
+            .split("\n")
+            .map { it.trim() }
+            .toList()
+    }
+
+    @Bean
+    open fun videoSpecialEffects(): List<String> {
+        return FileUtils.readFileFromResources("video-special-effects.txt")
+            .split("\n")
+            .map { it.trim() }
+            .toList()
     }
 }

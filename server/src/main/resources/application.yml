@@ -14,3 +14,7 @@ waic:
   jwt:
     expireAtInSeconds: 1800
     notBeforeInSeconds: -5
+
+kling:
+  open-api:
+    base-url: https://api-beijing.klingai.com
