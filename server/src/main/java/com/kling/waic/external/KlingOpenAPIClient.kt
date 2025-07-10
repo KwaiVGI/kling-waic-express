@@ -1,10 +1,13 @@
 package com.kling.waic.external
 
-import com.kling.waic.external.model.ImageTaskRequest
-import com.kling.waic.external.model.ImageTaskResponse
+import com.kling.waic.external.model.CreateImageTaskRequest
+import com.kling.waic.external.model.CreateImageTaskResponse
 import com.kling.waic.external.model.Message
+import com.kling.waic.external.model.QueryImageTaskRequest
+import com.kling.waic.external.model.QueryImageTaskResponse
 import com.kling.waic.repositories.JWTRepository
 import com.kling.waic.utils.ObjectMapperUtils
+import com.kling.waic.utils.Slf4j.Companion.log
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -21,35 +24,49 @@ class KlingOpenAPIClient(
     private val styleImagePrompts: List<String>,
 ) {
 
+    companion object {
+        private val CONTENT_TYPE = "application/json; charset=utf-8".toMediaType()
+    }
+
     @Throws(IOException::class)
-    fun createImageTask(imageTaskRequest: ImageTaskRequest): Message<ImageTaskResponse> {
+    fun createImageTask(createImageTaskRequest: CreateImageTaskRequest): Message<CreateImageTaskResponse> {
         val url = "$baseUrl/v1/images/generations"
-        val token = jwtRepository.getLatest()
+        val randomPrompt = styleImagePrompts.random()
+        log.info("Using random prompt: $randomPrompt")
 
         val body = ObjectMapperUtils.toJSON(
-            imageTaskRequest.copy(
-                prompt = styleImagePrompts.random()
-            ))!!
+            createImageTaskRequest.copy(
+                prompt = randomPrompt
+            )
+        )!!
 
         val request = Request.Builder()
             .url(url)
-            .addHeader("Authorization", "Bearer $token")
+            .addHeader("Authorization", "Bearer ${jwtRepository.getLatest()}")
             .post(body.toRequestBody(CONTENT_TYPE))
             .build()
 
         okHttpClient.newCall(request).execute().use { resp ->
-            if (!resp.isSuccessful) {
-                throw IOException(
-                    "Request failed, code: ${resp.code}, body: ${resp.body?.string()}"
-                )
-            }
             return resp.body
-                ?.let { Message.ok<ImageTaskResponse>(it.string()) }
+                ?.let { Message.ok<CreateImageTaskResponse>(it.string()) }
                 ?: throw IOException("Response body is empty")
         }
     }
 
-    companion object {
-        private val CONTENT_TYPE = "application/json; charset=utf-8".toMediaType()
+    @Throws(IOException::class)
+    fun queryImageTask(queryImageTaskRequest: QueryImageTaskRequest): Message<QueryImageTaskResponse> {
+        val url = "$baseUrl/v1/images/generations/${queryImageTaskRequest.taskId}"
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer ${jwtRepository.getLatest()}")
+            .get()
+            .build()
+
+        okHttpClient.newCall(request).execute().use { resp ->
+            return resp.body
+                ?.let { Message.ok<QueryImageTaskResponse>(it.string()) }
+                ?: throw IOException("Response body is empty")
+        }
     }
 }

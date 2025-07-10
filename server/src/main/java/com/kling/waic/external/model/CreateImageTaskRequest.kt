@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 // Doc: https://docs.qingque.cn/d/home/eZQAyImcbaS0fz-8ANjXvU5ed?identityId=2ETa3ZI9xlj#section=h.kc4crsy4j7to
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class ImageTaskRequest(
+data class CreateImageTaskRequest(
     @JsonProperty("model_name")
     val modelName: String = "kling-v2",
 
@@ -41,7 +41,7 @@ data class ImageTaskRequest(
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class ImageTaskResponse(
+data class CreateImageTaskResponse(
     @JsonProperty("task_id")
     val taskId: String = "",
 
