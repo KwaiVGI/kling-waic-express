@@ -18,8 +18,7 @@ export default ({ mode }: ConfigEnv): UserConfig => {
       port: 3000,
       proxy: {
         '/api': {
-          target: '',
-          ws: false,
+          target: 'http://52.81.18.108:10238',
           changeOrigin: true,
         },
       },

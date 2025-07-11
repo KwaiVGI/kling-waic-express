@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { showToast, showConfirmDialog } from 'vant'
+import { showToast } from 'vant'
 
 export type CreationType = 'image' | 'video'
 
@@ -42,15 +42,11 @@ export default function useCreation(creationType: CreationType) {
 
   // 处理图片上传
   const handleUpload = (file: any) => {
-    isLoading.value = true
-    loadingText.value = "图片上传中..."
 
-    setTimeout(() => {
-      if (file.file) {
+    if (file.file) {
         // 检查文件大小
         if (file.file.size > maxFileSize.value) {
           onOversize()
-          isLoading.value = false
           return
         }
 
@@ -58,12 +54,6 @@ export default function useCreation(creationType: CreationType) {
         reader.onload = (e) => {
           uploadedImage.value = e.target?.result as string
           generatedResult.value = null
-          isLoading.value = false
-          showToast({
-            type: "success",
-            message: "上传成功！",
-            duration: 1500,
-          })
         }
         reader.readAsDataURL(file.file)
       } else {
@@ -72,9 +62,7 @@ export default function useCreation(creationType: CreationType) {
           message: "上传失败，请重试",
           duration: 1500,
         })
-        isLoading.value = false
       }
-    }, 1500)
   }
 
   // 打开预览
@@ -86,17 +74,9 @@ export default function useCreation(creationType: CreationType) {
 
   // 删除图片
   const handleDelete = () => {
-    showConfirmDialog({
-      title: "删除图片",
-      message: "确定要删除已上传的图片吗？",
-    })
-      .then(() => {
-        fileList.value = []
-        uploadedImage.value = null
-        generatedResult.value = null
-        showToast("图片已删除")
-      })
-      .catch(() => {})
+     fileList.value = []
+    uploadedImage.value = null
+    generatedResult.value = null
   }
 
   // 替换图片

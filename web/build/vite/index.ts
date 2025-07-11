@@ -16,6 +16,8 @@ import Sitemap from 'vite-plugin-sitemap'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 import { loadEnv } from 'vite'
+import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
+import path from 'path'
 import { createViteVConsole } from './vconsole'
 
 export function createVitePlugins(mode: string) {
@@ -81,6 +83,12 @@ export function createVitePlugins(mode: string) {
     legacy({
       targets: ['defaults', 'not IE 11'],
     }),
+    createSvgIconsPlugin({
+        // 指定需要缓存的图标文件夹
+        iconDirs: [path.resolve(process.cwd(), 'src/assets/svg')],
+        // 指定symbolId格式
+        symbolId: 'icon-[dir]-[name]'
+      }),
 
     // https://github.com/antfu/unocss
     // see uno.config.ts for config

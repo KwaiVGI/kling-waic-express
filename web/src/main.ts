@@ -7,6 +7,8 @@ import 'virtual:uno.css'
 import '@/styles/app.less'
 import '@/styles/var.less'
 import { i18n } from '@/utils/i18n'
+// 注册 svg 雪碧图
+import 'virtual:svg-icons-register'
 
 // Vant 桌面端适配
 import '@vant/touch-emulator'

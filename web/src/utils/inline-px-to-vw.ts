@@ -8,7 +8,7 @@
 import { round } from 'lodash-es'
 
 // 理想宽度，设计稿的宽度
-const idealWidth = 375
+const idealWidth = 414
 
 // 表示伸缩视图的最大宽度
 const maxWidth = 600

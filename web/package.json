@@ -76,6 +76,7 @@
     "vite-plugin-mock-dev-server": "^1.9.1",
     "vite-plugin-pwa": "^1.0.0",
     "vite-plugin-sitemap": "^0.8.2",
+    "vite-plugin-svg-icons": "^2.0.1",
     "vite-plugin-vconsole": "^2.1.1",
     "vite-plugin-vue-devtools": "^7.7.7",
     "vue-tsc": "^2.2.10"

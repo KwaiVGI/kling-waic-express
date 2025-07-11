@@ -8,25 +8,26 @@
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import QRCodeStyling from "qr-code-styling";
+import { getLatestToken } from "@/api";
 
 const route = useRoute();
 const qrCodeElement = ref<HTMLElement | null>(null);
 const qrCode = ref<QRCodeStyling | null>(null);
 const token = ref<string>("");
 let timer: number | null = null;
+// token 10分钟失效，前端5分钟刷一次
+const tokenPollingInterval = 1000 * 60 * 5;
 
 // 获取token的API请求
 const fetchToken = async (): Promise<string> => {
-  //   try {
-  //     // 替换为你的实际API端点
-  //     const response = await fetch("https://api.example.com/get-token");
-  //     const data = await response.json();
-  //     return data.token;
-  //   } catch (error) {
-  //     console.error("获取token失败:", error);
-  //     return "";
-  //   }
-  return Math.random().toString(36).substring(2, 15);
+  try {
+    const data = await getLatestToken();
+    // console.log("获取token成功:", data);
+    return data.name;
+  } catch (error) {
+    console.error("获取token失败:", error);
+    return "";
+  }
 };
 
 // 初始化二维码生成器 https://qr-code-styling.com/
@@ -35,8 +36,7 @@ const initQrCode = () => {
     width: 300,
     height: 300,
     data: "",
-    image:
-      "https://p9-passport.byteacctimg.com/img/user-avatar/4fb1f1f5e20cf37f0c49957885d58b38~100x100.awebp",
+    image: "https://p2-kling.klingai.com/kcdn/cdn-kcdn112452/logo-80x80.png",
     margin: 10,
     qrOptions: {
       typeNumber: 0,
@@ -82,7 +82,7 @@ const startTokenPolling = () => {
     if (newToken && newToken !== token.value) {
       token.value = newToken;
     }
-  }, 3000) as unknown as number;
+  }, tokenPollingInterval) as unknown as number;
 };
 
 // 初始化
