@@ -1,0 +1,2 @@
+# before use
+- ensure deviceID
