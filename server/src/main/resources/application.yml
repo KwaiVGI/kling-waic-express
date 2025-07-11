@@ -1,2 +1,20 @@
+spring:
+  mvc:
+    servlet:
+      path: /api
+
 server:
   port: 8538
+
+jedis:
+  host: 52.81.18.108
+  port: 6379
+
+waic:
+  jwt:
+    expireAtInSeconds: 1800
+    notBeforeInSeconds: -5
+
+kling:
+  open-api:
+    base-url: https://api-beijing.klingai.com

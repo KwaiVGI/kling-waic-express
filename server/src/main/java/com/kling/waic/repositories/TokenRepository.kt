@@ -2,7 +2,7 @@ package com.kling.waic.repositories
 
 import com.kling.waic.entities.Token
 import com.kling.waic.utils.ObjectMapperUtils
-import com.kuaishou.m2v.kling.component.config.Slf4j.Companion.log
+import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Repository
 import redis.clients.jedis.Jedis
 import java.time.Instant
@@ -12,29 +12,33 @@ import java.util.*
 class TokenRepository(
     private val jedis: Jedis
 ) {
-    var latestToken: Token? = null
+    @Volatile
+    private var latestToken: Token? = null
 
     fun getLatest(): Token {
-        val current = this.latestToken
-        if (current != null && current.refreshTime > Instant.now()) {
+        val now = Instant.now()
+        val current = latestToken
+        if (current != null && current.refreshTime > now) {
             return current
         }
 
         synchronized(this) {
-            val recheck = this.latestToken
-            if (recheck == null || recheck.refreshTime <= Instant.now()) {
-                log.info("Generate new token, recheck: {}", recheck)
+            val previous = latestToken
+            val nowInLock = Instant.now()
+
+            if (previous == null || previous.refreshTime <= nowInLock) {
                 val newToken = Token(
-                    (recheck?.id ?: 0) + 1,
+                    (previous?.id ?: 0) + 1,
                     UUID.randomUUID().toString(),
-                    Instant.now(),
-                    Instant.now().plusSeconds(5),
-                    Instant.now().plusSeconds(EXPIRE_IN_SECONDS)
+                    nowInLock,
+                    nowInLock.plusSeconds(5),
+                    nowInLock.plusSeconds(EXPIRE_IN_SECONDS)
                 )
-                this.latestToken = newToken
-                jedis.setex(newToken.name, EXPIRE_IN_SECONDS, ObjectMapperUtils.toJSON(newToken))
+                latestToken = newToken
+                jedis.setex(newToken.value, EXPIRE_IN_SECONDS, ObjectMapperUtils.toJSON(newToken))
+                log.info("Generated and saved new token: id={}, name={}", newToken.id, newToken.value)
             }
-            return this.latestToken!!
+            return latestToken!!
         }
     }
 
@@ -44,8 +48,8 @@ class TokenRepository(
     }
 
     fun validate(token: String): Boolean {
-        val t = this.getByName(token) ?: return false
-        return Instant.now() < t.expireTime
+        val storedToken = getByName(token)
+        return storedToken?.let { Instant.now().isBefore(it.expireTime) } ?: false
     }
 
     companion object {

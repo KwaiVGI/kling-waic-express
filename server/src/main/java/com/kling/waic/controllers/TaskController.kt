@@ -28,6 +28,7 @@ class TaskController {
     }
 
     @GetMapping("{name}")
+    @Authorization(AuthorizationType.CREATE_TASK)
     fun getTask(@PathVariable name: String): Result<Task> {
         // TODO:
         return Result(null)
@@ -36,13 +37,14 @@ class TaskController {
     @PostMapping("{name}/print")
     fun printTask(
         @PathVariable name: String): Result<Printing> {
+        // only support printing Images
         return Result(null)
     }
 
-    @PostMapping("{name}/delete")
-    fun deleteTask(
-        @PathVariable name: String): Result<Boolean> {
-        return Result(null)
-    }
+//    @PostMapping("{name}/delete")
+//    fun deleteTask(
+//        @PathVariable name: String): Result<Boolean> {
+//        return Result(null)
+//    }
 
 }

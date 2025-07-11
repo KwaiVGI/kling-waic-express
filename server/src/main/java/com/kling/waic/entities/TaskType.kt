@@ -1,6 +1,6 @@
 package com.kling.waic.entities
 
-enum class TaskType {
-    STYLED_IMAGE,
-    VIDEO_EFFECT
+enum class TaskType(val startValue: Long) {
+    STYLED_IMAGE(100000),
+    VIDEO_EFFECT(500000)
 }

@@ -12,5 +12,7 @@ services:
       - "10238:8538"
     command: mvn spring-boot:run
     restart: unless-stopped
+    environment:
+      REDIS_PASS_WAIC: ${REDIS_PASS_WAIC}
     extra_hosts:
       - "host.docker.internal:host-gateway"
