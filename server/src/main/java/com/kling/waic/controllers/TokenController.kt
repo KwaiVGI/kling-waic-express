@@ -23,6 +23,7 @@ class TokenController @Autowired constructor (
     }
 
     @GetMapping("{name}")
+    @Authorization(AuthorizationType.MANAGEMENT)
     fun getToken(@PathVariable name: String): Result<Token> {
         return Result(tokenRepository.getByName(name))
     }

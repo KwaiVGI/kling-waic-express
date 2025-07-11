@@ -56,4 +56,9 @@ open class ServiceConfig(
             .map { it.trim() }
             .toList()
     }
+
+    @Bean
+    open fun nextCodeLuaScript(): String {
+        return FileUtils.readFileFromResources("next-code.lua")
+    }
 }

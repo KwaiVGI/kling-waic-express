@@ -35,8 +35,8 @@ class TokenRepository(
                     nowInLock.plusSeconds(EXPIRE_IN_SECONDS)
                 )
                 latestToken = newToken
-                jedis.setex(newToken.name, EXPIRE_IN_SECONDS, ObjectMapperUtils.toJSON(newToken))
-                log.info("Generated and saved new token: id={}, name={}", newToken.id, newToken.name)
+                jedis.setex(newToken.value, EXPIRE_IN_SECONDS, ObjectMapperUtils.toJSON(newToken))
+                log.info("Generated and saved new token: id={}, name={}", newToken.id, newToken.value)
             }
             return latestToken!!
         }
