@@ -37,7 +37,8 @@
         @oversize="onOversize"
       >
         <div
-          class="upload-area rounded-12px w-320px h-254px flex flex-col items-center justify-center"
+          class="upload-area rounded-12px w-320px flex flex-col items-center justify-center"
+          :class="type === 'image' ? 'h-254px' : 'h-320px'"
         >
           <IconSvg name="add-image" :size="32" />
           <p class="mt-10px text-14px text-white">上传照片</p>
@@ -46,7 +47,10 @@
           </p>
         </div>
       </van-uploader>
-      <div class="absolute bottom-0 left-0 w-360px h-124px">
+      <div
+        v-if="type === 'image'"
+        class="absolute bottom-0 left-0 w-360px h-124px"
+      >
         <img
           class="w-full h-full"
           src="https://tx.a.yximgs.com/kos/nlav12119/egmRUScU_2025-07-11-17-22-10.png"
@@ -71,7 +75,8 @@
           :src="uploadedImage"
           alt="上传的图片"
           @click="openPreview(uploadedImage)"
-          class="w-169px h-254px object-cover object-center relative z-10"
+          class="h-254px object-cover object-center relative z-10"
+          :class="type === 'image' ? 'w-169px' : 'w-143px'"
         />
       </div>
       <div class="w-full h-48px flex justify-between gap-8px mt-16px">
@@ -79,12 +84,14 @@
           class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px color-black bg-#09090A0A"
           @click="handleReplace()"
         >
-          IconSvg 替换
+          <IconSvg name="replace" color="black" />
+          替换
         </button>
         <button
           class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px color-black bg-#09090A0A"
           @click="handleDelete"
         >
+          <IconSvg name="delete" color="black" />
           删除
         </button>
       </div>
@@ -100,6 +107,7 @@
         type="primary"
         @click="handleGenerate"
         :loading="isGenerating"
+        loading-text="生成中，请稍后..."
         class="generate-btn !w-320px !h-56px !text-20px font-bold !text-black"
       >
         <template #default v-if="!isGenerating">
@@ -107,7 +115,6 @@
             type === "image" ? "图片" : "视频"
           }}
         </template>
-        <template #loading> 生成中，请稍后... </template>
       </van-button>
       <div
         class="warning-tip mt-20px text-12px text-white flex items-center justify-center gap-4px"
