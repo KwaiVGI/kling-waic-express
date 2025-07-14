@@ -6,6 +6,7 @@
 #include <iostream>
 #include <locale>
 #include <vector>
+#include <map>
 #include <QFile>
 #include <QString>
 #include <windows.h>
@@ -88,6 +89,7 @@ Printer::Printer(const std::wstring& printerName, int printerPageWidth /* = 0*/,
     }
     std::cout << "begin Thread" << std::endl;
     m_printThread = std::thread(&Printer::run, this);
+    m_monitorThread = std::thread(&Printer::monitorLoop, this);
 }
 
 Printer::~Printer()
@@ -100,15 +102,60 @@ Printer::~Printer()
     }
     m_isRunning = false;
     m_printThread.join();
+    m_isListening = false;
+    m_monitorThread.join();
+}
+
+void Printer::monitorLoop() {
+    while (m_isListening) {
+        // 轮询间隔（毫秒）
+        // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+        // 枚举所有打印任务
+        DWORD needed = 0, numJobs = 0;
+        EnumJobs(m_hPrinter, 0, ULONG_MAX, 2, NULL, 0, &needed, &numJobs);
+        DWORD err = GetLastError();
+        m_loopCount++;
+        if (needed == 0) {
+            continue; // 无任务
+        }
+        std::cout << "[monitorLoop] count:" << m_loopCount << std::endl;
+        std::vector<BYTE> buffer(needed);
+        if (!EnumJobs(m_hPrinter, 0, ULONG_MAX, 2, buffer.data(), needed, &needed, &numJobs)) {
+            std::cerr << "EnumJobs failed: " << GetLastError() << std::endl;
+            continue;
+        }
+
+        JOB_INFO_2* jobs = reinterpret_cast<JOB_INFO_2*>(buffer.data());
+        for (DWORD i = 0; i < numJobs; i++) {
+            DWORD jobId = jobs[i].JobId;
+            DWORD status = jobs[i].Status;
+            LPWSTR documentName = jobs[i].pDocument;
+            // 检查状态并触发回调
+            std::cout << "[job] ID:" << jobId << " status:" << status << std::endl; 
+            if (status & JOB_STATUS_PRINTING) {
+                std::cout << "[job] ID:" << jobId << "printing" << std::endl;
+                // 避免状态重复提交
+                
+                // if (onPrinting_) {
+                //     onPrinting_(jobId, documentName);
+                // }
+            } else if (status & JOB_STATUS_COMPLETE) {
+                std::cout << "[job] ID:" << jobId << "complete" << std::endl;
+            //     if (onCompleted_) {
+            //         onCompleted_(jobId, documentName);
+            //     }
+            }
+            Sleep(1000);
+        }
+    }
 }
 
 void Printer::run()
 {
-    std::cout << "thread running" << std::endl;
     Gdiplus::GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-    std::cout << "thread running here" << std::endl;
     if (!preparePrinterSetting())
     {
         std::cout << "failed Prepare\n";
@@ -130,6 +177,7 @@ void Printer::run()
                 continue;
             }
             //开始打印
+            // doc name从这修改
             DOCINFO doc_info = { sizeof(DOCINFO), L"Interaction-angle photo printer" };
             HDC hPrintDC = static_cast<HDC>(m_printInfo.hDC);
             int doc_idd = StartDoc(hPrintDC, &doc_info);
@@ -200,11 +248,6 @@ std::string Printer::getImageFile()
     std::cout << "[getImageFile] fetched: " << filename 
               << ", remaining size: " << m_filenameQueue.size() << std::endl;
     return filename;
-}
-
-int Printer::getQueueCount()
-{
-    return m_jobCount.load(std::memory_order_relaxed);
 }
 
 // 准备系统默认打印机，需要在“Windows设置” - “打印机和扫描仪”设定一个默认打印机

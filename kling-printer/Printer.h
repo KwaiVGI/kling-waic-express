@@ -15,20 +15,23 @@ public:
     ~Printer();
     void addPhotoFile(const std::string& filename);
     DWORD getJobsCount();
-    int getQueueCount();
 
 private:
     void run();
     bool preparePrinterSetting();
     bool updatePrinterConfig(double imageWidth, double imageHeight);
     std::string getImageFile();
+    void monitorLoop();
 
 private:
     std::thread m_printThread;
+    std::thread m_monitorThread;
+    int m_docSize = { 0 };
     std::queue<std::string> m_filenameQueue;
     std::mutex m_mutex;
-    std::atomic<int> m_jobCount{0};
     bool m_isRunning = true;
+    bool m_isListening{true};
+    int m_loopCount{0};
 
     HANDLE m_hPrinter = nullptr;
     std::wstring m_printerName;
