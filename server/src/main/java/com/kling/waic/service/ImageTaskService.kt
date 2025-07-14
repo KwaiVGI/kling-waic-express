@@ -10,6 +10,7 @@ import com.kling.waic.external.model.CreateImageTaskRequest
 import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
+import com.kling.waic.helper.FaceCropper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.utils.FileUtils
@@ -19,8 +20,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import redis.clients.jedis.Jedis
+import java.awt.image.BufferedImage
 import java.time.Instant
 import java.util.*
+import javax.imageio.ImageIO
 
 @Service
 class ImageTaskService(
@@ -29,6 +32,7 @@ class ImageTaskService(
     private val codeGenerateRepository: CodeGenerateRepository,
     private val jedis: Jedis,
     private val imageProcessHelper: ImageProcessHelper,
+    private val faceCropper: FaceCropper,
     @Value("\${waic.sudoku.images-dir}")
     private val sudokuImagesDir: String,
     @Value("\${waic.sudoku.url-prefix}")
@@ -42,7 +46,12 @@ class ImageTaskService(
     }
 
     override fun createTask(type: TaskType, file: MultipartFile): Task {
-        val imageBase64 = FileUtils.convertImageToBase64(file)
+        val taskName = codeGenerateRepository.nextCode(type)
+
+        val inputImage = multipartFileToBufferedImage(file)
+        val outputImage = faceCropper.cropFaceToAspectRatio(inputImage, taskName)
+        val imageBase64 = FileUtils.convertImageToBase64(outputImage)
+
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
         val taskIds = mutableListOf<String>()
         for (prompt in randomPrompts) {
@@ -56,7 +65,7 @@ class ImageTaskService(
 
         val task = Task(
             id = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
-            name = codeGenerateRepository.nextCode(type),
+            name = taskName,
             taskIds = taskIds,
             status = TaskStatus.SUBMITTED,
             type = type,
@@ -133,6 +142,12 @@ class ImageTaskService(
             taskResponseMap.values.all { it.taskStatus == KlingOpenAPITaskStatus.succeed } -> TaskStatus.SUCCEED
             taskResponseMap.values.any { it.taskStatus == KlingOpenAPITaskStatus.failed } -> TaskStatus.FAILED
             else -> TaskStatus.PROCESSING
+        }
+    }
+
+    fun multipartFileToBufferedImage(file: MultipartFile): BufferedImage {
+        file.inputStream.use { inputStream ->
+            return ImageIO.read(inputStream)
         }
     }
 }

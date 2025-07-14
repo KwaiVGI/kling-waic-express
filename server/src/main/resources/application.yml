@@ -7,7 +7,7 @@ server:
   port: 8538
 
 jedis:
-  host: 52.81.18.108
+  host: 43.196.50.81
   port: 6379
 
 waic:
