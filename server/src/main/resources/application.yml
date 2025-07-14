@@ -2,6 +2,9 @@ spring:
   mvc:
     servlet:
       path: /api
+  web:
+    resources:
+      static-locations: file:${waic.sudoku.images-dir}/
 
 server:
   port: 8538
@@ -14,6 +17,10 @@ waic:
   jwt:
     expireAtInSeconds: 1800
     notBeforeInSeconds: -5
+  sudoku:
+    images-dir: ${SUDOKU_IMAGES_DIR:./sudoku-images}
+    url-prefix: ${SUDOKU_IMAGES_URL_PREFIX:/sudoku-images}
+    server-domain: ${SUDOKU_IMAGES_SERVER_DOMAIN:localhost:8538}
 
 kling:
   open-api:

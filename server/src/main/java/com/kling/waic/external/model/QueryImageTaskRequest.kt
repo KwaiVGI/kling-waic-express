@@ -15,7 +15,7 @@ data class QueryImageTaskResponse(
     val taskId: String,
 
     @JsonProperty("task_status")
-    val taskStatus: String,
+    val taskStatus: KlingOpenAPITaskStatus,
 
     @JsonProperty("task_status_msg")
     val taskStatusMsg: String? = null,

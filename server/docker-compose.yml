@@ -8,11 +8,15 @@ services:
     volumes:
       - ~/.m2:/root/.m2
       - ./:/app
+      - ./sudoku-images:/app/sudoku-images
     ports:
       - "10238:8538"
     command: mvn spring-boot:run
     restart: unless-stopped
     environment:
       REDIS_PASS_WAIC: ${REDIS_PASS_WAIC}
+      SUDOKU_IMAGES_DIR: /app/sudoku-images
+      SUDOKU_IMAGES_URL_PREFIX: /sudoku-images
+      SUDOKU_IMAGES_SERVER_DOMAIN: 52.81.18.108:8538
     extra_hosts:
       - "host.docker.internal:host-gateway"
