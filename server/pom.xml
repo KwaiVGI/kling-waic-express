@@ -98,6 +98,12 @@
             <artifactId>lettuce-core</artifactId>
             <version>6.7.1.RELEASE</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-core</artifactId>
+            <version>1.10.2</version>
+        </dependency>
     </dependencies>
 
     <build>

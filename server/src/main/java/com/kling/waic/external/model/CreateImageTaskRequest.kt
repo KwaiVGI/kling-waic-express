@@ -10,7 +10,7 @@ data class CreateImageTaskRequest(
     val modelName: String = "kling-v2",
 
     @JsonProperty("prompt")
-    val prompt: String = "",
+    val prompt: String,
 
     @JsonProperty("negative_prompt")
     val negativePrompt: String? = null,
@@ -34,7 +34,7 @@ data class CreateImageTaskRequest(
     val n: Int = 1,
 
     @JsonProperty("aspect_ratio")
-    val aspectRatio: String = "9:16", // 1:1, 16:9, etc.
+    val aspectRatio: String = "2:3", // 1:1, 16:9, etc.
 
     @JsonProperty("call_back_url")
     val callBackUrl: String? = null,
@@ -46,7 +46,7 @@ data class CreateImageTaskResponse(
     val taskId: String = "",
 
     @JsonProperty("task_status")
-    val taskStatus: String = "",
+    val taskStatus: KlingOpenAPITaskStatus,
 
     @JsonProperty("created_at")
     val createdAt: Long = 0,

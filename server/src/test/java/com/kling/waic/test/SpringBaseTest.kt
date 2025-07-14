@@ -5,7 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest(
     classes = [WAICExpressApplication::class],
-    webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT
+    webEnvironment = SpringBootTest.WebEnvironment.NONE
 )
 abstract class SpringBaseTest {
 }
