@@ -1,4 +1,4 @@
-package com.kling.waic.configuration
+package com.kling.waic.config
 
 import com.kling.waic.utils.FileUtils
 import okhttp3.OkHttpClient
@@ -43,7 +43,7 @@ open class ServiceConfig(
 
     @Bean
     open fun styleImagePrompts(): List<String> {
-        return FileUtils.readFileFromResources("style-image-prompts.txt")
+        return FileUtils.readTextFromResources("style-image-prompts.txt")
             .split("\n")
             .map { it.trim() }
             .toList()
@@ -51,7 +51,7 @@ open class ServiceConfig(
 
     @Bean
     open fun videoSpecialEffects(): List<String> {
-        return FileUtils.readFileFromResources("video-special-effects.txt")
+        return FileUtils.readTextFromResources("video-special-effects.txt")
             .split("\n")
             .map { it.trim() }
             .toList()
@@ -59,6 +59,6 @@ open class ServiceConfig(
 
     @Bean
     open fun nextCodeLuaScript(): String {
-        return FileUtils.readFileFromResources("next-code.lua")
+        return FileUtils.readTextFromResources("next-code.lua")
     }
 }

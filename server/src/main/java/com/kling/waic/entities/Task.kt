@@ -1,13 +1,17 @@
 package com.kling.waic.entities
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import java.time.Instant
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class Task (
     val id: Long,
     val name: String,
-    val type: TaskType,
-    val createTime: Instant,
+    val taskIds: List<String>,
     val status: TaskStatus,
-    val input: TaskInput,
-    val outputs: TaskOutput?
+    val type: TaskType,
+    val filename: String,
+    val outputs: TaskOutput? = null,
+    val createTime: Instant,
+    val updateTime: Instant,
 )

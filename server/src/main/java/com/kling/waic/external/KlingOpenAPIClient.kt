@@ -2,12 +2,11 @@ package com.kling.waic.external
 
 import com.kling.waic.external.model.CreateImageTaskRequest
 import com.kling.waic.external.model.CreateImageTaskResponse
-import com.kling.waic.external.model.Message
+import com.kling.waic.external.model.KlingOpenAPIResult
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
 import com.kling.waic.repositories.JWTRepository
 import com.kling.waic.utils.ObjectMapperUtils
-import com.kling.waic.utils.Slf4j.Companion.log
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -21,7 +20,6 @@ class KlingOpenAPIClient(
     @Value("\${kling.open-api.base-url}") private val baseUrl: String,
     private val jwtRepository: JWTRepository,
     private val okHttpClient: OkHttpClient,
-    private val styleImagePrompts: List<String>,
 ) {
 
     companion object {
@@ -29,17 +27,11 @@ class KlingOpenAPIClient(
     }
 
     @Throws(IOException::class)
-    fun createImageTask(createImageTaskRequest: CreateImageTaskRequest): Message<CreateImageTaskResponse> {
+    fun createImageTask(createImageTaskRequest: CreateImageTaskRequest):
+            KlingOpenAPIResult<CreateImageTaskResponse> {
         val url = "$baseUrl/v1/images/generations"
-        val randomPrompt = styleImagePrompts.random()
-        log.info("Using random prompt: $randomPrompt")
 
-        val body = ObjectMapperUtils.toJSON(
-            createImageTaskRequest.copy(
-                prompt = randomPrompt
-            )
-        )!!
-
+        val body = ObjectMapperUtils.toJSON(createImageTaskRequest)!!
         val request = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Bearer ${jwtRepository.getLatest()}")
@@ -48,13 +40,14 @@ class KlingOpenAPIClient(
 
         okHttpClient.newCall(request).execute().use { resp ->
             return resp.body
-                ?.let { Message.ok<CreateImageTaskResponse>(it.string()) }
+                ?.let { KlingOpenAPIResult.ok<CreateImageTaskResponse>(it.string()) }
                 ?: throw IOException("Response body is empty")
         }
     }
 
     @Throws(IOException::class)
-    fun queryImageTask(queryImageTaskRequest: QueryImageTaskRequest): Message<QueryImageTaskResponse> {
+    fun queryImageTask(queryImageTaskRequest: QueryImageTaskRequest):
+            KlingOpenAPIResult<QueryImageTaskResponse> {
         val url = "$baseUrl/v1/images/generations/${queryImageTaskRequest.taskId}"
 
         val request = Request.Builder()
@@ -65,7 +58,7 @@ class KlingOpenAPIClient(
 
         okHttpClient.newCall(request).execute().use { resp ->
             return resp.body
-                ?.let { Message.ok<QueryImageTaskResponse>(it.string()) }
+                ?.let { KlingOpenAPIResult.ok<QueryImageTaskResponse>(it.string()) }
                 ?: throw IOException("Response body is empty")
         }
     }
