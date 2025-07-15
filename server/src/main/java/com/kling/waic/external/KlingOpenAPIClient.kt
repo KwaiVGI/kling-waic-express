@@ -7,6 +7,7 @@ import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
 import com.kling.waic.repository.JWTRepository
 import com.kling.waic.utils.ObjectMapperUtils
+import com.kling.waic.utils.Slf4j.Companion.log
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -58,7 +59,11 @@ class KlingOpenAPIClient(
 
         okHttpClient.newCall(request).execute().use { resp ->
             return resp.body
-                ?.let { KlingOpenAPIResult.ok<QueryImageTaskResponse>(it.string()) }
+                ?.let {
+                    val respStr = it.string()
+                    log.info("Request url: {}, Response body: {}", url, respStr)
+                    KlingOpenAPIResult.ok<QueryImageTaskResponse>(respStr)
+                }
                 ?: throw IOException("Response body is empty")
         }
     }
