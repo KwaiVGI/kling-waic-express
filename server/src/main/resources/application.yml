@@ -1,12 +1,14 @@
 spring:
   application:
     name: kling-waic-express-server
+  config:
+    import: optional:file:.env
   mvc:
     servlet:
       path: /api
-  web:
-    resources:
-      static-locations: file:${waic.sudoku.images-dir}/
+#  web:
+#    resources:
+#      static-locations: file:${waic.sudoku.images-dir}/
 
 server:
   port: 8538
@@ -14,6 +16,7 @@ server:
 jedis:
   host: 43.196.50.81
   port: 6379
+  password: ${REDIS_PASS_WAIC}
 
 waic:
   jwt:
@@ -23,6 +26,11 @@ waic:
     images-dir: ${SUDOKU_IMAGES_DIR:./sudoku-images}
     url-prefix: ${SUDOKU_IMAGES_URL_PREFIX:/sudoku-images}
     server-domain: ${SUDOKU_IMAGES_SERVER_DOMAIN:localhost:8538}
+  management:
+    token: ${WAIC_MANAGEMENT_TOKEN}
+  open-api:
+    access-key: ${WAIC_OPENAPI_ACCESS_KEY}
+    secret-key: ${WAIC_OPENAPI_SECRET_KEY}
 
 kling:
   open-api:

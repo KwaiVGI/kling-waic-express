@@ -1,7 +1,7 @@
 package com.kling.waic.test.service
 
-import com.kling.waic.entities.TaskStatus
-import com.kling.waic.entities.TaskType
+import com.kling.waic.entity.TaskStatus
+import com.kling.waic.entity.TaskType
 import com.kling.waic.service.TaskService
 import com.kling.waic.test.SpringBaseTest
 import com.kling.waic.utils.FileUtils

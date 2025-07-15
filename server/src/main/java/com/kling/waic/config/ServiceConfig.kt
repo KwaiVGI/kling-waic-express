@@ -15,29 +15,14 @@ import java.io.FileOutputStream
 open class ServiceConfig(
     @param:Value("\${jedis.host}") private val host: String,
     @param:Value("\${jedis.port}") private val port: Int,
+    @param:Value("\${jedis.password}") private val password: String,
 ) {
 
     @Bean
     open fun jedis(): Jedis {
-        val password = System.getenv("REDIS_PASS_WAIC")
         val jedis = Jedis(host, port)
         jedis.auth(password)
         return jedis
-    }
-
-    @Bean
-    open fun waicManagementToken(jedis: Jedis): String {
-        return jedis.get("waic.management.token")
-    }
-
-    @Bean
-    open fun waicOpenApiAccessKey(jedis: Jedis): String {
-        return jedis.get("waic.open-api.access-key")
-    }
-
-    @Bean
-    open fun waicOpenApiSecretKey(jedis: Jedis): String {
-        return jedis.get("waic.open-api.secret-key")
     }
 
     @Bean
@@ -68,12 +53,10 @@ open class ServiceConfig(
 
     @Bean
     open fun loadCascadeClassifierFromResources(): CascadeClassifier {
-//        val opencvPath = System.getenv("OPENCV_PATH")
-//        System.load(opencvPath)
-
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
-        val inputStream = this::class.java.classLoader.getResourceAsStream("haarcascade_frontalface_alt.xml")
-            ?: throw IllegalArgumentException("Cannot find haarcascade XML in resources")
+        val inputStream =
+            this::class.java.classLoader.getResourceAsStream("haarcascade_frontalface_alt.xml")
+                ?: throw IllegalArgumentException("Cannot find haarcascade XML in resources")
 
         // copy to a temporary file
         val tempFile = File.createTempFile("tmp_haarcascade_frontalface_alt", ".xml")
