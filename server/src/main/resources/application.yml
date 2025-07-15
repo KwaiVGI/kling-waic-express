@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: kling-waic-express-server
   mvc:
     servlet:
       path: /api

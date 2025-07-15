@@ -2,6 +2,7 @@ package com.kling.waic.config
 
 import com.kling.waic.auth.AuthorizationInterceptor
 import org.springframework.context.annotation.Configuration
+import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
@@ -22,5 +23,14 @@ open class WebConfig(
                 "/**/*.png", // Exclude PNG images
                 "/**/*.gif", // Exclude GIF images
             )
+    }
+
+    override fun addCorsMappings(registry: CorsRegistry) {
+        registry.addMapping("/**")
+            .allowedOrigins("*")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowedHeaders("*")
+            .allowCredentials(false)
+            .maxAge(3600)
     }
 }
