@@ -38,6 +38,7 @@ class ImageProcessHelper {
                 "Some images could not be downloaded. Expected: ${imageUrls.size}, Actual: ${images.size}")
         }
 
+        log.info("Creating Sudoku image for task: ${task.name} at $outputPath")
         createKlingWAICSudokuImage(task, images, outputPath)
         log.info("Created image ${images.size} from $outputPath")
     }
