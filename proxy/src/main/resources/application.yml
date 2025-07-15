@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: kling-waic-express-proxy
+  mvc:
+    servlet:
+      path: /proxy
+
+server:
+  port: 8638
+
+kling-waic-server:
+  host: 43.196.50.81
+  port: 8538
