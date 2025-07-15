@@ -10,24 +10,35 @@ import org.springframework.context.annotation.Configuration
 import redis.clients.jedis.Jedis
 import java.io.File
 import java.io.FileOutputStream
+import java.net.InetSocketAddress
+import java.net.Proxy
 
 @Configuration
 open class ServiceConfig(
-    @param:Value("\${jedis.host}") private val host: String,
-    @param:Value("\${jedis.port}") private val port: Int,
-    @param:Value("\${jedis.password}") private val password: String,
+    @param:Value("\${jedis.host}") private val jedisHost: String,
+    @param:Value("\${jedis.port}") private val jedisPort: Int,
+    @param:Value("\${jedis.password}") private val jedisPassword: String,
+    @param:Value("\${kling.proxy.host}") private val proxyHost: String,
+    @param:Value("\${kling.proxy.port}") private val proxyPort: Int
 ) {
 
     @Bean
     open fun jedis(): Jedis {
-        val jedis = Jedis(host, port)
-        jedis.auth(password)
+        val jedis = Jedis(jedisHost, jedisPort)
+        jedis.auth(jedisPassword)
         return jedis
     }
 
     @Bean
     open fun okHttpClient(): OkHttpClient {
-        return OkHttpClient()
+        return OkHttpClient.Builder()
+            .proxy(
+                Proxy(
+                    Proxy.Type.HTTP,
+                    InetSocketAddress(proxyHost, proxyPort)
+                )
+            )
+            .build()
     }
 
     @Bean

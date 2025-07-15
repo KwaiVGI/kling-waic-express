@@ -35,3 +35,6 @@ waic:
 kling:
   open-api:
     base-url: https://api-beijing.klingai.com
+  proxy:
+    host: 10.52.57.90
+    port: 11080
