@@ -1,9 +1,10 @@
-#pragma once
+#ifndef CONNECT_POOL_H
+#define CONNECT_POOL_H
 #include <queue>
 #include <mutex>
 #include <memory>
 #include <chrono>
-#include "httplib.h"
+#include "include/httplib.h"
 
 struct HttpsConn {
         std::unique_ptr<httplib::SSLClient> cli;
@@ -13,7 +14,7 @@ class ConnectPool {
 public:
     using Clock = std::chrono::steady_clock;
 
-    explicit ConnectPool(std::size_t max = 8, std::string host_, long connectMS, long readMS);
+    explicit ConnectPool(std::size_t max, std::string host_, long connectMS, long readMS);
     
     ~ConnectPool() = default;
     
@@ -31,3 +32,4 @@ private:
     long cto_;
     long rto_;
 };
+#endif

@@ -1,5 +1,6 @@
+#ifndef HTTP_CLIENT_H
+#define HTTP_CLIENT_H
 #include "ConnectPool.h"
-#include <nlohmann/json.hpp>
 #include <stdexcept>
 #include "include/httplib.h"
 #include "include/nlohmann/json.hpp"
@@ -32,3 +33,4 @@ private:
 
     std::unique_ptr<ConnectPool> pool_;
 };
+#endif

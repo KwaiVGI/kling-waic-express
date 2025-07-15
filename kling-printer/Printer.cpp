@@ -138,7 +138,8 @@ void Printer::monitorLoop() {
                 if (printMap.find(jobId) != printMap.end()) {
                     continue;
                 }
-                printMap[jobId] != printMap[jobId];
+                // 已经更新过该状态
+                printMap[jobId] = true;
                 std::cout << "[job] ID:" << jobId << "printing" << std::endl;
                 // if (onPrinting_) {
                 //     onPrinting_(jobId, documentName);
@@ -147,7 +148,8 @@ void Printer::monitorLoop() {
                 if (completeMap.find(jobId) != printMap.end()) {
                     continue;
                 }
-                completeMap[jobId] != completeMap[jobId];
+                // 已经更新过该状态
+                completeMap[jobId] = true;
                 std::cout << "[job] ID:" << jobId << "complete" << std::endl;
                 
             //     if (onCompleted_) {

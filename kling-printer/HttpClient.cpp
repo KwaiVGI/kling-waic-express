@@ -32,9 +32,9 @@ static json doRequest(Conn& conn,
 
     httplib::Result res;
     if (isPost) {
-        res = conn->cli->Post(path.c_str(), hdrs, body.dump(), "application/json");
+        res = conn->Post(path.c_str(), hdrs, body.dump(), "application/json");
     } else {
-        res = conn->cli->Get(path.c_str(), hdrs);
+        res = conn->Get(path.c_str(), hdrs);
     }
 
     if (!res) throw std::runtime_error("transport error");
@@ -60,13 +60,13 @@ json HttpClient::post(const std::string& path,
 }
 
 // 更新图片的状态
-bool HttpClient::updateImageStatus(const std::string& status) {
+// bool HttpClient::updateImageStatus(const std::string& status) {
 
-}
+// }
 
-bool HttpClient::DownloadImage(const std::string& imgUrl) {
+// bool HttpClient::DownloadImage(const std::string& imgUrl) {
 
-}
-bool HttpClient::fetchImageUrl() {
+// }
+// bool HttpClient::fetchImageUrl() {
 
-}
+// }

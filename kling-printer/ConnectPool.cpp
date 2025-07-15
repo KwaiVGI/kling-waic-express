@@ -1,6 +1,6 @@
 #include "ConnectPool.h"
 
-ConnectPool::ConnectPool(std::size_t max = 8, std::string host, long connectMS, long readMS) : max_(max) , host_(host), cto_(connectMS), rto_(readMS) {}
+ConnectPool::ConnectPool(std::size_t max, std::string host, long connectMS, long readMS) : max_(max) , host_(host), cto_(connectMS), rto_(readMS) {}
 
     // 归还连接
 void ConnectPool::release(std::shared_ptr<HttpsConn> conn) {

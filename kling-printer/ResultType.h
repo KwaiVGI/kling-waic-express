@@ -1,3 +1,5 @@
+#ifndef RESULT_TYPE_H
+#define RESULT_YTPE_H
 #include <string>
 #include <vector>
 #include <chrono>
@@ -52,3 +54,4 @@ struct Task {
     std::chrono::system_clock::time_point updateTime;
     
 };
+#endif
