@@ -20,15 +20,14 @@ const tokenPollingInterval = 1000 * 60 * 5;
 
 // 获取token的API请求
 const fetchToken = async (): Promise<string> => {
-  return "mock-token";
-  //   try {
-  //     const data = await getLatestToken();
-  //     // console.log("获取token成功:", data);
-  //     return data.name;
-  //   } catch (error) {
-  //     console.error("获取token失败:", error);
-  //     return "";
-  //   }
+  try {
+    const data = await getLatestToken();
+    // console.log("获取token成功:", data);
+    return data.name;
+  } catch (error) {
+    console.error("获取token失败:", error);
+    return "";
+  }
 };
 
 // 初始化二维码生成器 https://qr-code-styling.com/
