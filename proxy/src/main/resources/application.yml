@@ -8,6 +8,10 @@ spring:
 server:
   port: 8638
 
-kling-waic-server:
-  host: 43.196.50.81
-  port: 8538
+kling-waic:
+  server:
+    host: 43.196.50.81
+    port: 8538
+  proxy:
+    host: 10.52.57.90
+    port: 11080

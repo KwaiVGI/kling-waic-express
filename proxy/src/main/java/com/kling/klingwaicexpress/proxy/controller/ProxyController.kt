@@ -15,14 +15,12 @@ import reactor.core.publisher.Mono
 
 @RestController
 class ProxyController(
-    @Value("\${kling-waic-server.host}")
+    @Value("\${kling-waic.server.host}")
     private val host: String,
-    @Value("\${kling-waic-server.port}")
+    @Value("\${kling-waic.server.port}")
     private val port: Int,
     private val webClientBuilder: WebClient.Builder
 ) {
-
-    private val targetBaseUrl = "http://$host:$port"
 
     @RequestMapping("/**",
         method = [RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH])
@@ -31,7 +29,7 @@ class ProxyController(
         val method = HttpMethod.valueOf(request.method)
         val path = request.requestURI.replace("/proxy", "/api")
         val query = request.queryString?.let { "?$it" } ?: ""
-        val url = "$targetBaseUrl$path$query"
+        val url = "http://$host:$port$path$query"
 
         val headers = HttpHeaders()
         request.headerNames.toList().forEach {
