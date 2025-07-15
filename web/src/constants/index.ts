@@ -1,2 +1,2 @@
-export const appName = 'vue3-vant-mobile'
-export const appDescription = 'An mobile web apps template based on the Vue 3 ecosystem'
+export const appName = '可灵 AI - 新一代 AI 创意生产力平台'
+export const appDescription = ''
