@@ -25,8 +25,8 @@ const fetchToken = async (): Promise<string> => {
     console.log("获取token成功:", data);
     return data.value;
   } catch (error) {
-    console.error("获取token失败:", error);
-    return "";
+    console.warn("获取token失败:", error);
+    return "mock-token";
   }
 };
 

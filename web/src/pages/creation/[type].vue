@@ -307,61 +307,25 @@ const mockGenerate = (file: string, type: CreationType): Promise<string> => {
     // 模拟30%的失败率
     const shouldFail = Math.random() < 0.3;
 
-    setTimeout(
-      () => {
-        if (shouldFail) {
-          reject(new Error("模拟API失败"));
-          return;
-        }
+    setTimeout(() => {
+      if (shouldFail) {
+        reject(new Error("模拟API失败"));
+        return;
+      }
 
-        if (type === "image") {
-          // 图片处理逻辑
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d")!;
-          const img = new Image();
-          img.src = file;
-          img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            // 添加艺术效果
-            const imageData = ctx.getImageData(
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
-            const data = imageData.data;
-
-            // 添加暖色滤镜
-            for (let i = 0; i < data.length; i += 4) {
-              data[i] = Math.min(255, data[i] * 1.2); // R
-              data[i + 1] = Math.min(255, data[i + 1] * 1.1); // G
-              data[i + 2] = data[i + 2] * 0.9; // B
-            }
-
-            ctx.putImageData(imageData, 0, 0);
-
-            // 添加文字水印
-            ctx.font = "bold 40px Arial";
-            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-            ctx.textAlign = "center";
-            ctx.fillText("AI创作", canvas.width / 2, canvas.height - 60);
-
-            resolve(canvas.toDataURL("image/jpeg"));
-          };
-        } else {
-          // 视频类型 - 这里应该调用真实API生成视频
-          // 由于在客户端无法生成视频，我们模拟返回一个视频URL
-          // 实际项目中应该替换为真实API调用
-          resolve(
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-          );
-        }
-      },
-      type.value === "image" ? 2000 : 5000
-    ); // 视频生成时间更长
+      if (type === "image") {
+        resolve(
+          "https://s2-111386.kwimgs.com/bs2/mmu-kolors-public/frontgallery-20240514-33.png?x-oss-process=image/resize,m_mfit,w_1000"
+        );
+      } else {
+        // 视频类型 - 这里应该调用真实API生成视频
+        // 由于在客户端无法生成视频，我们模拟返回一个视频URL
+        // 实际项目中应该替换为真实API调用
+        resolve(
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+        );
+      }
+    }, 1000);
   });
 };
 

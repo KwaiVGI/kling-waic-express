@@ -17,8 +17,8 @@ export default ({ mode }: ConfigEnv): UserConfig => {
       host: true,
       port: 3000,
       proxy: {
-        '/api': {
-          target: 'http://43.196.50.81:8538',
+        '/proxy': {
+          target: 'https://waic.staging.kuaishou.com',
           changeOrigin: true,
         },
       },
