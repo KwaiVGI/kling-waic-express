@@ -1,144 +1,155 @@
 <template>
   <div
+    ref="containerRef"
     id="h5App"
-    class="creation-container h-100vh min-h-100vh relative overflow-hidden flex flex-col items-center"
+    class="creation-container h-100vh relative overflow-hidden flex flex-col items-center"
   >
     <div
-      v-show="!generatedResult"
-      class="w-full mt-28px flex justify-center mb-24px"
+      ref="step1Ref"
+      :style="{ zoom: step1Zoom }"
+      class="step-1 w-full flex flex-col items-center pb-28px"
     >
-      <img
-        v-if="type === 'image'"
-        class="w-329px h-156px"
-        src="https://ali.a.yximgs.com/kos/nlav12119/LMmTMlSW_2025-07-11-14-27-35.png"
-        alt=""
-      />
-      <img
-        v-else
-        class="w-329px h-156px"
-        src="https://tx.a.yximgs.com/kos/nlav12119/nJaiWFln_2025-07-11-17-25-24.png"
-        alt=""
-      />
-    </div>
-    <!-- 上传区域 -->
-    <div
-      v-show="!uploadedImage"
-      class="w-360px h-360px box-border bg-white rounded-24px p-20px text-center relative"
-    >
-      <van-uploader
-        ref="uploaderRef"
-        v-model="fileList"
-        :after-read="handleUpload"
-        :max-count="1"
-        reupload
-        :preview-image="false"
-        accept="image/*"
-        :max-size="maxFileSize"
-        @oversize="onOversize"
-      >
-        <div
-          class="upload-area rounded-12px w-320px flex flex-col items-center justify-center"
-          :class="type === 'image' ? 'h-254px' : 'h-320px'"
-        >
-          <IconSvg name="add-image" :size="32" />
-          <p class="mt-10px text-14px text-white">上传照片</p>
-          <p class="upload-tip mt-4px text-12px text-#B0B4B8">
-            支持JPG、PNG格式，大小不超过{{ maxFileSizeMB }}MB
-          </p>
-        </div>
-      </van-uploader>
       <div
-        v-if="type === 'image'"
-        class="absolute bottom-0 left-0 w-360px h-124px"
+        v-show="!generatedResult"
+        class="w-full mt-28px flex flex-col items-center mb-36px"
       >
         <img
-          class="w-full h-full"
-          src="https://tx.a.yximgs.com/kos/nlav12119/egmRUScU_2025-07-11-17-22-10.png"
+          class="w-106px h-32px mb-22px ml-20px self-start"
+          src="https://ali.a.yximgs.com/kos/nlav12119/QBZriaHi_2025-07-15-20-14-14.png"
+          alt=""
+        />
+        <img
+          v-if="type === 'image'"
+          class="w-329px h-126px"
+          src="https://ali.a.yximgs.com/kos/nlav12119/sZscckOe_2025-07-15-20-11-41.png"
+          alt=""
+        />
+        <img
+          v-else
+          class="w-329px h-126px"
+          src="https://tx.a.yximgs.com/kos/nlav12119/HosJbOVv_2025-07-15-20-12-01.png"
           alt=""
         />
       </div>
-    </div>
-
-    <!-- 图片预览区域 -->
-    <div
-      v-if="uploadedImage && !generatedResult"
-      class="w-360px h-360px box-border bg-white rounded-24px p-20px text-center relative"
-    >
+      <!-- 上传区域 -->
       <div
-        class="w-320px h-254px overflow-hidden rounded-12px flex items-center justify-center relative"
+        v-show="!uploadedImage"
+        class="w-360px h-360px box-border bg-white rounded-24px p-20px text-center relative"
+      >
+        <van-uploader
+          ref="uploaderRef"
+          v-model="fileList"
+          :after-read="handleUpload"
+          :max-count="1"
+          reupload
+          :preview-image="false"
+          accept="image/*"
+          :max-size="maxFileSize"
+          @oversize="onOversize"
+        >
+          <div
+            class="upload-area rounded-12px w-320px flex flex-col items-center justify-center"
+            :class="type === 'image' ? 'h-254px' : 'h-320px'"
+          >
+            <IconSvg name="add-image" :size="32" />
+            <p class="mt-10px text-14px text-white">上传照片</p>
+            <p class="upload-tip mt-4px text-12px text-#B0B4B8">
+              支持JPG、PNG格式，大小不超过{{ maxFileSizeMB }}MB
+            </p>
+          </div>
+        </van-uploader>
+        <div
+          v-if="type === 'image'"
+          class="absolute bottom-0 left-0 w-360px h-124px"
+        >
+          <img
+            class="w-full h-full"
+            src="https://tx.a.yximgs.com/kos/nlav12119/egmRUScU_2025-07-11-17-22-10.png"
+            alt=""
+          />
+        </div>
+      </div>
+
+      <!-- 图片预览区域 -->
+      <div
+        v-if="uploadedImage && !generatedResult"
+        class="w-360px h-360px box-border bg-white rounded-24px p-20px text-center relative"
       >
         <div
-          class="blur-40px absolute left-0 top-0 w-full h-full"
-          :style="{ backgroundImage: `url(${uploadedImage})` }"
-        ></div>
-        <img
-          :src="uploadedImage"
-          alt="上传的图片"
-          @click="openPreview(uploadedImage)"
-          class="h-254px object-cover object-center relative z-10"
-          :class="type === 'image' ? 'w-169px' : 'w-143px'"
-        />
-      </div>
-      <div class="w-full h-48px flex justify-between gap-8px mt-16px">
-        <button
-          class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px color-black bg-#09090A0A"
-          @click="handleReplace()"
+          class="w-320px h-254px overflow-hidden rounded-12px flex items-center justify-center relative"
         >
-          <IconSvg name="replace" color="black" />
-          替换
-        </button>
-        <button
-          class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px color-black bg-#09090A0A"
-          @click="handleDelete"
-        >
-          <IconSvg name="delete" color="black" />
-          删除
-        </button>
+          <div
+            class="blur-20px absolute left-0 top-0 w-full h-full"
+            :style="{ backgroundImage: `url(${uploadedImage})` }"
+          ></div>
+          <img
+            :src="uploadedImage"
+            alt="上传的图片"
+            @click="openPreview(uploadedImage)"
+            class="h-254px object-cover object-center relative z-10"
+            :class="type === 'image' ? 'w-169px' : 'w-143px'"
+          />
+        </div>
+        <div class="w-full h-48px flex justify-between gap-8px mt-16px">
+          <button
+            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px color-black bg-#09090A0A"
+            @click="handleReplace()"
+          >
+            <IconSvg name="replace" color="black" />
+            替换
+          </button>
+          <button
+            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px color-black bg-#09090A0A"
+            @click="handleDelete"
+          >
+            <IconSvg name="delete" color="black" />
+            删除
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- 生成按钮区域 -->
-    <div
-      v-if="!generatedResult"
-      class="generate-section mt-48px w-full text-center"
-    >
-      <van-button
-        round
-        type="primary"
-        @click="handleGenerate"
-        :loading="isGenerating"
-        loading-text="生成中，请稍后..."
-        class="generate-btn !w-320px !h-56px !text-20px font-bold !text-black"
-      >
-        <template #default v-if="!isGenerating">
-          <van-icon name="magic" /> 立即生成{{
-            type === "image" ? "图片" : "视频"
-          }}
-        </template>
-      </van-button>
+      <!-- 生成按钮区域 -->
       <div
-        class="warning-tip mt-20px text-12px text-white flex items-center justify-center gap-4px"
+        v-if="!generatedResult"
+        class="generate-section mt-48px w-full text-center"
       >
-        <IconSvg name="inform" :size="14" color="#fff" />
-        内容由AI生成，禁止利用功能从事违法活动。
+        <van-button
+          round
+          type="primary"
+          @click="handleGenerate"
+          :loading="isGenerating"
+          loading-text="生成中，请稍后..."
+          class="generate-btn !w-320px !h-56px !text-20px font-bold !text-black"
+        >
+          <template #default v-if="!isGenerating">
+            <van-icon name="magic" /> 立即生成
+          </template>
+        </van-button>
+        <div
+          class="warning-tip mt-20px text-12px text-black flex items-center justify-center gap-4px"
+        >
+          <IconSvg name="inform" :size="14" color="#000" />
+          内容由AI生成，禁止利用功能从事违法活动。
+        </div>
       </div>
     </div>
-
     <!-- 生成的结果区域 -->
     <div
-      v-if="generatedResult"
+      v-show="generatedResult"
       class="result-section-bg absolute left-0 top-0 right-0 bottom-0"
     ></div>
     <div
-      v-if="generatedResult"
-      class="result-section w-full box-border px-18px pt-40px flex flex-col items-center relative z-10 animate-slideUp"
+      v-show="generatedResult"
+      ref="step2Ref"
+      :style="{ zoom: step2Zoom }"
+      class="result-section w-full box-border px-18px py-40px flex flex-col items-center relative z-10 animate-slideUp"
     >
-      <div class="rounded-8px">
+      <div class="w-380px h-570px rounded-8px">
         <img
           v-if="type === 'image'"
           :src="generatedResult"
           alt="生成的图片"
-          class="w-380px h-570px object-cover object-center rounded-8px shadow-sm"
+          class="w-full h-full object-cover object-center rounded-8px shadow-sm"
         />
         <video
           v-else
@@ -146,7 +157,7 @@
           controls
           autoplay
           preload="auto"
-          class="w-380px h-570px object-cover object-center rounded-8px shadow-sm"
+          class="w-full h-full object-cover object-center rounded-8px shadow-sm"
         ></video>
       </div>
 
@@ -214,32 +225,69 @@
     <!-- 保存指导弹窗 -->
     <van-dialog
       v-model:show="showSaveGuide"
-      :title="`保存${type === 'image' ? '图片' : '视频'}指导`"
+      :width="vw(368)"
       show-cancel-button
       @confirm="handleSaveGuideConfirm"
     >
-      <div class="save-guide p-15px text-center">
-        <p>
-          长按下方{{ type === "image" ? "图片" : "视频" }}，选择"保存{{
-            type === "image" ? "图片" : "视频"
-          }}"
+      <template #title>
+        <p class="text-center text-20px font-bold">
+          {{ type === "image" ? "图片" : "视频" }}保存
         </p>
+      </template>
+      <p class="p-14px text-center text-black mb-24px">
+        长按下方{{ type === "image" ? "图片" : "视频" }}，选择"保存{{
+          type === "image" ? "图片" : "视频"
+        }}"
+      </p>
+      <div class="mx-24px h-254px relative rounded-12px overflow-hidden">
+        <div
+          v-if="type === 'image'"
+          class="blur-40px absolute left-0 top-0 w-full h-full"
+          :style="{ backgroundImage: `url(${generatedResult})` }"
+        ></div>
         <img
           v-if="type === 'image'"
           :src="generatedResult"
           alt="保存指导"
-          class="guide-image w-full max-h-300px object-contain my-15px rounded-8px border border-gray-200"
+          class="guide-image w-full h-full object-contain relative z-10"
         />
         <video
           v-else
           :src="generatedResult"
           controls
-          class="guide-video w-full max-h-300px object-contain my-15px rounded-8px border border-gray-200"
+          class="guide-video w-full h-full object-contain relative z-10"
         ></video>
-        <p class="save-tip text-12px text-red">
-          如无法保存，请使用浏览器打开本页面
-        </p>
       </div>
+      <template #footer>
+        <div class="flex flex-col gap-24px mt-16px px-24px pb-24px box-border">
+          <div class="flex items-center gap-8px">
+            <!-- <van-button
+              type="default"
+              @click="showSaveGuide = false"
+              class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none color-black !bg-#09090A0A !text-14px"
+            >
+              取消
+            </van-button> -->
+
+            <van-button
+              type="primary"
+              @click="showSaveGuide = false"
+              :loading="isSaving"
+              round
+              class="action-btn flex-1 h-full text-16px font-500 !border-none shadow-sm !text-14px !bg-#0B8A1B"
+            >
+              我知道了
+            </van-button>
+          </div>
+          <p
+            class="text-13px text-#EB9109ff leading-1 text-center flex justify-center gap-4px items-center"
+          >
+            <IconSvg name="inform" :size="14" /><span
+              >如无法保存，请使用浏览器打开本页面</span
+            >
+          </p>
+        </div>
+      </template>
     </van-dialog>
 
     <!-- 加载层 -->
@@ -262,6 +310,10 @@
 <script lang="ts" setup>
 import { showToast } from "vant";
 import useCreation, { type CreationType } from "@/composables/useCreation";
+import { getTaskStatus, newTask } from "@/api/creation";
+import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+import vw from "@/utils/inline-px-to-vw";
+import { useZoom } from "@/composables/useZoom";
 
 const route = useRoute();
 
@@ -301,32 +353,60 @@ const {
   printImage,
 } = useCreation(type.value as "image" | "video");
 
-// 模拟生成API
-const mockGenerate = (file: string, type: CreationType): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    // 模拟30%的失败率
-    const shouldFail = Math.random() < 0.3;
+const wait = async (delay: number) =>
+  new Promise((resolve) => setTimeout(resolve, delay));
 
-    setTimeout(() => {
-      if (shouldFail) {
-        reject(new Error("模拟API失败"));
-        return;
+// 生成
+const doGenerate = async (file: File, type: CreationType): Promise<string> => {
+  // mock
+  // if (type === "image") {
+  //   return "https://s2-111386.kwimgs.com/bs2/mmu-kolors-public/frontgallery-20240514-33.png?x-oss-process=image/resize,m_mfit,w_1000";
+  // } else {
+  //   return "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+  // }
+  try {
+    // 1. 创建新任务
+    const { name } = await newTask({
+      file,
+      type: type === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
+    });
+
+    // 2. 轮询任务状态
+    let status = "";
+    const maxAttempts = 2000; // 最大尝试次数，防止无限循环
+    const delay = 2000; // 每次轮询间隔2秒
+
+    await wait(10000);
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // 获取任务状态
+      const result = await getTaskStatus({
+        name,
+        type: type === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
+      });
+
+      status = result.status;
+      const { url } = result.outputs || {};
+
+      if (status === "SUCCEED") {
+        if (url) {
+          return url; // 成功返回URL
+        }
+        throw new Error("任务完成但未返回有效URL");
       }
 
-      if (type === "image") {
-        resolve(
-          "https://s2-111386.kwimgs.com/bs2/mmu-kolors-public/frontgallery-20240514-33.png?x-oss-process=image/resize,m_mfit,w_1000"
-        );
-      } else {
-        // 视频类型 - 这里应该调用真实API生成视频
-        // 由于在客户端无法生成视频，我们模拟返回一个视频URL
-        // 实际项目中应该替换为真实API调用
-        resolve(
-          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-        );
+      if (status === "FAILED") {
+        throw new Error("任务处理失败");
       }
-    }, 1000);
-  });
+
+      // 如果未完成，等待一段时间再继续
+      await wait(delay);
+    }
+
+    throw new Error("任务处理超时");
+  } catch (error) {
+    console.error("生成过程中出错:", error);
+    throw error; // 重新抛出错误，让调用者处理
+  }
 };
 
 // 处理生成
@@ -338,7 +418,7 @@ const handleGenerate = async () => {
   if (!uploadedImage.value) {
     showToast("请先上传图片");
   }
-  await generate(mockGenerate);
+  await generate(doGenerate);
 };
 
 // 处理保存
@@ -350,17 +430,23 @@ const handleSave = () => {
   }
 };
 
+const step1Ref = ref<HTMLElement | null>(null);
+const step2Ref = ref<HTMLElement | null>(null);
+const containerRef = ref<HTMLElement | null>(null);
+const step1Zoom = useZoom(step1Ref, containerRef);
+const step2Zoom = useZoom(step2Ref, containerRef);
+
 // 设置文件大小限制
 onMounted(() => {
-  // 可以根据类型设置不同的限制
-  maxFileSize.value = 10 * 1024 * 1024; // 10MB
+  localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+  console.log({ userAgent: navigator.userAgent });
 });
 </script>
 
 <style lang="less">
 .creation-container {
   background-color: #9ce5fa;
-  background-image: url(https://tx.a.yximgs.com/kos/nlav12119/naVetQFu_2025-07-11-14-31-25.png);
+  background-image: url(https://ali.a.yximgs.com/kos/nlav12119/JSsSVYUG_2025-07-15-20-17-58.png);
   background-size: cover;
 
   font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
@@ -368,6 +454,7 @@ onMounted(() => {
     background: linear-gradient(147.61deg, #313a47 0%, #171a1f 100%);
   }
   .generate-btn {
+    font-family: "Alimama ShuHeiTi";
     background: linear-gradient(
       98.88deg,
       #f7ffe0 0.35%,

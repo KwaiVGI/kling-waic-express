@@ -5,12 +5,13 @@ export type CreationType = 'image' | 'video'
 
 export default function useCreation(creationType: CreationType) {
   // 图片上传大小限制（单位：字节）
-  const maxFileSize = ref<number>(10 * 1024 * 1024) // 默认10MB
+  const maxFileSize = ref<number>(20 * 1024 * 1024) // 默认10MB
   const maxFileSizeMB = computed(() => Math.floor(maxFileSize.value / (1024 * 1024)))
   const uploaderRef = ref()
   // 状态管理
   const fileList = ref<any[]>([])
   const uploadedImage = ref<string | null>(null)
+  const uploadedFile = ref<File | null>(null)
   const generatedResult = ref<string | null>(null)
   const showPreview = ref(false)
   const previewItems = ref<string[]>([])
@@ -42,13 +43,13 @@ export default function useCreation(creationType: CreationType) {
 
   // 处理图片上传
   const handleUpload = (file: any) => {
-
     if (file.file) {
         // 检查文件大小
         if (file.file.size > maxFileSize.value) {
           onOversize()
           return
         }
+        uploadedFile.value = file.file
 
         const reader = new FileReader()
         reader.onload = (e) => {
@@ -87,7 +88,7 @@ export default function useCreation(creationType: CreationType) {
   }
 
   // 生成内容
-  const generate = async (generateFn: (file: string, type: CreationType) => Promise<string>) => {
+  const generate = async (generateFn: (file: File, type: CreationType) => Promise<string>) => {
     if (!uploadedImage.value) {
       showToast("请先上传图片")
       return
@@ -96,7 +97,7 @@ export default function useCreation(creationType: CreationType) {
     isGenerating.value = true
 
     try {
-      const result = await generateFn(uploadedImage.value, creationType)
+      const result = await generateFn(uploadedFile.value, creationType)
       generatedResult.value = result
       showToast({
         type: "success",
@@ -123,10 +124,11 @@ export default function useCreation(creationType: CreationType) {
       return
     }
 
-    // 检查是否在微信环境中
+    // 检查是否在微信、鸿蒙系统中
     const isWeChat = /MicroMessenger/i.test(navigator.userAgent)
+    const isHarmonyOS = /Harmony|HwBrowser|HuaweiBrowser/i.test(navigator.userAgent);
 
-    if (isWeChat) {
+    if (isWeChat || isHarmonyOS) {
       showSaveGuide.value = true
       return
     }

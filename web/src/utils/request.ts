@@ -10,7 +10,7 @@ export const REQUEST_TOKEN_KEY = 'Authorization'
 const request = axios.create({
   // API 请求的默认前缀
   baseURL: '/',
-  timeout: 60000, // 请求超时时间
+  timeout: 600000, // 请求超时时间
 })
 
 export type RequestError = AxiosError<{
@@ -48,7 +48,7 @@ function requestHandler(config: InternalAxiosRequestConfig): InternalAxiosReques
   const savedToken = localStorage.getItem(STORAGE_TOKEN_KEY)
   // 如果 token 存在
   // 让每个请求携带自定义 token, 请根据实际情况修改
-  if (savedToken)
+  if (savedToken && !config.headers[REQUEST_TOKEN_KEY])
     config.headers[REQUEST_TOKEN_KEY] = `Token ${savedToken}`
 
   return config

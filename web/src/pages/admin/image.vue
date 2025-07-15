@@ -129,7 +129,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
+import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 
+const route = useRoute();
 // 数据状态
 const images = ref<CastingImage[]>([]);
 const loading = ref(false);
@@ -235,6 +237,7 @@ const unpinImage = async () => {
 
 // 初始化加载图片
 onMounted(() => {
+  localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
   loadImages();
 });
 

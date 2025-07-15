@@ -10,6 +10,9 @@ import { i18n } from '@/utils/i18n'
 // 注册 svg 雪碧图
 import 'virtual:svg-icons-register'
 
+// font
+import '@/assets/font/index.scss'
+
 // Vant 桌面端适配
 import '@vant/touch-emulator'
 

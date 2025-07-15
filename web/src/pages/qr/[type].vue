@@ -9,6 +9,7 @@ import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import QRCodeStyling from "qr-code-styling";
 import { getLatestToken } from "@/api";
+import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 
 const route = useRoute();
 const qrCodeElement = ref<HTMLElement | null>(null);
@@ -16,7 +17,7 @@ const qrCode = ref<QRCodeStyling | null>(null);
 const token = ref<string>("");
 let timer: number | null = null;
 // token 10分钟失效，前端5分钟刷一次
-const tokenPollingInterval = 1000 * 60 * 5;
+const tokenPollingInterval = 1000 * 5;
 
 // 获取token的API请求
 const fetchToken = async (): Promise<string> => {
@@ -88,6 +89,7 @@ const startTokenPolling = () => {
 // 初始化
 onMounted(async () => {
   initQrCode();
+  localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
   token.value = await fetchToken();
   startTokenPolling();
 });
