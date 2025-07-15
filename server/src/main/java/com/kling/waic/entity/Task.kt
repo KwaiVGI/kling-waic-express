@@ -1,4 +1,4 @@
-package com.kling.waic.entities
+package com.kling.waic.entity
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import java.time.Instant

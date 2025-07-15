@@ -5,7 +5,7 @@ import com.kling.waic.external.model.CreateImageTaskResponse
 import com.kling.waic.external.model.KlingOpenAPIResult
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
-import com.kling.waic.repositories.JWTRepository
+import com.kling.waic.repository.JWTRepository
 import com.kling.waic.utils.ObjectMapperUtils
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient

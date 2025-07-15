@@ -1,6 +1,6 @@
 package com.kling.waic.helper
 
-import com.kling.waic.entities.TaskType
+import com.kling.waic.entity.TaskType
 import com.kling.waic.service.TaskService
 import org.springframework.stereotype.Component
 

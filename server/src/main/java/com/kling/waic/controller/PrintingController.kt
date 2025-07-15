@@ -1,10 +1,10 @@
-package com.kling.waic.controllers
+package com.kling.waic.controller
 
 import com.kling.waic.auth.Authorization
 import com.kling.waic.auth.AuthorizationType
-import com.kling.waic.entities.Printing
-import com.kling.waic.entities.PrintingUpdateInput
-import com.kling.waic.entities.Result
+import com.kling.waic.entity.Printing
+import com.kling.waic.entity.PrintingUpdateInput
+import com.kling.waic.entity.Result
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping

@@ -1,7 +1,7 @@
 package com.kling.waic.service
 
-import com.kling.waic.entities.Task
-import com.kling.waic.entities.TaskType
+import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskType
 import org.springframework.web.multipart.MultipartFile
 
 interface TaskService {

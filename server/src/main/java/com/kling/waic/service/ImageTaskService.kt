@@ -1,17 +1,18 @@
 package com.kling.waic.service
 
-import com.kling.waic.entities.Task
-import com.kling.waic.entities.TaskOutput
-import com.kling.waic.entities.TaskOutputType
-import com.kling.waic.entities.TaskStatus
-import com.kling.waic.entities.TaskType
+import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskOutput
+import com.kling.waic.entity.TaskOutputType
+import com.kling.waic.entity.TaskStatus
+import com.kling.waic.entity.TaskType
 import com.kling.waic.external.KlingOpenAPIClient
 import com.kling.waic.external.model.CreateImageTaskRequest
 import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
+import com.kling.waic.helper.FaceCropper
 import com.kling.waic.helper.ImageProcessHelper
-import com.kling.waic.repositories.CodeGenerateRepository
+import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import kotlinx.coroutines.runBlocking
@@ -19,8 +20,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import redis.clients.jedis.Jedis
+import java.awt.image.BufferedImage
 import java.time.Instant
 import java.util.*
+import javax.imageio.ImageIO
 
 @Service
 class ImageTaskService(
@@ -29,6 +32,7 @@ class ImageTaskService(
     private val codeGenerateRepository: CodeGenerateRepository,
     private val jedis: Jedis,
     private val imageProcessHelper: ImageProcessHelper,
+    private val faceCropper: FaceCropper,
     @Value("\${waic.sudoku.images-dir}")
     private val sudokuImagesDir: String,
     @Value("\${waic.sudoku.url-prefix}")
@@ -42,7 +46,12 @@ class ImageTaskService(
     }
 
     override fun createTask(type: TaskType, file: MultipartFile): Task {
-        val imageBase64 = FileUtils.convertImageToBase64(file)
+        val taskName = codeGenerateRepository.nextCode(type)
+
+        val inputImage = multipartFileToBufferedImage(file)
+        val outputImage = faceCropper.cropFaceToAspectRatio(inputImage, taskName)
+        val imageBase64 = FileUtils.convertImageToBase64(outputImage)
+
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
         val taskIds = mutableListOf<String>()
         for (prompt in randomPrompts) {
@@ -56,7 +65,7 @@ class ImageTaskService(
 
         val task = Task(
             id = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
-            name = codeGenerateRepository.nextCode(type),
+            name = taskName,
             taskIds = taskIds,
             status = TaskStatus.SUBMITTED,
             type = type,
@@ -72,6 +81,10 @@ class ImageTaskService(
         val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
         if (task == null || task.type != type) {
             throw IllegalArgumentException("Task not found or type mismatch")
+        }
+
+        if (task.status in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
+            return task // No need to query if the task is already completed
         }
 
         val taskIds = task.taskIds
@@ -115,11 +128,12 @@ class ImageTaskService(
         val outputPath = "$sudokuImagesDir/sudoku-${task.name}.jpg"
         runBlocking {
             imageProcessHelper.downloadAndCreateSudoku(
+                task,
                 imageUrls,
                 outputPath
             )
         }
-        return "$sudokuServerDomain/$sudokuUrlPrefix/sudoku-${task.name}.jpg"
+        return "$sudokuServerDomain/api$sudokuUrlPrefix/sudoku-${task.name}.jpg"
     }
 
     private fun calculateStatus(taskResponseMap: Map<String, QueryImageTaskResponse>): TaskStatus {
@@ -128,6 +142,12 @@ class ImageTaskService(
             taskResponseMap.values.all { it.taskStatus == KlingOpenAPITaskStatus.succeed } -> TaskStatus.SUCCEED
             taskResponseMap.values.any { it.taskStatus == KlingOpenAPITaskStatus.failed } -> TaskStatus.FAILED
             else -> TaskStatus.PROCESSING
+        }
+    }
+
+    fun multipartFileToBufferedImage(file: MultipartFile): BufferedImage {
+        file.inputStream.use { inputStream ->
+            return ImageIO.read(inputStream)
         }
     }
 }

@@ -1,6 +1,6 @@
-package com.kling.waic.repositories
+package com.kling.waic.repository
 
-import com.kling.waic.entities.Token
+import com.kling.waic.entity.Token
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Repository

@@ -20,19 +20,12 @@ open class SudokuConfig(
         if (!dir.exists()) {
             val created = dir.mkdirs()
             log.info("Created sudoku images directory: ${dir.absolutePath}, success: $created")
-        } else {
-            log.info("Sudoku images directory already exists: ${dir.absolutePath}")
         }
 
-        // check if the directory is writable
         if (!dir.canWrite()) {
-            log.error("Cannot write to sudoku images directory: ${dir.absolutePath}")
             throw IllegalStateException("Cannot write to sudoku images directory: ${dir.absolutePath}")
         }
 
-        log.info("Sudoku configuration:")
-        log.info("  Images directory: ${dir.absolutePath}")
-        log.info("  URL prefix: $sudokuUrlPrefix")
-        log.info("  Static resources will be served from: file:${dir.absolutePath}/")
+        log.info("Sudoku images directory: ${dir.absolutePath}")
     }
 }

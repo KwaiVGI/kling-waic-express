@@ -1,4 +1,4 @@
-package com.kling.waic.entities
+package com.kling.waic.entity
 
 enum class ResultStatus {
     SUCCEED,

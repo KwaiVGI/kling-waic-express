@@ -1,6 +1,6 @@
 package com.kling.waic.test.repository
 
-import com.kling.waic.repositories.TokenRepository
+import com.kling.waic.repository.TokenRepository
 import com.kling.waic.test.SpringBaseTest
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

@@ -1,6 +1,6 @@
-package com.kling.waic.repositories
+package com.kling.waic.repository
 
-import com.kling.waic.entities.TaskType
+import com.kling.waic.entity.TaskType
 import org.springframework.stereotype.Repository
 import redis.clients.jedis.Jedis
 

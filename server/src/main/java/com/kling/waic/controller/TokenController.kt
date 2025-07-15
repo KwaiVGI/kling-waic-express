@@ -1,10 +1,10 @@
-package com.kling.waic.controllers
+package com.kling.waic.controller
 
 import com.kling.waic.auth.Authorization
 import com.kling.waic.auth.AuthorizationType
-import com.kling.waic.entities.Result
-import com.kling.waic.entities.Token
-import com.kling.waic.repositories.TokenRepository
+import com.kling.waic.entity.Result
+import com.kling.waic.entity.Token
+import com.kling.waic.repository.TokenRepository
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.GetMapping

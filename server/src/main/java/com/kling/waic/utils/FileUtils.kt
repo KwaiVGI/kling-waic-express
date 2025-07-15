@@ -1,8 +1,11 @@
 package com.kling.waic.utils
 
 import org.springframework.web.multipart.MultipartFile
+import java.awt.Image
+import java.awt.image.BufferedImage
 import java.io.File
 import java.util.*
+import javax.imageio.ImageIO
 
 class FileUtils {
 
@@ -31,6 +34,18 @@ class FileUtils {
 
         fun convertImageToBase64(file: MultipartFile): String {
             return BASE64_ENCODER.encodeToString(file.bytes)
+        }
+
+        fun convertImageToBase64(bufferedImage: BufferedImage): String {
+            val file = File.createTempFile("temp_image", ".png")
+            ImageIO.write(bufferedImage, "png", file)
+            return convertImageToBase64(file)
+        }
+
+        fun convertFileAsImage(filePath: String): Image {
+            val file = this::class.java.classLoader.getResource(filePath)?.file
+                ?: throw IllegalArgumentException("File not found: $filePath")
+            return ImageIO.read(File(file))
         }
     }
 }

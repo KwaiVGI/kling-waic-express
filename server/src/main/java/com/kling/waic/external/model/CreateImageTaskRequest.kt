@@ -34,7 +34,7 @@ data class CreateImageTaskRequest(
     val n: Int = 1,
 
     @JsonProperty("aspect_ratio")
-    val aspectRatio: String = "9:16", // 1:1, 16:9, etc.
+    val aspectRatio: String = "2:3", // 1:1, 16:9, etc.
 
     @JsonProperty("call_back_url")
     val callBackUrl: String? = null,

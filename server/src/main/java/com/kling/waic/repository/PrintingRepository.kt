@@ -1,4 +1,4 @@
-package com.kling.waic.repositories
+package com.kling.waic.repository
 
 import org.springframework.stereotype.Repository
 

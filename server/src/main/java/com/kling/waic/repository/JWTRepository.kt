@@ -1,4 +1,4 @@
-package com.kling.waic.repositories
+package com.kling.waic.repository
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm

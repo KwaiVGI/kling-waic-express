@@ -1,11 +1,11 @@
-package com.kling.waic.controllers
+package com.kling.waic.controller
 
 import com.kling.waic.auth.Authorization
 import com.kling.waic.auth.AuthorizationType
-import com.kling.waic.entities.Result
-import com.kling.waic.entities.Task
-import com.kling.waic.entities.TaskOperateInput
-import com.kling.waic.entities.TaskType
+import com.kling.waic.entity.Result
+import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskOperateInput
+import com.kling.waic.entity.TaskType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping

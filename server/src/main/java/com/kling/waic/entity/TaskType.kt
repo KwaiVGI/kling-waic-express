@@ -1,4 +1,4 @@
-package com.kling.waic.entities
+package com.kling.waic.entity
 
 enum class TaskType(val startValue: Long) {
     STYLED_IMAGE(100000),
