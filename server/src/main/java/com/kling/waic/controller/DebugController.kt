@@ -16,7 +16,6 @@ class DebugController(
     @Value("\${jedis.password}")
     private val redisPass: String,
     @Value("\${waic.management.token}")
-//    @Value("\${WAIC_MANAGEMENT_TOKEN}")
     private val managementToken: String,
     @Value("\${waic.open-api.access-key}")
     private val accessKey: String,
