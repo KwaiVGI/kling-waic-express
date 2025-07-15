@@ -11,7 +11,7 @@ import org.springframework.web.servlet.HandlerInterceptor
 @Component
 open class AuthorizationInterceptor (
     private val tokenRepository: TokenRepository,
-    @Value("\${waic.management.token")
+    @Value("\${waic.management.token}")
     private val waicManagementToken: String
 ) : HandlerInterceptor {
 
