@@ -53,6 +53,6 @@ class TokenRepository(
     }
 
     companion object {
-        const val EXPIRE_IN_SECONDS: Long = 60 * 10
+        const val EXPIRE_IN_SECONDS: Long = 60 * 30
     }
 }
