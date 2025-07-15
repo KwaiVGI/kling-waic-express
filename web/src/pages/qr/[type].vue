@@ -22,8 +22,8 @@ const tokenPollingInterval = 1000 * 60 * 5;
 const fetchToken = async (): Promise<string> => {
   try {
     const data = await getLatestToken();
-    // console.log("获取token成功:", data);
-    return data.name;
+    console.log("获取token成功:", data);
+    return data.value;
   } catch (error) {
     console.error("获取token失败:", error);
     return "";

@@ -9,7 +9,7 @@ export const REQUEST_TOKEN_KEY = 'Authorization'
 // 创建 axios 实例
 const request = axios.create({
   // API 请求的默认前缀
-  baseURL: location.hostname === 'localhost' ? '/' : 'http://52.81.18.108:10238/',
+  baseURL: location.hostname === 'localhost' ? '/' : 'http://43.196.50.81:8538/',
   timeout: 60000, // 请求超时时间
 })
 
