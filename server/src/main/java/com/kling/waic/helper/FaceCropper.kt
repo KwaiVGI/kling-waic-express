@@ -80,20 +80,59 @@ class FaceCropper(
     }
 
     private fun bufferedImageToMat(bufferedImage: BufferedImage): Mat {
+        // Validate input
+        if (bufferedImage.width <= 0 || bufferedImage.height <= 0) {
+            throw IllegalArgumentException("Invalid BufferedImage: width=${bufferedImage.width}, height=${bufferedImage.height}")
+        }
+
         val byteArrayOutputStream = ByteArrayOutputStream()
-        ImageIO.write(bufferedImage, "jpg", byteArrayOutputStream)
+        val writeSuccess = ImageIO.write(bufferedImage, "jpg", byteArrayOutputStream)
+        
+        if (!writeSuccess) {
+            throw IllegalStateException("Failed to convert BufferedImage to JPG bytes")
+        }
+        
         val imageBytes = byteArrayOutputStream.toByteArray()
+        
+        if (imageBytes.isEmpty()) {
+            throw IllegalStateException("Image conversion resulted in empty byte array")
+        }
 
         val matOfByte = MatOfByte(*imageBytes)
-        return Imgcodecs.imdecode(matOfByte, Imgcodecs.IMREAD_COLOR)
+        val mat = Imgcodecs.imdecode(matOfByte, Imgcodecs.IMREAD_COLOR)
+        
+        if (mat.empty()) {
+            throw IllegalStateException("OpenCV failed to decode image bytes. Image may be corrupted or in unsupported format.")
+        }
+        
+        return mat
     }
 
     private fun matToBufferedImage(mat: Mat): BufferedImage {
+        if (mat.empty()) {
+            throw IllegalArgumentException("Cannot convert empty Mat to BufferedImage")
+        }
+        
         val matOfByte = MatOfByte()
-        Imgcodecs.imencode(".jpg", mat, matOfByte)
+        val encodeSuccess = Imgcodecs.imencode(".jpg", mat, matOfByte)
+        
+        if (!encodeSuccess) {
+            throw IllegalStateException("Failed to encode Mat to JPG bytes")
+        }
+        
         val byteArray = matOfByte.toArray()
+        
+        if (byteArray.isEmpty()) {
+            throw IllegalStateException("Mat encoding resulted in empty byte array")
+        }
 
         val byteArrayInputStream = ByteArrayInputStream(byteArray)
-        return ImageIO.read(byteArrayInputStream)
+        val bufferedImage = ImageIO.read(byteArrayInputStream)
+        
+        if (bufferedImage == null) {
+            throw IllegalStateException("Failed to create BufferedImage from byte array")
+        }
+        
+        return bufferedImage
     }
 }

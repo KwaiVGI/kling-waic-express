@@ -51,7 +51,11 @@ class ImageTaskService(
         log.info("Generated task name: $taskName for type: $type")
 
         val inputImage = multipartFileToBufferedImage(file)
+        log.info("Input image size: ${inputImage.width}x${inputImage.height}")
+
         val outputImage = faceCropper.cropFaceToAspectRatio(inputImage, taskName)
+        log.info("Output image size: ${outputImage.width}x${outputImage.height}")
+
         val imageBase64 = FileUtils.convertImageToBase64(outputImage)
 
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
