@@ -119,5 +119,6 @@ class ImageProcessHelper(
 
         g2d.dispose()
         ImageIO.write(canvas, "JPG", File(outputPath))
+        log.info("Saved Sudoku image to $outputPath")
     }
 }

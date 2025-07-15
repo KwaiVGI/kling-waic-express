@@ -6,6 +6,10 @@ spring:
   mvc:
     servlet:
       path: /api
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 #  web:
 #    resources:
 #      static-locations: file:${waic.sudoku.images-dir}/
