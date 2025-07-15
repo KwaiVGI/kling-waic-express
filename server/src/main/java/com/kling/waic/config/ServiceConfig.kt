@@ -1,6 +1,7 @@
 package com.kling.waic.config
 
 import com.kling.waic.utils.FileUtils
+import com.kling.waic.utils.Slf4j.Companion.log
 import okhttp3.OkHttpClient
 import org.opencv.core.Core
 import org.opencv.objdetect.CascadeClassifier
@@ -20,6 +21,7 @@ open class ServiceConfig(
     @Bean
     open fun jedis(): Jedis {
         val password = System.getenv("REDIS_PASS_WAIC")
+        log.info("Connecting to Redis at {}:{}, pass: {}", host, port, password)
         val jedis = Jedis(host, port)
         jedis.auth(password)
         return jedis
