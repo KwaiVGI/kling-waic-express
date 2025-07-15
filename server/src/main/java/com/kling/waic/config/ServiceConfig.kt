@@ -10,39 +10,35 @@ import org.springframework.context.annotation.Configuration
 import redis.clients.jedis.Jedis
 import java.io.File
 import java.io.FileOutputStream
+import java.net.InetSocketAddress
+import java.net.Proxy
 
 @Configuration
 open class ServiceConfig(
-    @param:Value("\${jedis.host}") private val host: String,
-    @param:Value("\${jedis.port}") private val port: Int,
+    @param:Value("\${jedis.host}") private val jedisHost: String,
+    @param:Value("\${jedis.port}") private val jedisPort: Int,
+    @param:Value("\${jedis.password}") private val jedisPassword: String,
+    @param:Value("\${kling.proxy.host}") private val proxyHost: String,
+    @param:Value("\${kling.proxy.port}") private val proxyPort: Int
 ) {
 
     @Bean
     open fun jedis(): Jedis {
-        val password = System.getenv("REDIS_PASS_WAIC")
-        val jedis = Jedis(host, port)
-        jedis.auth(password)
+        val jedis = Jedis(jedisHost, jedisPort)
+        jedis.auth(jedisPassword)
         return jedis
     }
 
     @Bean
-    open fun waicManagementToken(jedis: Jedis): String {
-        return jedis.get("waic.management.token")
-    }
-
-    @Bean
-    open fun waicOpenApiAccessKey(jedis: Jedis): String {
-        return jedis.get("waic.open-api.access-key")
-    }
-
-    @Bean
-    open fun waicOpenApiSecretKey(jedis: Jedis): String {
-        return jedis.get("waic.open-api.secret-key")
-    }
-
-    @Bean
     open fun okHttpClient(): OkHttpClient {
-        return OkHttpClient()
+        return OkHttpClient.Builder()
+            .proxy(
+                Proxy(
+                    Proxy.Type.HTTP,
+                    InetSocketAddress(proxyHost, proxyPort)
+                )
+            )
+            .build()
     }
 
     @Bean
@@ -68,12 +64,10 @@ open class ServiceConfig(
 
     @Bean
     open fun loadCascadeClassifierFromResources(): CascadeClassifier {
-//        val opencvPath = System.getenv("OPENCV_PATH")
-//        System.load(opencvPath)
-
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
-        val inputStream = this::class.java.classLoader.getResourceAsStream("haarcascade_frontalface_alt.xml")
-            ?: throw IllegalArgumentException("Cannot find haarcascade XML in resources")
+        val inputStream =
+            this::class.java.classLoader.getResourceAsStream("haarcascade_frontalface_alt.xml")
+                ?: throw IllegalArgumentException("Cannot find haarcascade XML in resources")
 
         // copy to a temporary file
         val tempFile = File.createTempFile("tmp_haarcascade_frontalface_alt", ".xml")

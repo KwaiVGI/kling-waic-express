@@ -9,7 +9,9 @@ import java.util.*
 
 @Repository
 class JWTRepository(
+    @Value("\${waic.open-api.access-key}")
     private val waicOpenApiAccessKey: String,
+    @Value("\${waic.open-api.secret-key}")
     private val waicOpenApiSecretKey: String,
     @Value("\${waic.jwt.expireAtInSeconds}")
     private val expireAtInSeconds: Int,
@@ -28,7 +30,8 @@ class JWTRepository(
 
         if (latestJWT != null
             && expireAtMillis != null
-            && expireAtMillis!! > now + SAFETY_MARGIN_MS) {
+            && expireAtMillis!! > now + SAFETY_MARGIN_MS
+        ) {
             return latestJWT!!
         }
 
@@ -36,7 +39,8 @@ class JWTRepository(
             val refreshedNow = Instant.now().toEpochMilli()
             if (latestJWT == null
                 || expireAtMillis == null
-                || expireAtMillis!! <= refreshedNow + SAFETY_MARGIN_MS) {
+                || expireAtMillis!! <= refreshedNow + SAFETY_MARGIN_MS
+            ) {
                 val (newJwt, newExpireAt) = generateJWT()
                 latestJWT = newJwt
                 expireAtMillis = newExpireAt

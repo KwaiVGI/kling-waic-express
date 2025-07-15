@@ -3,6 +3,7 @@ package com.kling.waic.auth
 import com.kling.waic.repository.TokenRepository
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
@@ -10,6 +11,7 @@ import org.springframework.web.servlet.HandlerInterceptor
 @Component
 open class AuthorizationInterceptor (
     private val tokenRepository: TokenRepository,
+    @Value("\${waic.management.token}")
     private val waicManagementToken: String
 ) : HandlerInterceptor {
 

@@ -15,6 +15,7 @@ import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.ObjectMapperUtils
+import com.kling.waic.utils.Slf4j.Companion.log
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -47,9 +48,14 @@ class ImageTaskService(
 
     override fun createTask(type: TaskType, file: MultipartFile): Task {
         val taskName = codeGenerateRepository.nextCode(type)
+        log.info("Generated task name: $taskName for type: $type")
 
         val inputImage = multipartFileToBufferedImage(file)
+        log.info("Input image size: ${inputImage.width}x${inputImage.height}")
+
         val outputImage = faceCropper.cropFaceToAspectRatio(inputImage, taskName)
+        log.info("Output image size: ${outputImage.width}x${outputImage.height}")
+
         val imageBase64 = FileUtils.convertImageToBase64(outputImage)
 
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
@@ -60,6 +66,7 @@ class ImageTaskService(
                 prompt = prompt
             )
             val result = klingOpenAPIClient.createImageTask(request)
+            log.info("Create image task with prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}")
             taskIds.add(result.data!!.taskId)
         }
 
@@ -73,7 +80,10 @@ class ImageTaskService(
             createTime = Instant.now(),
             updateTime = Instant.now(),
         )
-        jedis.set(task.name, ObjectMapperUtils.toJSON(task))
+
+        val newValue = ObjectMapperUtils.toJSON(task)
+        jedis.set(task.name, newValue)
+        log.info("Set task in Redis with name: ${task.name}, value: $newValue")
         return task
     }
 
@@ -84,6 +94,7 @@ class ImageTaskService(
         }
 
         if (task.status in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
+            log.info("Task ${task.name} is already finished with status: ${task.status}")
             return task // No need to query if the task is already completed
         }
 
@@ -92,20 +103,27 @@ class ImageTaskService(
         for (taskId in taskIds) {
             val request = QueryImageTaskRequest(taskId = taskId)
             val result = klingOpenAPIClient.queryImageTask(request)
+            log.info("Query task with result, taskId: {}, taskStatus: {}",
+                result.data?.taskId ?: "null", result.data?.taskStatus ?: "null")
             taskResponseMap.put(taskId, result.data!!)
         }
 
         val overallStatus = calculateStatus(taskResponseMap)
+        log.info("Task ${task.name} overallStatus: $overallStatus")
+
         val newTask = task.copy(
             status = overallStatus,
             updateTime = Instant.now(),
         )
-        jedis.set(task.name, ObjectMapperUtils.toJSON(newTask))
+        val newValue = ObjectMapperUtils.toJSON(newTask)
+        jedis.set(task.name, newValue)
+        log.info("Set updated task in Redis with name: ${newTask.name}, value: $newValue")
 
         if (overallStatus != TaskStatus.SUCCEED) {
             return newTask
         }
 
+        log.info("Generating Sudoku image URL for task: ${newTask.name}")
         val url = generateSudokuImageUrl(newTask, taskResponseMap)
 
         val finalTask = newTask.copy(
@@ -115,7 +133,10 @@ class ImageTaskService(
             ),
             updateTime = Instant.now()
         )
-        jedis.set(task.name, ObjectMapperUtils.toJSON(newTask))
+
+        val finalValue = ObjectMapperUtils.toJSON(finalTask)
+        jedis.set(task.name, finalValue)
+        log.info("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
         return finalTask
     }
 

@@ -12,7 +12,15 @@ class DebugController(
     @Value("\${waic.sudoku.images-dir}")
     private val sudokuImagesDir: String,
     @Value("\${waic.sudoku.url-prefix}")
-    private val sudokuUrlPrefix: String
+    private val sudokuUrlPrefix: String,
+    @Value("\${jedis.password}")
+    private val redisPass: String,
+    @Value("\${waic.management.token}")
+    private val managementToken: String,
+    @Value("\${waic.open-api.access-key}")
+    private val accessKey: String,
+    @Value("\${waic.open-api.secret-key}")
+    private val secretKey: String
 ) {
 
     @GetMapping("/config")
@@ -31,7 +39,11 @@ class DebugController(
             "sudokuUrlPrefix" to sudokuUrlPrefix,
             "imagesDirExists" to imagesDir.exists(),
             "imagesDirAbsolutePath" to imagesDir.absolutePath,
-            "filesInImagesDir" to files
+            "filesInImagesDir" to files,
+            "redisPass" to redisPass,
+            "managementToken" to managementToken,
+            "accessKey" to accessKey,
+            "secretKey" to secretKey,
         )
     }
 }
