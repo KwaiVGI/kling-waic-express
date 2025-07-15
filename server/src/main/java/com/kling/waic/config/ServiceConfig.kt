@@ -2,6 +2,7 @@ package com.kling.waic.config
 
 import com.kling.waic.utils.FileUtils
 import okhttp3.OkHttpClient
+import org.opencv.core.Core
 import org.opencv.objdetect.CascadeClassifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -67,14 +68,15 @@ open class ServiceConfig(
 
     @Bean
     open fun loadCascadeClassifierFromResources(): CascadeClassifier {
-        val opencvPath = System.getenv("OPENCV_PATH")
-        System.loadLibrary(opencvPath)
+//        val opencvPath = System.getenv("OPENCV_PATH")
+//        System.load(opencvPath)
 
-        val inputStream = object {}.javaClass.getResourceAsStream("haarcascade_frontalface_alt.xml")
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
+        val inputStream = this::class.java.classLoader.getResourceAsStream("haarcascade_frontalface_alt.xml")
             ?: throw IllegalArgumentException("Cannot find haarcascade XML in resources")
 
         // copy to a temporary file
-        val tempFile = File.createTempFile("haarcascade_frontalface_alt", ".xml")
+        val tempFile = File.createTempFile("tmp_haarcascade_frontalface_alt", ".xml")
         tempFile.deleteOnExit()
         FileOutputStream(tempFile).use { output ->
             inputStream.copyTo(output)
