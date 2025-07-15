@@ -16,6 +16,7 @@ set(CMAKE_AUTOUIC ON)
 # 手动指定Qt路径（关键！）
 set(CMAKE_PREFIX_PATH "C:\\Qt\\6.9.1\\msvc2022_64")
 
+
 find_package(Qt6 COMPONENTS 
     Core 
     Gui 
@@ -23,8 +24,9 @@ find_package(Qt6 COMPONENTS
     WebEngineWidgets
     REQUIRED
 )
+find_package(OpenSSL REQUIRED)
 
-add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
+add_executable(${PROJECT_NAME} WIN32
     main.cpp Printer.cpp Printer.h PrinterManager.h PrinterManager.cpp
     # 其他源文件...
 )
@@ -35,3 +37,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Widgets
     Qt6::WebEngineWidgets
 )
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    OpenSSL::SSL
+    OpenSSL::Crypto)
+add_compile_definitions(CPPHTTPLIB_OPENSSL_SUPPORT)
+target_link_libraries(${PROJECT_NAME} PRIVATE ssl crypto pthread)

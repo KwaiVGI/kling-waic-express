@@ -134,14 +134,22 @@ void Printer::monitorLoop() {
             // 检查状态并触发回调
             std::cout << "[job] ID:" << jobId << " status:" << status << std::endl; 
             if (status & JOB_STATUS_PRINTING) {
-                std::cout << "[job] ID:" << jobId << "printing" << std::endl;
                 // 避免状态重复提交
-                
+                if (printMap.find(jobId) != printMap.end()) {
+                    continue;
+                }
+                printMap[jobId] != printMap[jobId];
+                std::cout << "[job] ID:" << jobId << "printing" << std::endl;
                 // if (onPrinting_) {
                 //     onPrinting_(jobId, documentName);
                 // }
             } else if (status & JOB_STATUS_COMPLETE) {
+                if (completeMap.find(jobId) != printMap.end()) {
+                    continue;
+                }
+                completeMap[jobId] != completeMap[jobId];
                 std::cout << "[job] ID:" << jobId << "complete" << std::endl;
+                
             //     if (onCompleted_) {
             //         onCompleted_(jobId, documentName);
             //     }

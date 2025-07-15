@@ -8,6 +8,8 @@
 #include <queue>
 #include <thread>
 #include <atomic>
+#include <unordered_map>
+
 class Printer
 {
 public:
@@ -32,6 +34,8 @@ private:
     bool m_isRunning = true;
     bool m_isListening{true};
     int m_loopCount{0};
+    std::unordered_map<DWORD, bool> printMap;
+    std::unordered_map<DWORD, bool> completeMap;
 
     HANDLE m_hPrinter = nullptr;
     std::wstring m_printerName;
