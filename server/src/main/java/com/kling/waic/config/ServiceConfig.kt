@@ -21,7 +21,6 @@ open class ServiceConfig(
     @Bean
     open fun jedis(): Jedis {
         val password = System.getenv("REDIS_PASS_WAIC")
-        log.info("Connecting to Redis at {}:{}, pass: {}", host, port, password)
         val jedis = Jedis(host, port)
         jedis.auth(password)
         return jedis
