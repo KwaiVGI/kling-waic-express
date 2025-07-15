@@ -8,34 +8,44 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.File
+import java.net.HttpURLConnection
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.net.URL
 import javax.imageio.ImageIO
 
 
 @Component
-class ImageProcessHelper {
+class ImageProcessHelper(
+    @param:Value("\${kling.proxy.host}") private val proxyHost: String,
+    @param:Value("\${kling.proxy.port}") private val proxyPort: Int
+) {
 
-    suspend fun downloadAndCreateSudoku(task: Task,
-                                        imageUrls:
-                                        List<String>, outputPath: String) {
+    suspend fun downloadAndCreateSudoku(
+        task: Task,
+        imageUrls:
+        List<String>, outputPath: String
+    ) {
         val images = withContext(Dispatchers.IO) {
             imageUrls.mapIndexed { index, url ->
                 async {
                     log.info("Downloading image ${index + 1} from $url")
-                    ImageIO.read(URL(url))
+                    readImageWithProxy(url)
                 }
             }.awaitAll().filterNotNull()
         }
 
         if (images.size != imageUrls.size) {
             throw IllegalStateException(
-                "Some images could not be downloaded. Expected: ${imageUrls.size}, Actual: ${images.size}")
+                "Some images could not be downloaded. Expected: ${imageUrls.size}, Actual: ${images.size}"
+            )
         }
 
         log.info("Creating Sudoku image for task: ${task.name} at $outputPath")
@@ -43,10 +53,25 @@ class ImageProcessHelper {
         log.info("Created image ${images.size} from $outputPath")
     }
 
+    fun readImageWithProxy(url: String): BufferedImage? {
+        val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort))
+        val url = URL(url)
+        val connection = url.openConnection(proxy) as HttpURLConnection
+
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+
+        return connection.inputStream.use { inputStream ->
+            ImageIO.read(inputStream)
+        }
+    }
+
     // check the logic
-    private fun createKlingWAICSudokuImage(task: Task,
-                                           images: List<BufferedImage>,
-                                           outputPath: String) {
+    private fun createKlingWAICSudokuImage(
+        task: Task,
+        images: List<BufferedImage>,
+        outputPath: String
+    ) {
         val cellWidth = 112
         val cellHeight = 168
         val gap = 0
