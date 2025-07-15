@@ -14,7 +14,7 @@ server:
   port: 8538
 
 jedis:
-  host: 43.196.50.81
+  host: 172.28.199.165
   port: 6379
   password: ${REDIS_PASS_WAIC}
 
