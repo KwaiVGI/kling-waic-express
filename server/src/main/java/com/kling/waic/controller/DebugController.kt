@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.io.File
 
-@RestController
+//@RestController
 @RequestMapping("/debug")
 class DebugController(
     @Value("\${waic.sudoku.images-dir}")
