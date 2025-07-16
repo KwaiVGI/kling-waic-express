@@ -123,7 +123,8 @@ class CastingHelper(
             val result = listWithoutKeyword(castingQueue, score, pageSize, pageNum)
             return CastingListResult(
                 hasMore = result.first,
-                castings = result.second
+                castings = result.second,
+                score = score ?: result.second.first().score
             )
         }
         
@@ -131,7 +132,8 @@ class CastingHelper(
         val result = listWithKeyword(castingQueue, keyword, score, pageSize, pageNum)
         return CastingListResult(
             hasMore = result.first,
-            castings = result.second
+            castings = result.second,
+            score = score ?: result.second.first().score
         )
     }
     

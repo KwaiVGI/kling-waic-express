@@ -12,6 +12,7 @@ data class Casting(
 )
 
 data class CastingListResult(
+    val score: Double,
     val hasMore: Boolean,
     val castings: List<Casting>,
 )
