@@ -39,7 +39,7 @@ class TaskController (
         return Result(task)
     }
 
-    @GetMapping("{type}/{name}")
+    @GetMapping("{type}/{name}/query")
     @Authorization(AuthorizationType.CREATE_TASK)
     fun queryTask(@PathVariable type: TaskType,
                   @PathVariable name: String): Result<Task> {
@@ -58,8 +58,15 @@ class TaskController (
     fun printTask(
         @PathVariable type: TaskType,
         @PathVariable name: String): Result<Printing> {
-        // only support printing Images
-        return Result(null)
+        log.info("Print task of type: {}, name: {}", type, name)
+
+        val printing = CoroutineUtils.runSuspend {
+            taskServiceSelector.selectTaskService(type)
+                .printTask(type, name)
+        }
+
+        log.info("Print task with result, printing: {}", printing)
+        return Result(printing)
     }
 
 //    @PostMapping("{name}/delete")

@@ -2,9 +2,13 @@ package com.kling.waic.external
 
 import com.kling.waic.external.model.CreateImageTaskRequest
 import com.kling.waic.external.model.CreateImageTaskResponse
+import com.kling.waic.external.model.CreateVideoTaskRequest
+import com.kling.waic.external.model.CreateVideoTaskResponse
 import com.kling.waic.external.model.KlingOpenAPIResult
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
+import com.kling.waic.external.model.QueryVideoTaskRequest
+import com.kling.waic.external.model.QueryVideoTaskResponse
 import com.kling.waic.repository.JWTRepository
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
@@ -70,4 +74,46 @@ class KlingOpenAPIClient(
                 ?: throw IOException("Response body is empty")
         }
     }
+
+    @Throws(IOException::class)
+    suspend fun createVideoTask(createVideoTaskRequest: CreateVideoTaskRequest):
+            KlingOpenAPIResult<CreateVideoTaskResponse> = withContext(Dispatchers.IO) {
+        val url = "$baseUrl/v1/videos/effects"
+
+        val body = ObjectMapperUtils.toJSON(createVideoTaskRequest)!!
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer ${jwtRepository.getLatest()}")
+            .post(body.toRequestBody(CONTENT_TYPE))
+            .build()
+
+        okHttpClient.newCall(request).execute().use { resp ->
+            return@withContext resp.body
+                ?.let { KlingOpenAPIResult.ok<CreateVideoTaskResponse>(it.string()) }
+                ?: throw IOException("Response body is empty")
+        }
+    }
+
+    @Throws(IOException::class)
+    suspend fun queryVideoTask(queryVideoTaskRequest: QueryVideoTaskRequest):
+            KlingOpenAPIResult<QueryVideoTaskResponse> = withContext(Dispatchers.IO) {
+        val url = "$baseUrl/v1/videos/effects/${queryVideoTaskRequest.taskId}"
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer ${jwtRepository.getLatest()}")
+            .get()
+            .build()
+
+        okHttpClient.newCall(request).execute().use { resp ->
+            return@withContext resp.body
+                ?.let {
+                    val respStr = it.string()
+                    log.info("Request url: {}, Response body: {}", url, respStr)
+                    KlingOpenAPIResult.ok<QueryVideoTaskResponse>(respStr)
+                }
+                ?: throw IOException("Response body is empty")
+        }
+    }
+
 }

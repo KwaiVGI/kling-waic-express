@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class QueryImageTaskRequest(
+data class QueryVideoTaskRequest(
     @JsonProperty("task_id")
-    val taskId: String
+    val taskId: String,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class QueryImageTaskResponse(
+data class QueryVideoTaskResponse(
     @JsonProperty("task_id")
     val taskId: String,
 
@@ -24,7 +24,7 @@ data class QueryImageTaskResponse(
     val taskInfo: KlingTaskInfo? = null,
 
     @JsonProperty("task_result")
-    val taskResult: QueryImageTaskResult,
+    val taskResult: QueryVideoTaskResult,
 
     @JsonProperty("created_at")
     val createdAt: Long,
@@ -34,16 +34,19 @@ data class QueryImageTaskResponse(
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class QueryImageTaskResult(
-    @JsonProperty("images")
-    val images: List<QueryImageTaskImage>? = null
+data class QueryVideoTaskResult(
+    @JsonProperty("videos")
+    val videos: List<QueryVideoTaskVideo>? = null
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class QueryImageTaskImage(
-    @JsonProperty("index")
-    val index: Int = 0,
+data class QueryVideoTaskVideo(
+    @JsonProperty("id")
+    val id: String = "",
 
     @JsonProperty("url")
-    val url: String = ""
+    val url: String = "",
+
+    @JsonProperty("duration")
+    val duration: String = "",
 )
