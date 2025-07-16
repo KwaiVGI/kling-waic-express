@@ -1,0 +1,1 @@
+export type TaskType = 'STYLED_IMAGE' | 'VIDEO_EFFECT'

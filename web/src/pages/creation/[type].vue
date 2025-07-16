@@ -255,7 +255,7 @@
       <div class="mx-24px h-254px relative rounded-12px overflow-hidden">
         <div
           v-if="type === 'image'"
-          class="blur-40px absolute left-0 top-0 w-full h-full bg-cover bg-center"
+          class="blur-20px absolute left-0 top-0 w-full h-full bg-cover bg-center"
           :style="{ backgroundImage: `url(${generatedResult})` }"
         ></div>
         <img

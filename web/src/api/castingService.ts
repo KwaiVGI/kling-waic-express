@@ -1,13 +1,11 @@
 import request from '@/utils/request'
+import type { TaskType } from './type';
 
 // 定义接口类型
 export interface CastingImage {
   id: string;
-  title: string;
-  description: string;
+  name: string;
   url: string;
-  width: number;
-  height: number;
   createdAt: string;
   isPinned: boolean;
   isActive: boolean;
@@ -23,17 +21,13 @@ export interface PaginatedResult<T> {
 }
 
 // 模拟API服务
-const API_BASE_URL = 'https://api.example.com';
-const DEFAULT_TYPE = 'default';
+const DEFAULT_TYPE = 'STYLED_IMAGE';
 
 // 模拟数据
 const mockImages: CastingImage[] = Array.from({ length: 50 }, (_, i) => ({
   id: `img-${i + 1}`,
-  title: `图片 ${i + 1}`,
-  description: `这是第 ${i + 1} 张图片的描述，展示美丽的风景或重要内容`,
+  name: `图片 ${i + 1}`,
   url: `https://picsum.photos/1920/1080?random=${i}`,
-  width: 1920,
-  height: 1080,
   createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
   isPinned: i === 2, // 默认第三张图片为固定状态
   isActive: i === 0, // 默认第一张图片为活动状态
@@ -43,10 +37,11 @@ const mockImages: CastingImage[] = Array.from({ length: 50 }, (_, i) => ({
 let pinnedImageId: string | null = mockImages[2].id;
 // 当前活动图片索引
 let activeIndex = 0;
+let lastScore = null
 
 export const castingService = {
   // 获取当前展示图片
-  async getCurrentCasting(type: string = DEFAULT_TYPE, num: number = 1): Promise<CastingImage[]> {
+  async getCurrentCasting(type: TaskType = 'STYLED_IMAGE', num: number = 1): Promise<CastingImage[]> {
     // 模拟网络延迟
     await new Promise(resolve => setTimeout(resolve, 500));
     
@@ -67,21 +62,41 @@ export const castingService = {
   
   // 获取分页图片列表
   async getCastingList(
-    type: string = DEFAULT_TYPE, 
-    page: number = 1, 
-    limit: number = 12
+    {
+      type,
+      keyword,
+      page,
+      limit,
+    }:{
+      keyword: string,
+      type: TaskType,
+      page: number, 
+      limit: number
+    }
   ): Promise<PaginatedResult<CastingImage>> {
-    // // 模拟网络延迟
-    // await new Promise(resolve => setTimeout(resolve, 500));
-    
     // // 分页
     const start = (page - 1) * limit;
     const end = start + limit;
     const paginated = mockImages.slice(start, end);
-    const res = await request.get(`/api/castings/${type}/list`)
+    const {castings, hasMore, score } = await request.get(`/api/castings/${type}/list`, {
+      params: {
+        keyword,
+        score: page === 1 ? null : lastScore,
+        pageNum: page,
+        pageSize: limit
+      }
+    })
+    lastScore = score
     
     return {
-      items: paginated,
+      items: castings.map(item => ({
+          id: item.id,
+          name: item.name,
+          url: item.task.outputs.url,
+          createdAt: item.task.createTime,
+          isPinned: false,
+          isActive: false,
+      })),
       total: mockImages.length,
       page,
       limit,

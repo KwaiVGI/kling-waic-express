@@ -66,7 +66,7 @@
             class="image-container"
             :style="{ backgroundImage: `url(${image.url})` }"
           >
-            <span class="image-id">{{ image.id }}</span>
+            <span class="image-id">{{ image.name }}</span>
             <div class="item-badges">
               <span v-if="image.isPinned" class="badge pinned-badge">固定</span>
               <span v-if="image.isPromoted" class="badge promoted-badge"
@@ -165,11 +165,12 @@ const visiblePages = computed(() => {
 const loadImages = async () => {
   loading.value = true;
   try {
-    const result = await castingService.getCastingList(
-      "default",
-      currentPage.value,
-      pageSize.value
-    );
+    const result = await castingService.getCastingList({
+      keyword: searchQuery.value,
+      type: "STYLED_IMAGE",
+      page: currentPage.value,
+      limit: pageSize.value,
+    });
     images.value = result.items.map((img) => ({
       ...img,
       isPromoted: img.id === promotedImageId.value,

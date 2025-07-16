@@ -185,6 +185,7 @@ declare global {
   const useFullscreen: typeof import('@vueuse/core')['useFullscreen']
   const useGamepad: typeof import('@vueuse/core')['useGamepad']
   const useGeolocation: typeof import('@vueuse/core')['useGeolocation']
+  const useGuide: typeof import('../composables/useGuide')['useGuide']
   const useHead: typeof import('@unhead/vue')['useHead']
   const useHeadSafe: typeof import('@unhead/vue')['useHeadSafe']
   const useI18n: typeof import('vue-i18n')['useI18n']
