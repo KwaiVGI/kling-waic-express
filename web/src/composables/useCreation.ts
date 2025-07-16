@@ -18,7 +18,6 @@ export default function useCreation(creationType: CreationType) {
   const previewIndex = ref(0)
   const showSaveGuide = ref(false)
   const isLoading = ref(false)
-  const loadingText = ref("处理中...")
   const isGenerating = ref(false)
   const isSaving = ref(false)
   const isPrinting = ref(false)
@@ -197,7 +196,6 @@ export default function useCreation(creationType: CreationType) {
     uploadedImage,
     generatedResult,
     isLoading,
-    loadingText,
     isGenerating,
     isSaving,
     isPrinting,

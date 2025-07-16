@@ -10,14 +10,13 @@ export function useZoom(
   containerRef: Ref<HTMLElement | null> = ref(null),
   options: UseZoomOptions = {}
 ) {
-  const { topOffset = 0, bottomOffset = 200 } = options;
+//   const { topOffset = 0, bottomOffset = 200 } = options;
   const originalHeight = ref(0);
   const originalWidth = ref(0);
   const scaleRatio = ref(1);
 
   // 获取可用高度（容器高度或视口高度）
   const getUsableHeight = () => {
-    console.log('containerRef.value', containerRef.value)
     // if (containerRef.value) {
     //   return containerRef.value.clientHeight;
     // }
@@ -26,7 +25,6 @@ export function useZoom(
 
   // 更新内容原始尺寸
   const updateOriginalDimensions = () => {
-    console.log('contentRef.value', contentRef.value)
     if (!contentRef.value) return;
 
     const prevTransform = contentRef.value.style.transform;

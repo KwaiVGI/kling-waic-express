@@ -79,7 +79,7 @@
           class="w-320px h-254px overflow-hidden rounded-12px flex items-center justify-center relative"
         >
           <div
-            class="blur-20px absolute left-0 top-0 w-full h-full"
+            class="blur-20px absolute left-0 top-0 w-full h-full bg-cover bg-center"
             :style="{ backgroundImage: `url(${uploadedImage})` }"
           ></div>
           <img
@@ -92,18 +92,26 @@
         </div>
         <div class="w-full h-48px flex justify-between gap-8px mt-16px">
           <button
-            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px color-black bg-#09090A0A"
+            :disabled="isGenerating"
+            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px leading-1 text-black bg-#09090A0A disabled:bg-#09090A0a disabled:text-#B0B4B8ff"
             @click="handleReplace()"
           >
-            <IconSvg name="replace" color="black" />
-            替换
+            <IconSvg
+              name="replace"
+              :color="isGenerating ? '#B0B4B8' : 'black'"
+            />
+            <span> 替换 </span>
           </button>
           <button
-            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px color-black bg-#09090A0A"
+            :disabled="isGenerating"
+            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px leading-1 color-black bg-#09090A0A disabled:bg-#09090A0a disabled:text-#B0B4B8ff"
             @click="handleDelete"
           >
-            <IconSvg name="delete" color="black" />
-            删除
+            <IconSvg
+              name="delete"
+              :color="isGenerating ? '#B0B4B8' : 'black'"
+            />
+            <span> 删除 </span>
           </button>
         </div>
       </div>
@@ -121,9 +129,7 @@
           loading-text="生成中，请稍后..."
           class="generate-btn !w-320px !h-56px !text-20px font-bold !text-black"
         >
-          <template #default v-if="!isGenerating">
-            <van-icon name="magic" /> 立即生成
-          </template>
+          立即生成
         </van-button>
         <div
           class="warning-tip mt-20px text-12px text-black flex items-center justify-center gap-4px"
@@ -242,7 +248,7 @@
       <div class="mx-24px h-254px relative rounded-12px overflow-hidden">
         <div
           v-if="type === 'image'"
-          class="blur-40px absolute left-0 top-0 w-full h-full"
+          class="blur-40px absolute left-0 top-0 w-full h-full bg-cover bg-center"
           :style="{ backgroundImage: `url(${generatedResult})` }"
         ></div>
         <img
@@ -289,21 +295,6 @@
         </div>
       </template>
     </van-dialog>
-
-    <!-- 加载层 -->
-    <van-overlay
-      :show="isLoading"
-      class="overlay flex items-center justify-center z-2000"
-    >
-      <div
-        class="loading-wrapper text-center bg-white/95 py-30px px-40px rounded-16px shadow-lg"
-      >
-        <van-loading type="spinner" size="48" color="#1989fa" />
-        <p class="loading-text mt-20px text-16px text-gray-800 font-500">
-          {{ loadingText }}
-        </p>
-      </div>
-    </van-overlay>
   </div>
 </template>
 
@@ -333,7 +324,6 @@ const {
   uploadedImage,
   generatedResult,
   isLoading,
-  loadingText,
   isGenerating,
   isSaving,
   isPrinting,
@@ -462,6 +452,17 @@ onMounted(() => {
       #1bf6fd 100.35%
     );
     border: 4px solid black;
+    .van-button__content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 4px;
+      .van-button__text {
+        line-height: 28px;
+        height: 28px;
+      }
+    }
   }
   .result-section-bg {
     background: rgba(255, 255, 255, 0.64);
