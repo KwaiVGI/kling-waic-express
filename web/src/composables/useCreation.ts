@@ -111,6 +111,7 @@ export default function useCreation(creationType: CreationType) {
         duration: 2000,
       })
       console.error("生成失败:", error)
+      throw error
     } finally {
       isGenerating.value = false
     }

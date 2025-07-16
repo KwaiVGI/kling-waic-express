@@ -19,5 +19,5 @@ export interface TaskOutput {
     url: string
 }
 export async function getTaskStatus({name, type}: {name: string, type: 'STYLED_IMAGE' | 'VIDEO_EFFECT'}): Promise<{status: TaskStatus, outputs: TaskOutput}> {
-  return request.get(`/api/tasks/${type}/${name}`)
+  return request.get(`/api/tasks/${type}/${name}/query`)
 }

@@ -148,9 +148,10 @@
       v-show="generatedResult"
       ref="step2Ref"
       :style="{ zoom: step2Zoom }"
-      class="result-section w-full box-border px-18px py-40px flex flex-col items-center relative z-10 animate-slideUp"
+      class="result-section w-full box-border px-18px py-40px flex flex-col items-center relative z-10"
+      :class="{ 'animate-slideUp': isGuided }"
     >
-      <div class="w-380px h-570px rounded-8px">
+      <div class="w-380px h-570px rounded-8px relative">
         <img
           v-if="type === 'image'"
           :src="generatedResult"
@@ -165,6 +166,10 @@
           preload="auto"
           class="w-full h-full object-cover object-center rounded-8px shadow-sm"
         ></video>
+        <div
+          id="guideNo"
+          class="w-100px h-26px absolute right-10px bottom-10px"
+        ></div>
       </div>
 
       <div class="result-actions w-full h-48px flex gap-8px mt-24px">
@@ -172,30 +177,32 @@
           icon="revoke"
           type="default"
           @click="backToEdit"
-          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
+          class="action-btn w-33% h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
         >
           返回
         </van-button>
-        <van-button
-          v-if="type === 'image'"
-          icon="print"
-          type="default"
-          @click="printImage"
-          :loading="isPrinting"
-          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
-        >
-          打印图片
-        </van-button>
+        <div id="guideYes" class="flex h-full gap-8px w-66%">
+          <van-button
+            v-if="type === 'image'"
+            icon="print"
+            type="default"
+            @click="printImage"
+            :loading="isPrinting"
+            class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
+          >
+            打印图片
+          </van-button>
 
-        <van-button
-          icon="down"
-          type="primary"
-          @click="handleSave"
-          :loading="isSaving"
-          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px !bg-#0B8A1B"
-        >
-          保存{{ type === "image" ? "图片" : "视频" }}
-        </van-button>
+          <van-button
+            icon="down"
+            type="primary"
+            @click="handleSave"
+            :loading="isSaving"
+            class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px !bg-#0B8A1B"
+          >
+            保存{{ type === "image" ? "图片" : "视频" }}
+          </van-button>
+        </div>
       </div>
       <div
         class="warning-tip mt-20px text-12px text-#5E6266ff flex items-center justify-center gap-4px"
@@ -295,6 +302,13 @@
         </div>
       </template>
     </van-dialog>
+    <guide-overlay
+      v-if="showGuide"
+      v-model="showGuide"
+      :guides="currentGuides"
+      :theme="currentTheme"
+      @finish="onFinishGuide"
+    />
   </div>
 </template>
 
@@ -302,9 +316,10 @@
 import { showToast } from "vant";
 import useCreation, { type CreationType } from "@/composables/useCreation";
 import { getTaskStatus, newTask } from "@/api/creation";
-import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+import { STORAGE_TOKEN_KEY, STORAGE_GUIDE_KEY } from "@/stores/mutation-type";
 import vw from "@/utils/inline-px-to-vw";
 import { useZoom } from "@/composables/useZoom";
+import { useGuide } from "@/composables/useGuide";
 
 const route = useRoute();
 
@@ -343,6 +358,10 @@ const {
   printImage,
 } = useCreation(type.value as "image" | "video");
 
+const isGuided = ref(!!localStorage.getItem(STORAGE_GUIDE_KEY));
+const { currentGuides, showGuide, startGuide, currentTheme, finishGuide } =
+  useGuide();
+
 const wait = async (delay: number) =>
   new Promise((resolve) => setTimeout(resolve, delay));
 
@@ -363,10 +382,10 @@ const doGenerate = async (file: File, type: CreationType): Promise<string> => {
 
     // 2. 轮询任务状态
     let status = "";
-    const maxAttempts = 2000; // 最大尝试次数，防止无限循环
+    const maxAttempts = 1800; // 最大尝试次数，防止无限循环
     const delay = 2000; // 每次轮询间隔2秒
 
-    await wait(10000);
+    await wait(10 * 1000);
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       // 获取任务状态
       const result = await getTaskStatus({
@@ -408,7 +427,32 @@ const handleGenerate = async () => {
   if (!uploadedImage.value) {
     showToast("请先上传图片");
   }
+
   await generate(doGenerate);
+  if (isGuided.value) {
+    return;
+  }
+  await wait(0);
+  // 启动引导
+  startGuide([
+    {
+      element: "#guideNo",
+      image:
+        "https://tx.a.yximgs.com/kos/nlav12119/wKJuuNBr_2025-07-16-20-04-31.png",
+      position: "top",
+    },
+    {
+      element: "#guideYes",
+      image:
+        "https://tx.a.yximgs.com/kos/nlav12119/XkqhokRT_2025-07-16-20-05-16.png",
+      position: "top",
+    },
+  ]);
+};
+const onFinishGuide = () => {
+  isGuided.value = true;
+  localStorage.setItem(STORAGE_GUIDE_KEY, "1");
+  finishGuide();
 };
 
 // 处理保存

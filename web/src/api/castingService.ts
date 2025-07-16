@@ -1,4 +1,4 @@
-import axios from 'axios';
+import request from '@/utils/request'
 
 // 定义接口类型
 export interface CastingImage {
@@ -71,13 +71,14 @@ export const castingService = {
     page: number = 1, 
     limit: number = 12
   ): Promise<PaginatedResult<CastingImage>> {
-    // 模拟网络延迟
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // // 模拟网络延迟
+    // await new Promise(resolve => setTimeout(resolve, 500));
     
-    // 分页
+    // // 分页
     const start = (page - 1) * limit;
     const end = start + limit;
     const paginated = mockImages.slice(start, end);
+    const res = await request.get(`/api/castings/${type}/list`)
     
     return {
       items: paginated,
