@@ -1,6 +1,7 @@
 package com.kling.waic.auth
 
 import com.kling.waic.repository.TokenRepository
+import com.kling.waic.utils.Slf4j.Companion.log
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
@@ -16,9 +17,10 @@ open class AuthorizationInterceptor (
 ) : HandlerInterceptor {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
+        log.info("AuthorizationInterceptor preHandle called for request: ${request.requestURI}," +
+                " method: ${request.method}, handler class: ${handler.javaClass}")
         val annotation = (handler as HandlerMethod).getMethodAnnotation<Authorization>(Authorization::class.java)
         if (annotation == null) {
-            // todo: also check Token
             return true
         }
         val authHeader = request.getHeader("Authorization")
