@@ -116,6 +116,12 @@
             <artifactId>dotenv-java</artifactId>
             <version>3.2.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-test</artifactId>
+            <version>1.7.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

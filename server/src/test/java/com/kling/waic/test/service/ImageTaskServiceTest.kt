@@ -5,10 +5,11 @@ import com.kling.waic.entity.TaskType
 import com.kling.waic.service.TaskService
 import com.kling.waic.test.SpringBaseTest
 import com.kling.waic.utils.FileUtils
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
-import java.lang.Thread.sleep
 
 class ImageTaskServiceTest : SpringBaseTest() {
 
@@ -22,13 +23,16 @@ class ImageTaskServiceTest : SpringBaseTest() {
             "test_girl.png",
             FileUtils.readBytesFromResources("test_girl.png")
         )
-        var task = imageTaskService.createTask(type, file)
 
-        while (task.status !in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
-            sleep(1000)
-            task = imageTaskService.queryTask(type, task.name)
+        runBlocking {
+            var task = imageTaskService.createTask(type, file)
+
+            while (task.status !in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
+                delay(1000) // 使用 delay 替代 sleep
+                task = imageTaskService.queryTask(type, task.name)
+            }
+            assert(task.status == TaskStatus.SUCCEED) { "Task failed with status: ${task.status}" }
+            println(task)
         }
-        assert(task.status == TaskStatus.SUCCEED) { "Task failed with status: ${task.status}" }
-        println(task)
     }
 }
