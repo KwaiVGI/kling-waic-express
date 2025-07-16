@@ -9,4 +9,4 @@ gradle
 gradlew
 gradlew.bat
 bin
-.env
+/src/main/resources/application-env.properties

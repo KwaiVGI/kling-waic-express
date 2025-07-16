@@ -16,7 +16,11 @@ import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -46,7 +50,7 @@ class ImageTaskService(
         const val TASK_N: Int = 9
     }
 
-    override fun createTask(type: TaskType, file: MultipartFile): Task {
+    override suspend fun createTask(type: TaskType, file: MultipartFile): Task {
         val taskName = codeGenerateRepository.nextCode(type)
         log.info("Generated task name: $taskName for type: $type")
 
@@ -59,15 +63,25 @@ class ImageTaskService(
         val imageBase64 = FileUtils.convertImageToBase64(outputImage)
 
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
-        val taskIds = mutableListOf<String>()
-        for (prompt in randomPrompts) {
-            val request = CreateImageTaskRequest(
-                image = imageBase64,
-                prompt = prompt
-            )
-            val result = klingOpenAPIClient.createImageTask(request)
-            log.info("Create image task with prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}")
-            taskIds.add(result.data!!.taskId)
+
+        // Use coroutineScope instead of runBlocking
+        val taskIds = coroutineScope {
+            val deferredResults = randomPrompts.map { prompt ->
+                async(Dispatchers.IO) {
+                    val request = CreateImageTaskRequest(
+                        image = imageBase64,
+                        prompt = prompt
+                    )
+
+                    val result = klingOpenAPIClient.createImageTask(request)
+                    log.info("Create image task with prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}")
+                    result.data?.taskId
+                }
+            }
+
+            // await all deferred results
+            val results = deferredResults.awaitAll()
+            results.filterNotNull().toMutableList()
         }
 
         val task = Task(
@@ -87,7 +101,7 @@ class ImageTaskService(
         return task
     }
 
-    override fun queryTask(type: TaskType, name: String): Task {
+    override suspend fun queryTask(type: TaskType, name: String): Task {
         val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
         if (task == null || task.type != type) {
             throw IllegalArgumentException("Task not found or type mismatch")
@@ -99,13 +113,29 @@ class ImageTaskService(
         }
 
         val taskIds = task.taskIds
-        val taskResponseMap = mutableMapOf<String, QueryImageTaskResponse>()
-        for (taskId in taskIds) {
-            val request = QueryImageTaskRequest(taskId = taskId)
-            val result = klingOpenAPIClient.queryImageTask(request)
-            log.info("Query task with result, taskId: {}, taskStatus: {}",
-                result.data?.taskId ?: "null", result.data?.taskStatus ?: "null")
-            taskResponseMap.put(taskId, result.data!!)
+
+        // Use coroutineScope instead of runBlocking
+        val taskResponseMap = coroutineScope {
+            val deferredResults = taskIds.map { taskId ->
+                async(Dispatchers.IO) {
+                    val request = QueryImageTaskRequest(taskId = taskId)
+
+                    val result = klingOpenAPIClient.queryImageTask(request)
+                    log.info(
+                        "Query task with result, taskId: {}, taskStatus: {}",
+                        result.data?.taskId ?: "null", result.data?.taskStatus ?: "null"
+                    )
+                    taskId to result.data
+                }
+            }
+
+            // Wait for all deferred results to complete
+            val results = deferredResults.awaitAll()
+            mutableMapOf<String, QueryImageTaskResponse>().apply {
+                results.forEach { (taskId, data) ->
+                    data?.let { this[taskId] = it }
+                }
+            }
         }
 
         val overallStatus = calculateStatus(taskResponseMap)
@@ -140,20 +170,20 @@ class ImageTaskService(
         return finalTask
     }
 
-    private fun generateSudokuImageUrl(task: Task,
-                                       taskResponseMap: Map<String, QueryImageTaskResponse>): String {
+    private suspend fun generateSudokuImageUrl(
+        task: Task,
+        taskResponseMap: Map<String, QueryImageTaskResponse>
+    ): String {
         val imageUrls: List<String> = taskResponseMap.values
             .flatMap { it.taskResult.images ?: emptyList() }
             .map { it.url }
 
         val outputPath = "$sudokuImagesDir/sudoku-${task.name}.jpg"
-        runBlocking {
-            imageProcessHelper.downloadAndCreateSudoku(
-                task,
-                imageUrls,
-                outputPath
-            )
-        }
+        imageProcessHelper.downloadAndCreateSudoku(
+            task,
+            imageUrls,
+            outputPath
+        )
         return "$sudokuServerDomain/api$sudokuUrlPrefix/sudoku-${task.name}.jpg"
     }
 

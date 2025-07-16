@@ -7,6 +7,7 @@ import com.kling.waic.entity.Result
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskType
 import com.kling.waic.helper.TaskServiceSelector
+import com.kling.waic.utils.CoroutineUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -28,8 +29,10 @@ class TaskController (
                 @RequestParam("file") file: MultipartFile): Result<Task> {
         log.info("Creating new task of type: {}, file: {}", type, file.originalFilename)
 
-        val task = taskServiceSelector.selectTaskService(type)
-            .createTask(type, file)
+        val task = CoroutineUtils.runSuspend {
+            taskServiceSelector.selectTaskService(type)
+                .createTask(type, file)
+        }
 
         log.info("Created new task of type: {}, file: {}, task: {}",
             type, file.originalFilename, task)
@@ -39,11 +42,13 @@ class TaskController (
     @GetMapping("{type}/{name}")
     @Authorization(AuthorizationType.CREATE_TASK)
     fun queryTask(@PathVariable type: TaskType,
-                @PathVariable name: String): Result<Task> {
+                  @PathVariable name: String): Result<Task> {
         log.info("Query task of type: {}, name: {}", type, name)
 
-        val task = taskServiceSelector.selectTaskService(type)
-            .queryTask(type, name)
+        val task = CoroutineUtils.runSuspend {
+            taskServiceSelector.selectTaskService(type)
+                .queryTask(type, name)
+        }
 
         log.info("Query task with result, taskId: {}, taskStatus: {}", task.id, task.status)
         return Result(task)

@@ -68,6 +68,6 @@ class JWTRepository(
 
     companion object {
         private const val THOUSAND = 1000L
-        private const val SAFETY_MARGIN_MS = 10 * THOUSAND // 提前10秒刷新
+        private const val SAFETY_MARGIN_MS = 10 * THOUSAND // Refresh 10 seconds early
     }
 }

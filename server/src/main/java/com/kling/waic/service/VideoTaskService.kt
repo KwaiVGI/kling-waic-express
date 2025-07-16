@@ -16,11 +16,11 @@ class VideoTaskService(
     private val jedis: Jedis
 ) : TaskService {
 
-    override fun createTask(type: TaskType, file: MultipartFile): Task {
+    override suspend fun createTask(type: TaskType, file: MultipartFile): Task {
         TODO("Not yet implemented")
     }
 
-    override fun queryTask(
+    override suspend fun queryTask(
         type: TaskType,
         name: String
     ): Task {

@@ -8,6 +8,9 @@ import com.kling.waic.external.model.QueryImageTaskResponse
 import com.kling.waic.repository.JWTRepository
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -28,8 +31,8 @@ class KlingOpenAPIClient(
     }
 
     @Throws(IOException::class)
-    fun createImageTask(createImageTaskRequest: CreateImageTaskRequest):
-            KlingOpenAPIResult<CreateImageTaskResponse> {
+    suspend fun createImageTask(createImageTaskRequest: CreateImageTaskRequest):
+            KlingOpenAPIResult<CreateImageTaskResponse> = withContext(Dispatchers.IO) {
         val url = "$baseUrl/v1/images/generations"
 
         val body = ObjectMapperUtils.toJSON(createImageTaskRequest)!!
@@ -40,15 +43,15 @@ class KlingOpenAPIClient(
             .build()
 
         okHttpClient.newCall(request).execute().use { resp ->
-            return resp.body
+            return@withContext resp.body
                 ?.let { KlingOpenAPIResult.ok<CreateImageTaskResponse>(it.string()) }
                 ?: throw IOException("Response body is empty")
         }
     }
 
     @Throws(IOException::class)
-    fun queryImageTask(queryImageTaskRequest: QueryImageTaskRequest):
-            KlingOpenAPIResult<QueryImageTaskResponse> {
+    suspend fun queryImageTask(queryImageTaskRequest: QueryImageTaskRequest):
+            KlingOpenAPIResult<QueryImageTaskResponse> = withContext(Dispatchers.IO) {
         val url = "$baseUrl/v1/images/generations/${queryImageTaskRequest.taskId}"
 
         val request = Request.Builder()
@@ -58,7 +61,7 @@ class KlingOpenAPIClient(
             .build()
 
         okHttpClient.newCall(request).execute().use { resp ->
-            return resp.body
+            return@withContext resp.body
                 ?.let {
                     val respStr = it.string()
                     log.info("Request url: {}, Response body: {}", url, respStr)
