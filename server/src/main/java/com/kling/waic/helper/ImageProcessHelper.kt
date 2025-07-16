@@ -10,6 +10,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import org.springframework.web.multipart.MultipartFile
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
@@ -28,6 +29,12 @@ class ImageProcessHelper(
     @param:Value("\${kling.proxy.host}") private val proxyHost: String,
     @param:Value("\${kling.proxy.port}") private val proxyPort: Int
 ) {
+
+    fun multipartFileToBufferedImage(file: MultipartFile): BufferedImage {
+        file.inputStream.use { inputStream ->
+            return ImageIO.read(inputStream)
+        }
+    }
 
     suspend fun downloadAndCreateSudoku(
         task: Task,

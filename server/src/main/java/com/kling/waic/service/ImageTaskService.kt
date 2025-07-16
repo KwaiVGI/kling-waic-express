@@ -25,10 +25,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import redis.clients.jedis.Jedis
-import java.awt.image.BufferedImage
 import java.time.Instant
 import java.util.*
-import javax.imageio.ImageIO
 
 @Service
 class ImageTaskService(
@@ -54,7 +52,7 @@ class ImageTaskService(
         val taskName = codeGenerateRepository.nextCode(type)
         log.info("Generated task name: $taskName for type: $type")
 
-        val inputImage = multipartFileToBufferedImage(file)
+        val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
         log.info("Input image size: ${inputImage.width}x${inputImage.height}")
 
         val outputImage = faceCropper.cropFaceToAspectRatio(inputImage, taskName)
@@ -193,12 +191,6 @@ class ImageTaskService(
             taskResponseMap.values.all { it.taskStatus == KlingOpenAPITaskStatus.succeed } -> TaskStatus.SUCCEED
             taskResponseMap.values.any { it.taskStatus == KlingOpenAPITaskStatus.failed } -> TaskStatus.FAILED
             else -> TaskStatus.PROCESSING
-        }
-    }
-
-    fun multipartFileToBufferedImage(file: MultipartFile): BufferedImage {
-        file.inputStream.use { inputStream ->
-            return ImageIO.read(inputStream)
         }
     }
 }

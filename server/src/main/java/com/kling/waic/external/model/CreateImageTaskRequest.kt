@@ -48,6 +48,9 @@ data class CreateImageTaskResponse(
     @JsonProperty("task_status")
     val taskStatus: KlingOpenAPITaskStatus,
 
+    @JsonProperty("task_info")
+    val taskInfo: KlingTaskInfo? = null,
+
     @JsonProperty("created_at")
     val createdAt: Long = 0,
 

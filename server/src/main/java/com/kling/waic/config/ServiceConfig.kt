@@ -46,6 +46,7 @@ open class ServiceConfig(
         return FileUtils.readTextFromResources("style-image-prompts.txt")
             .split("\n")
             .map { it.trim() }
+            .filter { it.isNotEmpty() }
             .toList()
     }
 
@@ -54,6 +55,7 @@ open class ServiceConfig(
         return FileUtils.readTextFromResources("video-special-effects.txt")
             .split("\n")
             .map { it.trim() }
+            .filter { it.isNotEmpty() }
             .toList()
     }
 
