@@ -1,5 +1,6 @@
 package com.kling.waic.service
 
+import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskOutput
 import com.kling.waic.entity.TaskOutputType
@@ -133,4 +134,10 @@ class VideoTaskService(
         }
     }
 
+    override suspend fun printTask(
+        type: TaskType,
+        name: String
+    ): Printing {
+        throw UnsupportedOperationException("Print video is not implemented yet")
+    }
 }

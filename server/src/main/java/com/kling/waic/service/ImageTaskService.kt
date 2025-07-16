@@ -1,6 +1,7 @@
 package com.kling.waic.service
 
 import com.google.errorprone.annotations.concurrent.LazyInit
+import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskOutput
 import com.kling.waic.entity.TaskOutputType
@@ -13,6 +14,7 @@ import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
 import com.kling.waic.helper.FaceCropper
 import com.kling.waic.helper.ImageProcessHelper
+import com.kling.waic.helper.PrintingHelper
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.ObjectMapperUtils
@@ -44,7 +46,8 @@ class ImageTaskService(
     @Value("\${waic.sudoku.server-domain}")
     private val sudokuServerDomain: String,
     @Value("\${waic.crop-image-with-opencv}")
-    private val cropImageWithOpenCV: Boolean
+    private val cropImageWithOpenCV: Boolean,
+    private val printingHelper: PrintingHelper
 ) : TaskService {
 
     @Autowired(required = false)
@@ -210,5 +213,17 @@ class ImageTaskService(
             taskResponseMap.values.any { it.taskStatus == KlingOpenAPITaskStatus.failed } -> TaskStatus.FAILED
             else -> TaskStatus.PROCESSING
         }
+    }
+
+    override suspend fun printTask(
+        type: TaskType,
+        name: String
+    ): Printing {
+        val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
+        if (task == null || task.type != type) {
+            throw IllegalArgumentException("Task not found or type mismatch")
+        }
+
+        return printingHelper.addTaskToPrintingQueue(task)
     }
 }
