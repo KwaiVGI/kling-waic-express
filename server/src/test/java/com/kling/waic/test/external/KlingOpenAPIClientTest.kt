@@ -7,9 +7,9 @@ import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
 import com.kling.waic.test.SpringBaseTest
+import com.kling.waic.utils.CoroutineUtils
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.Slf4j.Companion.log
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.test.assertEquals
@@ -32,7 +32,7 @@ class KlingOpenAPIClientTest : SpringBaseTest() {
             prompt = styleImagePrompts.random()
         )
 
-        runBlocking {
+        CoroutineUtils.runSuspend {
             val response = klingOpenAPIClient.createImageTask(createImageTaskRequest)
             assertEquals(response.code, 0)
 

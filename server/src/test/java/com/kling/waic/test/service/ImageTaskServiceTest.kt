@@ -4,9 +4,9 @@ import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
 import com.kling.waic.service.TaskService
 import com.kling.waic.test.SpringBaseTest
+import com.kling.waic.utils.CoroutineUtils
 import com.kling.waic.utils.FileUtils
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
@@ -24,7 +24,7 @@ class ImageTaskServiceTest : SpringBaseTest() {
             FileUtils.readBytesFromResources("test_girl.png")
         )
 
-        runBlocking {
+        CoroutineUtils.runSuspend {
             var task = imageTaskService.createTask(type, file)
 
             while (task.status !in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
