@@ -12,6 +12,7 @@ import com.kling.waic.external.model.CreateImageTaskRequest
 import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
+import com.kling.waic.helper.CastingHelper
 import com.kling.waic.helper.FaceCropper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.helper.PrintingHelper
@@ -47,7 +48,8 @@ class ImageTaskService(
     private val sudokuServerDomain: String,
     @Value("\${waic.crop-image-with-opencv}")
     private val cropImageWithOpenCV: Boolean,
-    private val printingHelper: PrintingHelper
+    private val printingHelper: PrintingHelper,
+    private val castingHelper: CastingHelper
 ) : TaskService {
 
     @Autowired(required = false)
@@ -186,6 +188,10 @@ class ImageTaskService(
         val finalValue = ObjectMapperUtils.toJSON(finalTask)
         jedis.set(task.name, finalValue)
         log.info("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
+
+        val casting = castingHelper.addToCastingQueue(finalTask)
+        log.info("Added task ${finalTask.name} to casting queue, casting: $casting")
+
         return finalTask
     }
 
