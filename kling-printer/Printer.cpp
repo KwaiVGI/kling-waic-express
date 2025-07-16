@@ -59,7 +59,7 @@ Printer::Printer(const std::wstring& printerName, int printerPageWidth /* = 0*/,
     }
     m_savePhotos = savePhotos;
     m_printerName = printerName;
-        // 获取 DEVMODE 所需大小
+    // 获取 DEVMODE 所需大小
     LONG size = DocumentProperties(NULL, m_hPrinter, (LPWSTR)printerName.c_str(), NULL, NULL, 0);
     if (size <= 0) {
         throw std::runtime_error("DocumentProperties 获取大小失败，错误码: " + std::to_string(GetLastError()));
@@ -81,7 +81,6 @@ Printer::Printer(const std::wstring& printerName, int printerPageWidth /* = 0*/,
     // 获取并填充默认 DevMode
     LONG ret = DocumentProperties(NULL, m_hPrinter, (LPWSTR)m_printerName.c_str(), pDevMode, NULL, DM_OUT_BUFFER);
     GlobalUnlock(m_hDevMode);
-
     if (ret != IDOK) {
         GlobalFree(m_hDevMode);
         m_hDevMode = NULL;
@@ -119,7 +118,6 @@ void Printer::monitorLoop() {
         if (needed == 0) {
             continue; // 无任务
         }
-        std::cout << "[monitorLoop] count:" << m_loopCount << std::endl;
         std::vector<BYTE> buffer(needed);
         if (!EnumJobs(m_hPrinter, 0, ULONG_MAX, 2, buffer.data(), needed, &needed, &numJobs)) {
             std::cerr << "EnumJobs failed: " << GetLastError() << std::endl;
@@ -132,7 +130,6 @@ void Printer::monitorLoop() {
             DWORD status = jobs[i].Status;
             LPWSTR documentName = jobs[i].pDocument;
             // 检查状态并触发回调
-            std::cout << "[job] ID:" << jobId << " status:" << status << std::endl; 
             if (status & JOB_STATUS_PRINTING) {
                 // 避免状态重复提交
                 if (printMap.find(jobId) != printMap.end()) {
@@ -145,7 +142,7 @@ void Printer::monitorLoop() {
                 //     onPrinting_(jobId, documentName);
                 // }
             } else if (status & JOB_STATUS_COMPLETE) {
-                if (completeMap.find(jobId) != printMap.end()) {
+                if (completeMap.find(jobId) != completeMap.end()) {
                     continue;
                 }
                 // 已经更新过该状态
@@ -208,6 +205,7 @@ void Printer::run()
             }
 
             double calcWidth = imageWidth, calcHeight = imageHeight;
+            std::cout << "image size(width x height):" << imageWidth << ", " << imageHeight << std::endl;
             double scaling = std::min((m_pageWidthInMM / calcWidth), (m_pageHeightInMM / calcHeight));
             calcWidth *= scaling;
             calcHeight *= scaling;
@@ -372,8 +370,13 @@ bool Printer::updatePrinterConfig(double imageWidth, double imageHeight)
 
         //计算scale
         double pixelsInMM = m_dpi / 254;
-        double scale = (imageWidth * imageHeight) / (m_pageWidthInMM * pixelsInMM * m_pageHeightInMM * pixelsInMM);
-        devMode->dmScale = ceil(scale * 100.0);
+        double scale = std::min((double)imageHeight / m_pageHeightInMM * pixelsInMM,
+                   (double)imageWidth / m_pageWidthInMM * pixelsInMM);
+        double old_scale = (imageWidth * imageHeight) / (m_pageWidthInMM * pixelsInMM * m_pageHeightInMM * pixelsInMM);
+        std::cout << "old_scale:" << old_scale << "new_scale:" << scale << std::endl;
+        devMode->dmFields |= DM_SCALE;
+        // double scale = (imageWidth * imageHeight) / (m_pageWidthInMM * pixelsInMM * m_pageHeightInMM * pixelsInMM);
+        devMode->dmScale = 50;
     }
     else
     {
@@ -384,7 +387,7 @@ bool Printer::updatePrinterConfig(double imageWidth, double imageHeight)
     HDC hPrintDC = static_cast<HDC>(m_printInfo.hDC);
     ResetDC(hPrintDC, devMode);
 
-    GlobalUnlock(m_printInfo.hDevMode);
+    GlobalUnlock(m_hDevMode);
 
 
     //------------------------------------

@@ -81,8 +81,8 @@ int main() {
     HGLOBAL hDevMode = NULL;
     std::vector<PrinterInfo> printerInfoList;
     // printerInfoList.push_back({L"Canon SELPHY CP1500 (test1)", 89, 119 , 300, true});
-    printerInfoList.push_back({L"Canon SELPHY CP1500", 100, 148 , 300, true});
-    // printerInfoList.push_back({L"Canon SELPHY CP1500 (test2)", 89, 119 , 300, true});
+    // printerInfoList.push_back({L"Canon SELPHY CP1500", 100, 148 , 300, true});
+    printerInfoList.push_back({L"Canon SELPHY CP1500 (test2)", 100, 148 , 300, true});
     PrinterManager* printerManager = new PrinterManager(printerInfoList);
     bool running = true;
     printf("Please input image path to print. press Enter for end. input empty line for quit.\n");
