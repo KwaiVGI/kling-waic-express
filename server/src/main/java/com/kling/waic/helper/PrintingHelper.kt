@@ -13,7 +13,7 @@ import java.util.UUID
 class PrintingHelper(
     private val jedis: Jedis,
 ) {
-    private val printingQueue = "printing_image_queue"
+    private val printingQueue = "printing_queue_image"
 
     fun addTaskToPrintingQueue(task: Task): Printing {
         val printingName = "printing:${task.name}"

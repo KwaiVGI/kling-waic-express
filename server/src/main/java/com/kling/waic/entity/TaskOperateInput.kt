@@ -8,6 +8,6 @@ data class TaskOperateInput (
 enum class TaskOperateAction{
     PIN,
     UNPIN,
-    TOP,
+    PROMOTE,
     DELETE
 }

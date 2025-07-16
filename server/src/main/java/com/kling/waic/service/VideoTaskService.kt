@@ -11,6 +11,7 @@ import com.kling.waic.external.model.CreateVideoTaskInput
 import com.kling.waic.external.model.CreateVideoTaskRequest
 import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryVideoTaskRequest
+import com.kling.waic.helper.CastingHelper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.utils.FileUtils
@@ -28,7 +29,8 @@ class VideoTaskService(
     private val videoSpecialEffects: List<String>,
     private val klingOpenAPIClient: KlingOpenAPIClient,
     private val codeGenerateRepository: CodeGenerateRepository,
-    private val jedis: Jedis
+    private val jedis: Jedis,
+    private val castingHelper: CastingHelper
 ) : TaskService {
 
     override suspend fun createTask(type: TaskType, file: MultipartFile): Task {
@@ -122,6 +124,10 @@ class VideoTaskService(
         val finalValue = ObjectMapperUtils.toJSON(finalTask)
         jedis.set(task.name, finalValue)
         log.info("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
+
+        val casting = castingHelper.addToCastingQueue(finalTask)
+        log.info("Added task ${finalTask.name} to casting queue, casting: $casting")
+
         return finalTask
     }
 
