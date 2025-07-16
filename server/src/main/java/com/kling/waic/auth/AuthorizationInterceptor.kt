@@ -18,6 +18,7 @@ open class AuthorizationInterceptor (
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val annotation = (handler as HandlerMethod).getMethodAnnotation<Authorization>(Authorization::class.java)
         if (annotation == null) {
+            // todo: also check Token
             return true
         }
         val authHeader = request.getHeader("Authorization")

@@ -24,7 +24,7 @@ class TaskController (
 
     @PostMapping("{type}/new")
     @Authorization(AuthorizationType.CREATE_TASK)
-    fun newTask(@PathVariable type: TaskType,
+    suspend fun newTask(@PathVariable type: TaskType,
                 @RequestParam("file") file: MultipartFile): Result<Task> {
         log.info("Creating new task of type: {}, file: {}", type, file.originalFilename)
 
@@ -38,7 +38,7 @@ class TaskController (
 
     @GetMapping("{type}/{name}")
     @Authorization(AuthorizationType.CREATE_TASK)
-    fun queryTask(@PathVariable type: TaskType,
+    suspend fun queryTask(@PathVariable type: TaskType,
                 @PathVariable name: String): Result<Task> {
         log.info("Query task of type: {}, name: {}", type, name)
 

@@ -6,7 +6,7 @@ import org.springframework.web.multipart.MultipartFile
 
 interface TaskService {
 
-    fun createTask(type: TaskType, file: MultipartFile): Task
+    suspend fun createTask(type: TaskType, file: MultipartFile): Task
 
-    fun queryTask(type: TaskType, name: String): Task
+    suspend fun queryTask(type: TaskType, name: String): Task
 }

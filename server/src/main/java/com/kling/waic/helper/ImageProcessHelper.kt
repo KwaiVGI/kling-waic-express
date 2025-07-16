@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
+import java.awt.font.TextLayout
 import java.awt.image.BufferedImage
 import java.io.File
 import java.net.HttpURLConnection
@@ -115,7 +116,21 @@ class ImageProcessHelper(
 
         g2d.color = Color.WHITE
         g2d.font = Font("Arial", Font.PLAIN, 12)
-        g2d.drawString(taskName, taskNameTopLeftX, taskNameTopLeftY)
+        
+        // use TextLayout to handle text rendering
+        val font = g2d.font
+        val frc = g2d.fontRenderContext
+        val textLayout = TextLayout(taskName, font, frc)
+        val textBounds = textLayout.bounds
+        
+        // calculate the maximum X position for the text
+        val textRightMargin = 22 // 设置右边距为20像素
+        val maxX = totalWidth - textRightMargin
+        
+        // make sure the text does not exceed the maximum width
+        val drawX = minOf(taskNameTopLeftX, (maxX - textBounds.width).toInt())
+        
+        g2d.drawString(taskName, drawX, taskNameTopLeftY)
 
         g2d.dispose()
         ImageIO.write(canvas, "JPG", File(outputPath))
