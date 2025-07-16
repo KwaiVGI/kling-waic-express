@@ -64,7 +64,7 @@ class ImageTaskService(
 
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
 
-        // 使用 coroutineScope 替代 runBlocking
+        // Use coroutineScope instead of runBlocking
         val taskIds = coroutineScope {
             val deferredResults = randomPrompts.map { prompt ->
                 async(Dispatchers.IO) {
@@ -114,7 +114,7 @@ class ImageTaskService(
 
         val taskIds = task.taskIds
 
-        // 使用 coroutineScope 替代 runBlocking
+        // Use coroutineScope instead of runBlocking
         val taskResponseMap = coroutineScope {
             val deferredResults = taskIds.map { taskId ->
                 async(Dispatchers.IO) {

@@ -73,23 +73,23 @@ class ImageProcessHelper(
         images: List<BufferedImage>,
         outputPath: String
     ) {
-        // 获取实际图片尺寸（假设所有图片尺寸相同）
+        // Get actual image dimensions (assuming all images have the same size)
         val actualImageWidth = images[0].width
         val actualImageHeight = images[0].height
         
-        // 基准尺寸（原来的固定值）
+        // Base dimensions (original fixed values)
         val baseCellWidth = 112
         val baseCellHeight = 168
         
-        // 计算缩放倍数（取宽度和高度缩放倍数的平均值，或者选择其中一个）
+        // Calculate scale factors (take average of width and height scale factors, or choose one)
         val scaleFactorWidth = actualImageWidth.toDouble() / baseCellWidth
         val scaleFactorHeight = actualImageHeight.toDouble() / baseCellHeight
-        val scaleFactor = minOf(scaleFactorWidth, scaleFactorHeight) // 使用较小的倍数保持比例
+        val scaleFactor = minOf(scaleFactorWidth, scaleFactorHeight) // Use smaller factor to maintain aspect ratio
         
-        // 根据缩放倍数计算所有尺寸
+        // Calculate all dimensions based on scale factor
         val cellWidth = (baseCellWidth * scaleFactor).toInt()
         val cellHeight = (baseCellHeight * scaleFactor).toInt()
-        val gap = (0 * scaleFactor).toInt() // 原来是0，缩放后还是0
+        val gap = (0 * scaleFactor).toInt() // Originally 0, still 0 after scaling
         
         val topMargin = (24 * scaleFactor).toInt()
         val bottomMargin = (42 * scaleFactor).toInt()
@@ -116,7 +116,7 @@ class ImageProcessHelper(
             g2d.drawImage(scaledImage, x, y, null)
         }
         
-        // Logo 位置和尺寸也按比例缩放
+        // Logo position and size also scaled proportionally
         val logoTopLeftX = leftMargin
         val logoTopLeftY = topMargin + cellHeight * 3 + gap * 2 + (12 * scaleFactor).toInt()
         val logoImage = FileUtils.convertFileAsImage("KlingAI-logo-CN.png")
@@ -125,7 +125,7 @@ class ImageProcessHelper(
         val scaledLogoImage = logoImage.getScaledInstance(logoWidth, logoHeight, BufferedImage.SCALE_SMOOTH)
         g2d.drawImage(scaledLogoImage, logoTopLeftX, logoTopLeftY, null)
         
-        // 文字位置和大小也按比例缩放
+        // Text position and size also scaled proportionally
         val taskName = task.name
         val taskNameTopLeftX = leftMargin + (276 * scaleFactor).toInt()
         val taskNameTopLeftY = topMargin + cellHeight * 3 + gap * 2 + (26 * scaleFactor).toInt()
@@ -134,17 +134,17 @@ class ImageProcessHelper(
         val fontSize = (12 * scaleFactor).toInt()
         g2d.font = Font("Arial", Font.PLAIN, fontSize)
         
-        // 使用 TextLayout 处理文本渲染
+        // Use TextLayout to handle text rendering
         val font = g2d.font
         val frc = g2d.fontRenderContext
         val textLayout = TextLayout(taskName, font, frc)
         val textBounds = textLayout.bounds
         
-        // 计算文本的最大X位置（右边距也按比例缩放）
+        // Calculate maximum X position for text (right margin also scaled proportionally)
         val textRightMargin = (22 * scaleFactor).toInt()
         val maxX = totalWidth - textRightMargin
         
-        // 确保文本不超出最大宽度
+        // Ensure text does not exceed maximum width
         val drawX = minOf(taskNameTopLeftX, (maxX - textBounds.width).toInt())
         
         g2d.drawString(taskName, drawX, taskNameTopLeftY)

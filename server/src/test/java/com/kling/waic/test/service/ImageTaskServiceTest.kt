@@ -28,7 +28,7 @@ class ImageTaskServiceTest : SpringBaseTest() {
             var task = imageTaskService.createTask(type, file)
 
             while (task.status !in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
-                delay(1000) // 使用 delay 替代 sleep
+                delay(1000) // Use delay instead of sleep
                 task = imageTaskService.queryTask(type, task.name)
             }
             assert(task.status == TaskStatus.SUCCEED) { "Task failed with status: ${task.status}" }
