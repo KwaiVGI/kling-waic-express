@@ -2,7 +2,7 @@ spring:
   application:
     name: kling-waic-express-server
   config:
-    import: classpath:.env
+    import: classpath:application-env.properties
   mvc:
     servlet:
       path: /api
