@@ -40,8 +40,8 @@ class CastingController(
     @GetMapping("{type}/count")
     @Authorization(AuthorizationType.MANAGEMENT)
     fun getCount(@PathVariable type: TaskType,
-                @RequestParam keyword: String = "",
-                @RequestParam score: Double? = null,
+                @RequestParam(required = false) keyword: String = "",
+                @RequestParam(required = false) score: Double? = null,
                 @RequestParam pageSize: Int = 10,
                 @RequestParam pageNum: Int = 1): Result<Int> {
         val result = castingHelper.count(type, keyword, score, pageSize, pageNum)
@@ -51,8 +51,8 @@ class CastingController(
     @GetMapping("{type}/list")
     @Authorization(AuthorizationType.MANAGEMENT)
     fun getList(@PathVariable type: TaskType,
-                @RequestParam keyword: String = "",
-                @RequestParam score: Double? = null,
+                @RequestParam(required = false) keyword: String = "",
+                @RequestParam(required = false) score: Double? = null,
                 @RequestParam pageSize: Int = 10,
                 @RequestParam pageNum: Int = 1): Result<CastingListResult> {
         val result = castingHelper.list(type, keyword, score, pageSize, pageNum)
