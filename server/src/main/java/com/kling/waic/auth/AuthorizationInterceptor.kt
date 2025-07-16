@@ -17,8 +17,10 @@ open class AuthorizationInterceptor (
 ) : HandlerInterceptor {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        log.info("AuthorizationInterceptor preHandle called for request: ${request.requestURI}," +
-                " method: ${request.method}, handler class: ${handler.javaClass}")
+        if (handler !is HandlerMethod) {
+            log.info("AuthorizationInterceptor preHandle called for request: ${request.requestURI}," +
+                    " method: ${request.method}, handler class: ${handler.javaClass}")
+        }
         val annotation = (handler as HandlerMethod).getMethodAnnotation<Authorization>(Authorization::class.java)
         if (annotation == null) {
             return true
