@@ -35,7 +35,7 @@ data class QueryVideoTaskResponse(
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class QueryVideoTaskResult(
-    @JsonProperty("images")
+    @JsonProperty("videos")
     val videos: List<QueryVideoTaskVideo>? = null
 )
 

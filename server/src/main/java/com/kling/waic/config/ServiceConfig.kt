@@ -1,10 +1,12 @@
 package com.kling.waic.config
 
 import com.kling.waic.utils.FileUtils
+import com.kling.waic.utils.Slf4j.Companion.log
 import okhttp3.OkHttpClient
 import org.opencv.core.Core
 import org.opencv.objdetect.CascadeClassifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import redis.clients.jedis.Jedis
@@ -19,7 +21,8 @@ open class ServiceConfig(
     @param:Value("\${jedis.port}") private val jedisPort: Int,
     @param:Value("\${jedis.password}") private val jedisPassword: String,
     @param:Value("\${kling.proxy.host}") private val proxyHost: String,
-    @param:Value("\${kling.proxy.port}") private val proxyPort: Int
+    @param:Value("\${kling.proxy.port}") private val proxyPort: Int,
+    @param:Value("\${kling.proxy.use-proxy}") private val useProxy: Boolean,
 ) {
 
     @Bean
@@ -31,14 +34,17 @@ open class ServiceConfig(
 
     @Bean
     open fun okHttpClient(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .proxy(
+        val builder = OkHttpClient.Builder()
+        if (useProxy) {
+            builder.proxy(
                 Proxy(
                     Proxy.Type.HTTP,
                     InetSocketAddress(proxyHost, proxyPort)
                 )
             )
-            .build()
+            log.info("Using proxy for okHttpClient: $proxyHost:$proxyPort")
+        }
+        return builder.build()
     }
 
     @Bean
@@ -65,6 +71,11 @@ open class ServiceConfig(
     }
 
     @Bean
+    @ConditionalOnProperty(
+        name = ["waic.crop-image-with-opencv"],
+        havingValue = "true",
+        matchIfMissing = false
+    )
     open fun loadCascadeClassifierFromResources(): CascadeClassifier {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
         val inputStream =

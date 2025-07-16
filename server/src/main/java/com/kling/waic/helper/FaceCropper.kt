@@ -1,11 +1,16 @@
 package com.kling.waic.helper
 
 import nu.pattern.OpenCV
-import org.opencv.core.*
+import org.opencv.core.Mat
+import org.opencv.core.MatOfByte
+import org.opencv.core.MatOfRect
+import org.opencv.core.Point
+import org.opencv.core.Rect
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.opencv.objdetect.CascadeClassifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -13,6 +18,11 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 @Component
+@ConditionalOnProperty(
+    name = ["waic.crop-image-with-opencv"],
+    havingValue = "true",
+    matchIfMissing = false
+)
 class FaceCropper(
     @Value("\${waic.sudoku.images-dir}")
     private val sudokuImagesDir: String,
@@ -87,24 +97,24 @@ class FaceCropper(
 
         val byteArrayOutputStream = ByteArrayOutputStream()
         val writeSuccess = ImageIO.write(bufferedImage, "jpg", byteArrayOutputStream)
-        
+
         if (!writeSuccess) {
             throw IllegalStateException("Failed to convert BufferedImage to JPG bytes")
         }
-        
+
         val imageBytes = byteArrayOutputStream.toByteArray()
-        
+
         if (imageBytes.isEmpty()) {
             throw IllegalStateException("Image conversion resulted in empty byte array")
         }
 
         val matOfByte = MatOfByte(*imageBytes)
         val mat = Imgcodecs.imdecode(matOfByte, Imgcodecs.IMREAD_COLOR)
-        
+
         if (mat.empty()) {
             throw IllegalStateException("OpenCV failed to decode image bytes. Image may be corrupted or in unsupported format.")
         }
-        
+
         return mat
     }
 
@@ -112,27 +122,27 @@ class FaceCropper(
         if (mat.empty()) {
             throw IllegalArgumentException("Cannot convert empty Mat to BufferedImage")
         }
-        
+
         val matOfByte = MatOfByte()
         val encodeSuccess = Imgcodecs.imencode(".jpg", mat, matOfByte)
-        
+
         if (!encodeSuccess) {
             throw IllegalStateException("Failed to encode Mat to JPG bytes")
         }
-        
+
         val byteArray = matOfByte.toArray()
-        
+
         if (byteArray.isEmpty()) {
             throw IllegalStateException("Mat encoding resulted in empty byte array")
         }
 
         val byteArrayInputStream = ByteArrayInputStream(byteArray)
         val bufferedImage = ImageIO.read(byteArrayInputStream)
-        
+
         if (bufferedImage == null) {
             throw IllegalStateException("Failed to create BufferedImage from byte array")
         }
-        
+
         return bufferedImage
     }
 }

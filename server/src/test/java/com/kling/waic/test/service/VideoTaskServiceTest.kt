@@ -11,25 +11,25 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
 
-class TaskServiceTest : SpringBaseTest() {
+class VideoTaskServiceTest : SpringBaseTest() {
 
     @Autowired
-    private lateinit var imageTaskService: TaskService
+    private lateinit var videoTaskService: TaskService
 
     @Test
-    fun testImageTaskService() {
-        val type = TaskType.STYLED_IMAGE
+    fun testVideoTaskService() {
+        val type = TaskType.VIDEO_EFFECT
         val file = MockMultipartFile(
             "test_girl.png",
             FileUtils.readBytesFromResources("test_girl.png")
         )
 
         CoroutineUtils.runSuspend {
-            var task = imageTaskService.createTask(type, file)
+            var task = videoTaskService.createTask(type, file)
 
             while (task.status !in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
                 delay(1000) // Use delay instead of sleep
-                task = imageTaskService.queryTask(type, task.name)
+                task = videoTaskService.queryTask(type, task.name)
             }
             assert(task.status == TaskStatus.SUCCEED) { "Task failed with status: ${task.status}" }
             println(task)

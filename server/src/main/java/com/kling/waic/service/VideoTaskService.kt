@@ -1,6 +1,8 @@
 package com.kling.waic.service
 
 import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskOutput
+import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
 import com.kling.waic.external.KlingOpenAPIClient
@@ -90,6 +92,11 @@ class VideoTaskService(
         val convertedStatus = calculateStatus(taskStatus)
         log.info("Task ${task.name} convertedStatus: $convertedStatus")
 
+        if (convertedStatus == task.status) {
+            log.info("Task ${task.name} status has not changed, returning existing task")
+            return task // No status change, return existing task
+        }
+
         val newTask = task.copy(
             status = convertedStatus,
             updateTime = Instant.now(),
@@ -98,7 +105,23 @@ class VideoTaskService(
         jedis.set(task.name, newValue)
         log.info("Set updated task in Redis with name: ${newTask.name}, value: $newValue")
 
-        return newTask
+        if (convertedStatus != TaskStatus.SUCCEED) {
+            return newTask
+        }
+
+        val url = result.data.taskResult.videos!!.first().url
+        val finalTask = newTask.copy(
+            outputs = TaskOutput(
+                type = TaskOutputType.VIDEO,
+                url = url
+            ),
+            updateTime = Instant.now()
+        )
+
+        val finalValue = ObjectMapperUtils.toJSON(finalTask)
+        jedis.set(task.name, finalValue)
+        log.info("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
+        return finalTask
     }
 
     private fun calculateStatus(taskStatus: KlingOpenAPITaskStatus): TaskStatus {

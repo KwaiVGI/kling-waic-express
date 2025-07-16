@@ -1,5 +1,6 @@
 package com.kling.waic.service
 
+import com.google.errorprone.annotations.concurrent.LazyInit
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskOutput
 import com.kling.waic.entity.TaskOutputType
@@ -21,6 +22,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -35,14 +37,19 @@ class ImageTaskService(
     private val codeGenerateRepository: CodeGenerateRepository,
     private val jedis: Jedis,
     private val imageProcessHelper: ImageProcessHelper,
-    private val faceCropper: FaceCropper,
     @Value("\${waic.sudoku.images-dir}")
     private val sudokuImagesDir: String,
     @Value("\${waic.sudoku.url-prefix}")
     private val sudokuUrlPrefix: String,
     @Value("\${waic.sudoku.server-domain}")
-    private val sudokuServerDomain: String
+    private val sudokuServerDomain: String,
+    @Value("\${waic.crop-image-with-opencv}")
+    private val cropImageWithOpenCV: Boolean
 ) : TaskService {
+
+    @Autowired(required = false)
+    @LazyInit
+    private var faceCropper: FaceCropper? = null
 
     companion object {
         const val TASK_N: Int = 9
@@ -55,7 +62,13 @@ class ImageTaskService(
         val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
         log.info("Input image size: ${inputImage.width}x${inputImage.height}")
 
-        val outputImage = faceCropper.cropFaceToAspectRatio(inputImage, taskName)
+        val outputImage = if (cropImageWithOpenCV && faceCropper != null) {
+            log.info("OpenCV face cropping is enabled, processing image with face detection")
+            faceCropper!!.cropFaceToAspectRatio(inputImage, taskName)
+        } else {
+            log.info("OpenCV face cropping is disabled or FaceCropper not available, using original image")
+            inputImage
+        }
         log.info("Output image size: ${outputImage.width}x${outputImage.height}")
 
         val imageBase64 = FileUtils.convertImageToBase64(outputImage)
@@ -138,6 +151,11 @@ class ImageTaskService(
 
         val overallStatus = calculateStatus(taskResponseMap)
         log.info("Task ${task.name} overallStatus: $overallStatus")
+
+        if (overallStatus == task.status) {
+            log.info("Task ${task.name} status has not changed, returning existing task")
+            return task // No status change, return existing task
+        }
 
         val newTask = task.copy(
             status = overallStatus,

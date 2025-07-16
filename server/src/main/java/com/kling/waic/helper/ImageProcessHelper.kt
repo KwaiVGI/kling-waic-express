@@ -27,7 +27,8 @@ import javax.imageio.ImageIO
 @Component
 class ImageProcessHelper(
     @param:Value("\${kling.proxy.host}") private val proxyHost: String,
-    @param:Value("\${kling.proxy.port}") private val proxyPort: Int
+    @param:Value("\${kling.proxy.port}") private val proxyPort: Int,
+    @param:Value("\${kling.proxy.use-proxy}") private val useProxy: Boolean,
 ) {
 
     fun multipartFileToBufferedImage(file: MultipartFile): BufferedImage {
@@ -62,9 +63,15 @@ class ImageProcessHelper(
     }
 
     fun readImageWithProxy(url: String): BufferedImage? {
-        val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort))
         val url = URL(url)
-        val connection = url.openConnection(proxy) as HttpURLConnection
+        val connection = if (useProxy) {
+            log.info("Using proxy to connect to $url via $proxyHost:$proxyPort")
+            val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort))
+            url.openConnection(proxy) as HttpURLConnection
+        } else {
+            log.info("Not using proxy to connect to $url")
+            url.openConnection() as HttpURLConnection
+        }
 
         connection.connectTimeout = 5000
         connection.readTimeout = 5000

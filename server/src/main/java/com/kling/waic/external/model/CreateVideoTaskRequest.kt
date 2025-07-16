@@ -8,7 +8,7 @@ data class CreateVideoTaskRequest(
     @JsonProperty("effect_scene")
     val effectScene: String,
 
-    @JsonProperty("model_name")
+    @JsonProperty("input")
     val input: CreateVideoTaskInput,
 
     @JsonProperty("callback_url")
@@ -27,7 +27,7 @@ data class CreateVideoTaskInput(
     val image: String,
 
     @JsonProperty("duration")
-    val duration: String = "10", //5, 10
+    val duration: String = "5", //5, 10
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

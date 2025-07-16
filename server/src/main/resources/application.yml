@@ -35,10 +35,12 @@ waic:
   open-api:
     access-key: ${WAIC_OPENAPI_ACCESS_KEY}
     secret-key: ${WAIC_OPENAPI_SECRET_KEY}
+  crop-image-with-opencv: ${WAIC_CROP_IMAGE_WITH_OPENCV:true}
 
 kling:
   open-api:
     base-url: https://api-beijing.klingai.com
   proxy:
+    use-proxy: ${WAIC_KLING_USE_PROXY:true}
     host: 10.52.57.90
     port: 11080
