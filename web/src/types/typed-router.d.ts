@@ -22,6 +22,7 @@ declare module 'vue-router/auto-routes' {
     '404': RouteRecordInfo<'404', '/:all(.*)', { all: ParamValue<true> }, { all: ParamValue<false> }>,
     '/admin/': RouteRecordInfo<'/admin/', '/admin', Record<never, never>, Record<never, never>>,
     '/admin/image': RouteRecordInfo<'/admin/image', '/admin/image', Record<never, never>, Record<never, never>>,
+    '/admin/print': RouteRecordInfo<'/admin/print', '/admin/print', Record<never, never>, Record<never, never>>,
     '/admin/video': RouteRecordInfo<'/admin/video', '/admin/video', Record<never, never>, Record<never, never>>,
     '/creation/': RouteRecordInfo<'/creation/', '/creation', Record<never, never>, Record<never, never>>,
     '/creation/[type]': RouteRecordInfo<'/creation/[type]', '/creation/:type', { type: ParamValue<true> }, { type: ParamValue<false> }>,

@@ -1,6 +1,10 @@
-import request from "@/utils/request";
 import type { TaskType } from "./type";
-import { getCastings } from "./admin";
+import {
+  getCastings,
+  getPined,
+  operateCasting,
+  TaskOperateAction,
+} from "./admin";
 
 // 定义接口类型
 export interface CastingImage {
@@ -8,8 +12,6 @@ export interface CastingImage {
   name: string;
   url: string;
   createdAt: string;
-  isPinned: boolean;
-  isActive: boolean;
 }
 
 // 分页结果类型
@@ -93,8 +95,8 @@ export const castingService = {
 
     return {
       items: castings.map((item) => ({
-        id: item.id,
-        name: item.name,
+        id: item.name,
+        name: item.name.replace("casting:", ""),
         url: item.task.outputs.url,
         createdAt: item.task.createTime,
         isPinned: false,
@@ -107,42 +109,58 @@ export const castingService = {
     };
   },
 
+  // 删除图片
+  async deleteImage(
+    type: TaskType = DEFAULT_TYPE,
+    imageNo: string
+  ): Promise<any> {
+    const res = await operateCasting({
+      type,
+      name: imageNo,
+      action: TaskOperateAction.DELETE,
+    });
+    return res;
+  },
+
   // 置顶图片
   async promoteImage(
-    type: string = DEFAULT_TYPE,
-    imageId: string
-  ): Promise<void> {
-    // 模拟网络延迟
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    type: TaskType = DEFAULT_TYPE,
+    imageNo: string
+  ): Promise<any> {
+    const res = await operateCasting({
+      type,
+      name: imageNo,
+      action: TaskOperateAction.PROMOTE,
+    });
+    return res;
+  },
 
-    // 在实际应用中，这里会有真正的API调用
-    const index = mockImages.findIndex((img) => img.id === imageId);
-    if (index !== -1) {
-      // 将图片移动到数组开头
-      const [image] = mockImages.splice(index, 1);
-      mockImages.unshift(image);
-      // 更新活动索引
-      activeIndex = 0;
-    }
-
-    console.log(`Promoted image: ${imageId}`);
+  // 获取当前固定展示的图片
+  async getPinedImage(type: TaskType = DEFAULT_TYPE) {
+    const res = await getPined({ type });
+    return res;
   },
 
   // 固定展示图片
-  async pinImage(type: string = DEFAULT_TYPE, imageId: string): Promise<void> {
-    // 模拟网络延迟
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    pinnedImageId = imageId;
-    console.log(`Pinned image: ${imageId}`);
+  async pinImage(type: TaskType = DEFAULT_TYPE, imageNo: string): Promise<any> {
+    const res = await operateCasting({
+      type,
+      name: imageNo,
+      action: TaskOperateAction.PIN,
+    });
+    return res;
   },
 
   // 取消固定展示
-  async unpinImage(type: string = DEFAULT_TYPE): Promise<void> {
-    // 模拟网络延迟
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    pinnedImageId = null;
-    console.log("Unpinned image");
+  async unpinImage(
+    type: TaskType = DEFAULT_TYPE,
+    imageNo: string
+  ): Promise<any> {
+    const res = await operateCasting({
+      type,
+      name: imageNo,
+      action: TaskOperateAction.UNPIN,
+    });
+    return res;
   },
 };

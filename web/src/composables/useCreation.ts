@@ -1,5 +1,6 @@
 import { ref, computed } from "vue";
 import { showToast } from "vant";
+import { printImageTask } from "@/api/creation";
 
 export type CreationType = "image" | "video";
 
@@ -175,22 +176,25 @@ export default function useCreation(creationType: CreationType) {
   };
 
   // 打印图片（仅图片类型）
-  const printImage = () => {
+  const printImage = async (name: string) => {
     if (!generatedResult.value || creationType !== "image") {
       showToast("没有可打印的内容");
       return;
     }
 
     isPrinting.value = true;
-
-    setTimeout(() => {
+    try {
+      const res = await printImageTask({ type: "STYLED_IMAGE", name });
       showToast({
         // type: "success",
         message: "打印任务已发送",
         duration: 1500,
       });
+    } catch (error) {
+      showToast("操作失败，请重试");
+    } finally {
       isPrinting.value = false;
-    }, 1500);
+    }
   };
 
   return {

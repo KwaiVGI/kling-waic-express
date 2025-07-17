@@ -55,8 +55,8 @@
           :key="image.id"
           class="gallery-item"
           :class="{
-            pinned: image.isPinned,
-            promoted: image.isPromoted,
+            pinned: image.id === pinnedImageId,
+            promoted: image.id === promotedImageId,
           }"
         >
           <div
@@ -65,8 +65,12 @@
           >
             <span class="image-id">{{ image.name }}</span>
             <div class="item-badges">
-              <span v-if="image.isPinned" class="badge pinned-badge">固定</span>
-              <span v-if="image.isPromoted" class="badge promoted-badge"
+              <span v-if="image.id === pinnedImageId" class="badge pinned-badge"
+                >固定</span
+              >
+              <span
+                v-if="image.id === promotedImageId"
+                class="badge promoted-badge"
                 >置顶</span
               >
             </div>
@@ -74,16 +78,25 @@
               <button
                 @click="promoteImage(image.id)"
                 class="action-button promote"
-                :disabled="image.isPromoted"
+                :disabled="image.id === promotedImageId"
               >
                 置顶
               </button>
               <button
                 @click="pinImage(image.id)"
-                :disabled="image.isPinned"
+                :disabled="image.id === pinnedImageId"
                 class="action-button pin"
               >
                 固定
+              </button>
+              <button
+                @click="deleteImage(image.id)"
+                :disabled="
+                  image.id === pinnedImageId || image.id === promotedImageId
+                "
+                class="action-button delete"
+              >
+                删除
               </button>
             </div>
           </div>
@@ -170,18 +183,12 @@ const loadImages = async () => {
     });
     images.value = result.items.map((img) => ({
       ...img,
+      isPinned: img.id === pinnedImageId.value,
       isPromoted: img.id === promotedImageId.value,
     }));
     totalPages.value = Math.ceil(result.total / pageSize.value);
     totalImages.value = result.total;
-
-    // 查找固定图片
-    const pinned = result.items.find((img) => img.isPinned);
-    if (pinned) {
-      pinnedImageId.value = pinned.id;
-    } else {
-      pinnedImageId.value = null;
-    }
+    await getPinedImage();
   } catch (error) {
     console.error("加载图片失败:", error);
   } finally {
@@ -205,7 +212,7 @@ const goToPage = (page: number) => {
 // 置顶图片
 const promoteImage = async (imageId: string) => {
   try {
-    await castingService.promoteImage("default", imageId);
+    await castingService.promoteImage("STYLED_IMAGE", imageId);
     promotedImageId.value = imageId;
     loadImages();
   } catch (error) {
@@ -213,11 +220,22 @@ const promoteImage = async (imageId: string) => {
   }
 };
 
+const getPinedImage = async () => {
+  try {
+    const { name, task } = await castingService.getPinedImage("STYLED_IMAGE");
+    pinnedImageId.value = name;
+  } catch (error) {
+    console.error("获取固定图片失败:", error);
+    pinnedImageId.value = null;
+  }
+};
+
 // 固定图片
 const pinImage = async (imageId: string) => {
   try {
-    await castingService.pinImage("default", imageId);
-    loadImages();
+    await castingService.pinImage("STYLED_IMAGE", imageId);
+    // loadImages();
+    getPinedImage();
   } catch (error) {
     console.error("固定图片失败:", error);
   }
@@ -226,7 +244,18 @@ const pinImage = async (imageId: string) => {
 // 取消固定
 const unpinImage = async () => {
   try {
-    await castingService.unpinImage("default");
+    await castingService.unpinImage("STYLED_IMAGE", pinnedImageId.value);
+    pinnedImageId.value = null;
+    // loadImages();
+  } catch (error) {
+    console.error("取消固定失败:", error);
+  }
+};
+
+// 删除
+const deleteImage = async (imageId: string) => {
+  try {
+    await castingService.deleteImage("STYLED_IMAGE", imageId);
     loadImages();
   } catch (error) {
     console.error("取消固定失败:", error);
@@ -243,6 +272,7 @@ onMounted(() => {
 watch(searchQuery, (newVal) => {
   if (newVal === "") {
     loadImages();
+    getPinedImage();
   }
 });
 </script>
@@ -493,19 +523,19 @@ watch(searchQuery, (newVal) => {
   right: 0;
   display: flex;
   justify-content: center;
-  gap: 6px;
-  padding: 6px;
+  gap: 2px;
+  padding: 2px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
 }
 
 .action-button {
-  padding: 4px 8px;
+  padding: 2px 4px;
   border: none;
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.3s;
-  min-width: 50px;
+  min-width: 40px;
 }
 
 .action-button.promote {
@@ -533,6 +563,21 @@ watch(searchQuery, (newVal) => {
 }
 
 .action-button.pin:disabled {
+  background-color: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.action-button.delete {
+  background-color: rgb(150, 10, 10);
+  color: white;
+}
+
+.action-button.delete:hover:not(:disabled) {
+  background-color: rgb(189, 14, 14);
+}
+
+.action-button.delete:disabled {
   background-color: #e0e0e0;
   color: #999;
   cursor: not-allowed;

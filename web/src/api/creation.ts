@@ -23,6 +23,16 @@ export async function getTaskStatus({
 }: {
   name: string;
   type: "STYLED_IMAGE" | "VIDEO_EFFECT";
-}): Promise<{ status: TaskStatus; outputs: TaskOutput }> {
+}): Promise<{ status: TaskStatus; outputs: TaskOutput; name: string }> {
   return request.get(`/api/tasks/${type}/${name}/query`);
+}
+
+export async function printImageTask({
+  name,
+  type,
+}: {
+  name: string;
+  type: "STYLED_IMAGE" | "VIDEO_EFFECT";
+}): Promise<{ status: TaskStatus; outputs: TaskOutput }> {
+  return request.post(`/api/tasks/${type}/${name}/print`);
 }

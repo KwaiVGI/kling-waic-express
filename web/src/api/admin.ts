@@ -14,7 +14,7 @@ interface Task {
 
 export interface CastingImage {
   id: number;
-  name: String;
+  name: string;
   task: Task;
   score: number;
   originScore: number;
@@ -43,7 +43,7 @@ export async function getCastings({
   });
 }
 
-enum TaskOperateAction {
+export enum TaskOperateAction {
   PIN = "PIN",
   UNPIN = "UNPIN",
   PROMOTE = "PROMOTE",
@@ -56,11 +56,10 @@ export async function operateCasting({
   ...params
 }: {
   type: TaskType;
-  input: TaskOperateAction;
+  name: string;
+  action: TaskOperateAction;
 }): Promise<CastingListResult> {
-  return request.post(`/api/castings/${type}/operate`, {
-    params,
-  });
+  return request.post(`/api/castings/${type}/operate`, params);
 }
 
 // 获取固定的作品
@@ -68,8 +67,8 @@ export async function getPined({
   type,
 }: {
   type: TaskType;
-}): Promise<CastingListResult> {
-  return request.post(`/api/castings/${type}/pined`);
+}): Promise<CastingImage> {
+  return request.get(`/api/castings/${type}/pinned`);
 }
 
 // 获取大屏列表

@@ -1,24 +1,25 @@
-import path from 'node:path'
-import process from 'node:process'
-import { loadEnv } from 'vite'
-import type { ConfigEnv, UserConfig } from 'vite'
-import { createVitePlugins } from './build/vite'
-import { exclude, include } from './build/vite/optimize'
+import path from "node:path";
+import process from "node:process";
+import { loadEnv } from "vite";
+import type { ConfigEnv, UserConfig } from "vite";
+import { createVitePlugins } from "./build/vite";
+import { exclude, include } from "./build/vite/optimize";
 
 export default ({ mode }: ConfigEnv): UserConfig => {
-  const root = process.cwd()
-  const env = loadEnv(mode, root)
+  const root = process.cwd();
+  const env = loadEnv(mode, root);
 
   return {
-    base: env.VITE_APP_BASE_URL || '/',
+    base: env.VITE_APP_BASE_URL || "/",
     plugins: createVitePlugins(mode),
 
     server: {
       host: true,
       port: 3000,
       proxy: {
-        '/api': {
-          target: 'https://waic.staging.kuaishou.com',
+        "/api": {
+          // target: "https://waic.staging.kuaishou.com",
+          target: "https://waic-api.klingai.com:6443",
           changeOrigin: true,
         },
       },
@@ -26,18 +27,18 @@ export default ({ mode }: ConfigEnv): UserConfig => {
 
     resolve: {
       alias: {
-        '@': path.join(__dirname, './src'),
-        '~': path.join(__dirname, './src/assets'),
-        '~root': path.join(__dirname, '.'),
+        "@": path.join(__dirname, "./src"),
+        "~": path.join(__dirname, "./src/assets"),
+        "~root": path.join(__dirname, "."),
       },
     },
 
     build: {
       cssCodeSplit: false,
       chunkSizeWarningLimit: 2048,
-      outDir: env.VITE_APP_OUT_DIR || 'dist',
+      outDir: env.VITE_APP_OUT_DIR || "dist",
     },
 
     optimizeDeps: { include, exclude },
-  }
-}
+  };
+};

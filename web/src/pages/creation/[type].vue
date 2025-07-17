@@ -186,7 +186,7 @@
             v-if="type === 'image'"
             icon="print"
             type="default"
-            @click="printImage"
+            @click="printImage(currentImageNo)"
             :loading="isPrinting"
             class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
           >
@@ -365,6 +365,8 @@ const { currentGuides, showGuide, startGuide, currentTheme, finishGuide } =
 const wait = async (delay: number) =>
   new Promise((resolve) => setTimeout(resolve, delay));
 
+const currentImageNo = ref("");
+
 // 生成
 const doGenerate = async (file: File, type: CreationType): Promise<string> => {
   // mock
@@ -398,6 +400,7 @@ const doGenerate = async (file: File, type: CreationType): Promise<string> => {
 
       if (status === "SUCCEED") {
         if (url) {
+          currentImageNo.value = result.name;
           return url; // 成功返回URL
         }
         throw new Error("任务完成但未返回有效URL");
@@ -426,10 +429,11 @@ const handleGenerate = async () => {
   }
   if (!uploadedImage.value) {
     showToast("请先上传图片");
+    return;
   }
 
   await generate(doGenerate);
-  if (isGuided.value) {
+  if (isGuided.value || type.value !== "image") {
     return;
   }
   await wait(0);

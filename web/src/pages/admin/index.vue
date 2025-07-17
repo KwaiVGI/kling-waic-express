@@ -1,24 +1,31 @@
 <template>
   <div class="control-view">
     <div class="header">
-      <h1>大屏图片轮播控制系统</h1>
+      <h1>WAIC 大屏控制系统</h1>
     </div>
 
     <div class="control-panel">
       <Image></Image>
+      <Tab :tabs="tabs" defaultActive="image" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import Image from "./image.vue";
+import ImageComponent from "./image.vue";
+import VideoComponent from "./video.vue";
+import PrintComponent from "./print.vue";
+const tabs = [
+  { value: "image", label: "图片", component: ImageComponent },
+  { value: "video", label: "视频", component: VideoComponent },
+  { value: "print", label: "打印", component: PrintComponent },
+];
 </script>
 
 <style scoped>
 .control-view {
   min-height: 100vh;
   padding: 40px 20px;
-  max-width: 1600px;
   margin: 0 auto;
   background: linear-gradient(135deg, #1a2a6c, #2a1a6c);
 }
