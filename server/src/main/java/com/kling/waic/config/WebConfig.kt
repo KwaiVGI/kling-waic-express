@@ -22,6 +22,7 @@ open class WebConfig(
                 "/**/*.jpeg", // Exclude JPEG images
                 "/**/*.png", // Exclude PNG images
                 "/**/*.gif", // Exclude GIF images
+                "/**/health/heartbeat"
             )
     }
 
