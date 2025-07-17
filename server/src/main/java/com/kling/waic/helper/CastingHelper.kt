@@ -11,6 +11,7 @@ import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Component
 import redis.clients.jedis.Jedis
 import java.time.Instant
+import kotlin.collections.emptyList
 
 @Component
 class CastingHelper(
@@ -48,16 +49,19 @@ class CastingHelper(
 
     fun getPinned(type: TaskType): Casting? {
         val castingPinnedKey = "${castingPinnedPrefix}${type}"
-        val value = jedis.get(castingPinnedKey) ?: return null
+        val castingName = jedis.get(castingPinnedKey) ?: return null
+        log.info("Got pinned castingName: {}", castingName)
 
-        val casting = ObjectMapperUtils.fromJSON(value, Casting::class.java)!!
+        val castingValue = jedis.get(castingName)
+            ?: throw IllegalArgumentException("Casting not exists for castingName: $castingName")
+        val casting = ObjectMapperUtils.fromJSON(castingValue, Casting::class.java)!!
         log.info("Retrieved pinned type: {}, casting: {}", type, casting)
         return casting
     }
 
     fun operate(type: TaskType,
                 name: String,
-                action: TaskOperateAction): Casting {
+                action: TaskOperateAction): Boolean {
         val value = jedis.get(name)
             ?: throw IllegalArgumentException("Casting not found: $name")
         val casting = ObjectMapperUtils.fromJSON(value, Casting::class.java)!!
@@ -68,15 +72,13 @@ class CastingHelper(
         val castingPinnedKey = "${castingPinnedPrefix}${type}"
         val castingQueue = "${castingQueuePrefix}${type}"
 
-        val newCasting = when (action) {
+        when (action) {
             TaskOperateAction.PIN -> {
                 jedis.set(castingPinnedKey, name)
-                casting
             }
 
             TaskOperateAction.UNPIN -> {
                 jedis.del(castingPinnedKey)
-                casting
             }
 
             TaskOperateAction.PROMOTE -> {
@@ -86,29 +88,10 @@ class CastingHelper(
 
             TaskOperateAction.DELETE -> {
                 jedis.zrem(castingQueue, name)
-                casting
             }
         }
-        log.info("Operated casting: {}, action: {}, newCasting: {}", name, action, newCasting)
-        return newCasting
-    }
-
-    fun count(type: TaskType,
-             keyword: String,
-             score: Double?,
-             pageSize: Int,
-             pageNum: Int): Int {
-        val castingQueue = "${castingQueuePrefix}${type}"
-
-        // Get total count first for pagination calculation
-        val totalCount = if (keyword.isBlank()) {
-            // No keyword filter, get total count directly from Redis
-            jedis.zcard(castingQueue).toInt()
-        } else {
-            // With keyword filter, need to count matching items
-            countMatchingCastings(castingQueue, keyword)
-        }
-        return totalCount
+        log.info("Operated casting: {}, action: {}", name, action)
+        return true
     }
 
     fun list(type: TaskType,
@@ -118,57 +101,80 @@ class CastingHelper(
              pageNum: Int): CastingListResult {
         val castingQueue = "${castingQueuePrefix}${type}"
         
-        // If no keyword search, use Redis pagination directly for better performance
-        if (keyword.isBlank()) {
-            val result = listWithoutKeyword(castingQueue, score, pageSize, pageNum)
-            return CastingListResult(
-                hasMore = result.first,
-                castings = result.second,
-                score = score ?: result.second.first().score
-            )
+        // Calculate total count based on whether there's keyword filtering
+        val totalCount = if (keyword.isBlank()) {
+            // No keyword filter, get total count directly from Redis
+            if (score != null) {
+                // Count items with score less than the given score
+                jedis.zcount(castingQueue, "0", "(${score}").toInt()
+            } else {
+                // Count all items in the queue
+                jedis.zcard(castingQueue).toInt()
+            }
+        } else {
+            // With keyword filter, need to count matching items
+            countCastingsWithKeyword(castingQueue, keyword, score)
         }
         
-        // When keyword search is needed, fetch more data for filtering
-        val result = listWithKeyword(castingQueue, keyword, score, pageSize, pageNum)
+        // Get paginated results
+        val result = if (keyword.isBlank()) {
+            listWithoutKeyword(castingQueue, score, pageSize, pageNum)
+        } else {
+            listWithKeyword(castingQueue, keyword, score, pageSize, pageNum)
+        }
+        
         return CastingListResult(
+            total = totalCount,
+            score = score,
             hasMore = result.first,
-            castings = result.second,
-            score = score ?: result.second.first().score
+            castings = result.second
         )
     }
     
-    private fun countMatchingCastings(castingQueue: String, keyword: String): Int {
-        // For keyword search, we need to count all matching items
-        // This is expensive but necessary for accurate pagination
+    private fun countCastingsWithKeyword(castingQueue: String, keyword: String, score: Double?): Int {
         val batchSize = 100
         var count = 0
         var offset = 0L
+        var currentScore = score
         
         while (true) {
-            val castingNames = jedis.zrevrange(castingQueue, offset, offset + batchSize - 1)
+            val castingNames = if (currentScore != null) {
+                jedis.zrevrangeByScore(castingQueue, "(${currentScore}", "0", offset.toInt(), batchSize)
+            } else {
+                jedis.zrevrange(castingQueue, offset, offset + batchSize - 1)
+            }
+            
             if (castingNames.isEmpty()) break
             
             val batchCastings = getCastingDetails(castingNames)
             count += batchCastings.count { casting ->
-                casting.name.contains(keyword, ignoreCase = true)
+                casting.name.contains(keyword, ignoreCase = true) ||
+                casting.task.name.contains(keyword, ignoreCase = true) ||
+                casting.task.filename.contains(keyword, ignoreCase = true)
             }
             
-            offset += batchSize
+            if (currentScore != null) {
+                currentScore = batchCastings.minOfOrNull { it.score }
+                if (currentScore == null) break
+            } else {
+                offset += batchSize
+            }
+            
             if (castingNames.size < batchSize) break
         }
         
         return count
     }
     
-    private fun listWithoutKeyword(castingQueue: String, score: Double?, pageSize: Int, pageNum: Int): Pair<Boolean, List<Casting>> {
-        // Calculate offset based on pageNum (1-based)
+    private fun listWithoutKeyword(castingQueue: String,
+                                   score: Double?,
+                                   pageSize: Int,
+                                   pageNum: Int): Pair<Boolean, List<Casting>> {
         val offset = (pageNum - 1) * pageSize
         
         val castingNames = if (score != null) {
-            // Score-based pagination: get items with score less than the given score
             jedis.zrevrangeByScore(castingQueue, "(${score}", "0", offset, pageSize + 1)
         } else {
-            // Regular pagination: get items by rank
             jedis.zrevrange(castingQueue, offset.toLong(), (offset + pageSize).toLong())
         }
         
@@ -179,17 +185,19 @@ class CastingHelper(
             return Pair(false, emptyList())
         }
         
-        // Get casting details
         val castings = getCastingDetails(castingNames.take(pageSize))
         val hasMore = castingNames.size > pageSize
         
         return Pair(hasMore, castings)
     }
     
-    private fun listWithKeyword(castingQueue: String, keyword: String, score: Double?, pageSize: Int, pageNum: Int): Pair<Boolean, List<Casting>> {
-        // For keyword search, we need to fetch and filter data
+    private fun listWithKeyword(castingQueue: String,
+                                keyword: String,
+                                score: Double?,
+                                pageSize: Int,
+                                pageNum: Int): Pair<Boolean, List<Casting>> {
         val targetOffset = (pageNum - 1) * pageSize
-        val batchSize = maxOf(pageSize * 5, 100) // Larger batch size for filtering
+        val batchSize = maxOf(pageSize * 5, 100)
         val resultCastings = mutableListOf<Casting>()
         var currentScore = score
         var processedCount = 0
@@ -204,18 +212,17 @@ class CastingHelper(
             }
             
             if (castingNames.isEmpty()) {
-                break // No more data available
+                break
             }
             
-            // Get details for this batch
             val batchCastings = getCastingDetails(castingNames)
             
-            // Filter data matching the keyword
             val filteredBatch = batchCastings.filter { casting ->
-                casting.name.contains(keyword, ignoreCase = true)
+                casting.name.contains(keyword, ignoreCase = true) ||
+                casting.task.name.contains(keyword, ignoreCase = true) ||
+                casting.task.filename.contains(keyword, ignoreCase = true)
             }
             
-            // Skip items before target offset
             val filteredAfterOffset = if (processedCount < targetOffset) {
                 val skipCount = minOf(filteredBatch.size, targetOffset - processedCount)
                 processedCount += skipCount
@@ -224,21 +231,17 @@ class CastingHelper(
                 filteredBatch
             }
             
-            // Add to results if we've reached the target page
             if (processedCount >= targetOffset) {
                 val remainingNeeded = pageSize - resultCastings.size
                 val toAdd = filteredAfterOffset.take(remainingNeeded)
                 resultCastings.addAll(toAdd)
                 
-                // Check if there are more items after what we added
                 if (filteredAfterOffset.size > toAdd.size) {
                     hasMore = true
                     break
                 }
                 
-                // If we have enough results, check if there are more matching items
                 if (resultCastings.size >= pageSize) {
-                    // Continue processing to check for more items
                     val remainingFiltered = filteredAfterOffset.drop(toAdd.size)
                     if (remainingFiltered.isNotEmpty()) {
                         hasMore = true
@@ -249,22 +252,21 @@ class CastingHelper(
                 processedCount += filteredBatch.size
             }
             
-            // Update currentScore for next iteration
             currentScore = batchCastings.minOfOrNull { it.score }
             
-            // If this batch has fewer items than batchSize, no more data available
             if (castingNames.size < batchSize) {
                 break
             }
         }
         
-        // Final check for hasMore if we haven't determined it yet
         if (!hasMore && resultCastings.size == pageSize && currentScore != null) {
             val nextBatch = jedis.zrevrangeByScore(castingQueue, "(${currentScore}", "0", 0, 10)
             if (nextBatch.isNotEmpty()) {
                 val nextCastings = getCastingDetails(nextBatch)
                 hasMore = nextCastings.any { casting ->
-                    casting.name.contains(keyword, ignoreCase = true)
+                    casting.name.contains(keyword, ignoreCase = true) ||
+                    casting.task.name.contains(keyword, ignoreCase = true) ||
+                    casting.task.filename.contains(keyword, ignoreCase = true)
                 }
             }
         }
@@ -318,7 +320,7 @@ class CastingHelper(
         // Strategy 1: Get latest items first (from highest score, descending order)
         val availableLatest = maxOf(0L, totalCount - latestCursor)
         val latestToTake = minOf(num, availableLatest)
-        
+
         if (latestToTake > 0) {
             // Get latest items using ZREVRANGE (highest score first)
             val latestCastingNames = jedis.zrevrange(castingQueue, latestCursor, latestCursor + latestToTake - 1)

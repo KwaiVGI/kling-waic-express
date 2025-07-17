@@ -8,11 +8,11 @@ data class Casting(
     val name: String,
     val task: Task,
     val score: Double,
-    val originScore: Long? = null,
 )
 
 data class CastingListResult(
-    val score: Double,
+    val total: Int,
+    val score: Double?,
     val hasMore: Boolean,
     val castings: List<Casting>,
 )

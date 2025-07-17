@@ -1,34 +1,35 @@
 package com.kling.waic.test.helper
 
-import com.kling.waic.entity.Printing
-import com.kling.waic.entity.PrintingStatus
+import com.kling.waic.entity.Casting
 import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskOperateAction
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
-import com.kling.waic.helper.PrintingHelper
+import com.kling.waic.helper.CastingHelper
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.test.SpringBaseTest
 import com.kling.waic.utils.IdUtils
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
-class PrintingHelperTest : SpringBaseTest() {
+class CastingHelperTest : SpringBaseTest() {
 
     @Autowired
-    private lateinit var printingHelper: PrintingHelper
+    private lateinit var castingHelper: CastingHelper
     @Autowired
     private lateinit var codeGenerateRepository: CodeGenerateRepository
 
     @Test
-    fun testAddTaskToPrintingQueue() {
+    fun testAddToCastingQueue() {
         val total = 10
-        val timestamp = Instant.now().toEpochMilli()
         val type = TaskType.STYLED_IMAGE
+        val timestamp = Instant.now().toEpochMilli()
 
-        val printings: MutableList<Printing> = mutableListOf()
+        val castings: MutableList<Casting> = mutableListOf()
         for (i in 1..total) {
             val taskName = codeGenerateRepository.nextCode(type)
             val task = Task(
@@ -52,28 +53,43 @@ class PrintingHelperTest : SpringBaseTest() {
                 updateTime = Instant.now(),
             )
 
-            val printing = printingHelper.addTaskToPrintingQueue(task)
-            printings.add(printing)
+            val casting = castingHelper.addToCastingQueue(task)
+            castings.add(casting)
         }
-        assertEquals(printings.size, total)
+        assertEquals(castings.size, total)
     }
 
     @Test
-    fun testPollOneFromPrintingQueue() {
-        val printing = printingHelper.pollOneFromPrintingQueue()
-        println(printing)
+    fun testGetPinned() {
+        val casting = castingHelper.getPinned(TaskType.STYLED_IMAGE)
+        println(casting)
     }
 
     @Test
-    fun testGetPrinting() {
-        val printing = printingHelper.getPrinting("printing:Test_No.100022")
-        println(printing)
+    fun testOperatePin() {
+        val castingName = "casting:Test_No.100032"
+        val result = castingHelper.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.PIN)
+        assertTrue(result)
     }
 
     @Test
-    fun testUpdatePrintingStatus() {
-        printingHelper.updatePrintingStatus("printing:Test_No.100022", PrintingStatus.QUEUING)
-        printingHelper.updatePrintingStatus("printing:Test_No.100023", PrintingStatus.PRINTING)
-        printingHelper.updatePrintingStatus("printing:Test_No.100024", PrintingStatus.COMPLETED)
+    fun testOperateUnPin() {
+        val castingName = "casting:Test_No.100032"
+        val result = castingHelper.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.UNPIN)
+        assertTrue(result)
+    }
+
+    @Test
+    fun testOperateDelete() {
+        val castingName = "casting:Test_No.100032"
+        val result = castingHelper.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.DELETE)
+        assertTrue(result)
+    }
+
+    @Test
+    fun testOperatePromote() {
+        val castingName = "casting:Test_No.100035"
+        val result = castingHelper.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.PROMOTE)
+        assertTrue(result)
     }
 }
