@@ -15,13 +15,13 @@ import com.kling.waic.helper.CastingHelper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.utils.FileUtils
+import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import redis.clients.jedis.Jedis
 import java.time.Instant
-import java.util.*
 
 @Service
 class VideoTaskService(
@@ -52,7 +52,7 @@ class VideoTaskService(
         log.info("Create video task with effectScene: $effectScene, taskId: ${result.data?.taskId ?: "null"}")
 
         val task = Task(
-            id = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
+            id = IdUtils.generateId(),
             name = taskName,
             taskIds = listOf(result.data!!.taskId),
             status = TaskStatus.SUBMITTED,

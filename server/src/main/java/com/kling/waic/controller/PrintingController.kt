@@ -7,6 +7,7 @@ import com.kling.waic.entity.PrintingUpdateInput
 import com.kling.waic.entity.Result
 import com.kling.waic.helper.PrintingHelper
 import com.kling.waic.utils.Slf4j.Companion.log
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -42,10 +43,10 @@ class PrintingController(
         return Result(printing)
     }
 
-//    @GetMapping("{name}")
-//    @Authorization(AuthorizationType.MANAGEMENT)
-//    fun getPrinting(@PathVariable name: String): Result<Printing> {
-//        // TODO:
-//        return Result(null)
-//    }
+    @GetMapping("{name}")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun getPrinting(@PathVariable name: String): Result<Printing> {
+        val printing = printingHelper.getPrinting(name)
+        return Result(printing)
+    }
 }
