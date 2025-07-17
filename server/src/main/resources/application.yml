@@ -18,8 +18,8 @@ server:
   port: 8538
 
 jedis:
-  host: 172.28.199.165
-  port: 6379
+  host: ${REDIS_HOST_WAIC:127.0.0.1}
+  port: ${REDIS_PORT_WAIC:6379}
   password: ${REDIS_PASS_WAIC}
 
 waic:
