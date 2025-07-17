@@ -3,22 +3,23 @@ package com.kling.waic.helper
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.PrintingStatus
 import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskType
+import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Component
 import redis.clients.jedis.Jedis
-import java.util.UUID
 
 @Component
 class PrintingHelper(
     private val jedis: Jedis,
 ) {
-    private val printingQueue = "printing_queue_image"
+    private val printingQueue = "printing_queue_${TaskType.STYLED_IMAGE}"
 
     fun addTaskToPrintingQueue(task: Task): Printing {
         val printingName = "printing:${task.name}"
         val printing = Printing(
-            id = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
+            id = IdUtils.generateId(),
             name = printingName,
             task = task,
             status = PrintingStatus.SUBMITTED
@@ -44,14 +45,18 @@ class PrintingHelper(
         return ObjectMapperUtils.fromJSON(value, Printing::class.java)
     }
 
-    fun updatePrintingStatus(name: String, status: PrintingStatus): Printing {
+    fun getPrinting(name: String): Printing {
         val value = jedis.get(name)
             ?: throw IllegalArgumentException("$name is not exists")
         log.info("Get printing value from Redis: $name, value: $value")
+        return ObjectMapperUtils.fromJSON(value, Printing::class.java)!!
+    }
 
-        val printing = ObjectMapperUtils.fromJSON(value, Printing::class.java)!!
+    fun updatePrintingStatus(name: String, status: PrintingStatus): Printing {
+        val printing = getPrinting(name)
         val newPrinting = printing.copy(status= status)
         val newValue = ObjectMapperUtils.toJSON(newPrinting)
+        jedis.set(name, newValue)
 
         log.info("Updated printing: $name, newValue: $newValue")
         return newPrinting

@@ -18,6 +18,7 @@ import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.helper.PrintingHelper
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.utils.FileUtils
+import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import redis.clients.jedis.Jedis
 import java.time.Instant
-import java.util.*
 
 @Service
 class ImageTaskService(
@@ -101,7 +101,7 @@ class ImageTaskService(
         }
 
         val task = Task(
-            id = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
+            id = IdUtils.generateId(),
             name = taskName,
             taskIds = taskIds,
             status = TaskStatus.SUBMITTED,

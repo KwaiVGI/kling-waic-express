@@ -5,12 +5,12 @@ import com.kling.waic.entity.CastingListResult
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskOperateAction
 import com.kling.waic.entity.TaskType
+import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Component
 import redis.clients.jedis.Jedis
 import java.time.Instant
-import java.util.*
 
 @Component
 class CastingHelper(
@@ -25,7 +25,7 @@ class CastingHelper(
         val score = Instant.now().toEpochMilli().toDouble()
         val castingName = "casting:${task.name}"
         val casting = Casting(
-            id = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
+            id = IdUtils.generateId(),
             name = castingName,
             task = task,
             score = score,
