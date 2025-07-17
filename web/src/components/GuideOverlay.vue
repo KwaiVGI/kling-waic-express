@@ -157,7 +157,7 @@ onMounted(() => {
   border-radius: 8px;
   z-index: 2001;
   box-shadow: 0 0 0 2000px #000000cc;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  //   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .tooltip-container {
   position: absolute;

@@ -37,19 +37,26 @@ class CastingController(
         return Result(castings)
     }
 
+    @GetMapping("{type}/count")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun getCount(@PathVariable type: TaskType,
+                @RequestParam(required = false) keyword: String = "",
+                @RequestParam(required = false) score: Double? = null,
+                @RequestParam pageSize: Int = 10,
+                @RequestParam pageNum: Int = 1): Result<Int> {
+        val result = castingHelper.count(type, keyword, score, pageSize, pageNum)
+        return Result(result)
+    }
+
     @GetMapping("{type}/list")
     @Authorization(AuthorizationType.MANAGEMENT)
     fun getList(@PathVariable type: TaskType,
-                @RequestParam keyword: String,
-                @RequestParam score: Double? = null,
-                @RequestParam count: Int): Result<CastingListResult> {
-        val castingsPair = castingHelper.list(type, keyword, score, count)
-        return Result(
-            CastingListResult(
-                hasMore = castingsPair.first,
-                castings = castingsPair.second
-            )
-        )
+                @RequestParam(required = false) keyword: String = "",
+                @RequestParam(required = false) score: Double? = null,
+                @RequestParam pageSize: Int = 10,
+                @RequestParam pageNum: Int = 1): Result<CastingListResult> {
+        val result = castingHelper.list(type, keyword, score, pageSize, pageNum)
+        return Result(result)
     }
 
     @PostMapping("{type}/operate")

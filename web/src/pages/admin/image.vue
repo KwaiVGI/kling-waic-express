@@ -37,9 +37,6 @@
         >
           取消固定
         </button>
-        <a href="/screen/image" target="_blank" class="preview-button">
-          预览
-        </a>
       </div>
     </div>
 
@@ -136,7 +133,7 @@ const route = useRoute();
 const images = ref<CastingImage[]>([]);
 const loading = ref(false);
 const currentPage = ref(1);
-const pageSize = ref(24);
+const pageSize = ref(20);
 const totalPages = ref(1);
 const totalImages = ref(0);
 const searchQuery = ref("");
@@ -175,7 +172,7 @@ const loadImages = async () => {
       ...img,
       isPromoted: img.id === promotedImageId.value,
     }));
-    totalPages.value = result.totalPages;
+    totalPages.value = Math.ceil(result.total / pageSize.value);
     totalImages.value = result.total;
 
     // 查找固定图片
@@ -276,7 +273,7 @@ watch(searchQuery, (newVal) => {
   align-items: center;
   gap: 8px;
   flex: 1;
-  min-width: 250px;
+  max-width: 250px;
 }
 
 .search-input {

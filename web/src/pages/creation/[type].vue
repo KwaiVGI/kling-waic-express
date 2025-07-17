@@ -79,7 +79,7 @@
           class="w-320px h-254px overflow-hidden rounded-12px flex items-center justify-center relative"
         >
           <div
-            class="blur-20px absolute left-0 top-0 w-full h-full bg-cover bg-center"
+            class="blur-bg blur-20px absolute left-0 top-0 w-full h-full bg-cover bg-center select"
             :style="{ backgroundImage: `url(${uploadedImage})` }"
           ></div>
           <img
@@ -255,7 +255,7 @@
       <div class="mx-24px h-254px relative rounded-12px overflow-hidden">
         <div
           v-if="type === 'image'"
-          class="blur-20px absolute left-0 top-0 w-full h-full bg-cover bg-center"
+          class="blur-bg blur-20px absolute left-0 top-0 w-full h-full bg-cover bg-center"
           :style="{ backgroundImage: `url(${generatedResult})` }"
         ></div>
         <img
@@ -484,6 +484,11 @@ onMounted(() => {
   background-size: cover;
 
   font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  // TODO: 行内的class不生效，所以
+  .blur-bg {
+    filter: blur(20px);
+    -webkit-filter: blur(20px);
+  }
   .upload-area {
     background: linear-gradient(147.61deg, #313a47 0%, #171a1f 100%);
   }
