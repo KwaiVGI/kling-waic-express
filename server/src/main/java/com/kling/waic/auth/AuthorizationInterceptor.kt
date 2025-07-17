@@ -20,8 +20,9 @@ open class AuthorizationInterceptor (
         if (handler !is HandlerMethod) {
             log.info("AuthorizationInterceptor preHandle called for request: ${request.requestURI}," +
                     " method: ${request.method}, handler class: ${handler.javaClass}")
+            return true
         }
-        val annotation = (handler as HandlerMethod).getMethodAnnotation<Authorization>(Authorization::class.java)
+        val annotation = handler.getMethodAnnotation(Authorization::class.java)
         if (annotation == null) {
             return true
         }
