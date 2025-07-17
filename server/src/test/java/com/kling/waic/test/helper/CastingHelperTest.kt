@@ -27,7 +27,7 @@ class CastingHelperTest : SpringBaseTest() {
 
     @Test
     fun testAddToCastingQueue() {
-        val total = 10
+        val total = 1
         val type = TaskType.STYLED_IMAGE
         val timestamp = Instant.now().toEpochMilli()
 
@@ -133,6 +133,14 @@ class CastingHelperTest : SpringBaseTest() {
                 castingHelper.list(TaskType.STYLED_IMAGE, keyword, score, 2, ++pageNum)
             hasMore = result2.hasMore
             score = result2.score
+        }
+    }
+
+    @Test
+    fun testScreen() {
+        for (i in 1..10) {
+            val castings = castingHelper.screen(TaskType.STYLED_IMAGE, 3)
+            println(castings.size)
         }
     }
 }

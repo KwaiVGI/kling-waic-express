@@ -287,7 +287,6 @@ class CastingHelper(
         return castings
     }
 
-    // todo: check the logic
     fun screen(type: TaskType, num: Long): List<Casting> {
         val castingQueue = "${castingQueuePrefix}${type}"
         val screenLatestCursorKey = "${screenLatestCursorPrefix}${type}"
@@ -316,7 +315,7 @@ class CastingHelper(
 
         if (latestToTake > 0) {
             // Get latest items using ZREVRANGE (highest score first)
-            val latestCastingNames = jedis.zrevrange(castingQueue, latestCursor, latestCursor + latestToTake - 1)
+            val latestCastingNames = jedis.zrange(castingQueue, latestCursor, latestCursor + latestToTake - 1)
             val latestCastings = getCastingDetails(latestCastingNames)
             resultCastings.addAll(latestCastings)
             newLatestCursor = latestCursor + latestToTake
@@ -328,7 +327,7 @@ class CastingHelper(
         // Strategy 2: If still need more items, get earliest items (from lowest score, ascending order)
         val remainingNeeded = num - resultCastings.size
         if (remainingNeeded > 0) {
-            val availableEarliest = maxOf(0L, totalCount - earliestCursor)
+            val availableEarliest = maxOf(0L, newLatestCursor - earliestCursor)
             val earliestToTake = minOf(remainingNeeded, availableEarliest)
 
             if (earliestToTake > 0) {
@@ -343,27 +342,9 @@ class CastingHelper(
             }
         }
 
-        // Handle cursor reset and collision logic
-        // Reset cursors when they reach the end
-        if (newLatestCursor >= totalCount) {
-            log.info("Latest cursor reached end, resetting to 0")
-            newLatestCursor = 0L
-        }
-
-        if (newEarliestCursor >= totalCount) {
+        // If newEarliestCursor catch up with newLatestCursor, reset it to 0
+        if (newEarliestCursor >= newLatestCursor) {
             log.info("Earliest cursor reached end, resetting to 0")
-            newEarliestCursor = 0L
-        }
-
-        // Handle cursor collision: when earliest cursor catches up with latest cursor
-        // Latest cursor works on ZREVRANGE (0=highest score, totalCount-1=lowest score)
-        // Earliest cursor works on ZRANGE (0=lowest score, totalCount-1=highest score)
-        // Collision happens when: earliestCursor >= (totalCount - latestCursor)
-        // This means earliest cursor is accessing the same items as latest cursor
-        val latestAccessedFromBottom = totalCount - newLatestCursor
-        if (newEarliestCursor >= latestAccessedFromBottom && newLatestCursor > 0) {
-            log.info("Cursor collision detected: earliest cursor ({}) caught up with latest cursor range (bottom index: {}), resetting earliest cursor to 0",
-                    newEarliestCursor, latestAccessedFromBottom)
             newEarliestCursor = 0L
         }
 
@@ -371,15 +352,16 @@ class CastingHelper(
         jedis.set(screenLatestCursorKey, newLatestCursor.toString())
         jedis.set(screenEarliestCursorKey, newEarliestCursor.toString())
 
-        // Sort final results by score descending for consistent display order
-        val sortedResults = resultCastings.sortedByDescending { it.score }
+        // If num > resultCastings.size, add remaining screens
+        if (num > resultCastings.size) {
+            resultCastings.addAll(screen(type, num - resultCastings.size))
+        }
 
         log.info("Screen display completed: type={}, requested={}, returned={}, " +
                 "latestCursor: {}→{}, earliestCursor: {}→{}",
-                type, num, sortedResults.size, latestCursor, newLatestCursor,
+                type, num, resultCastings.size, latestCursor, newLatestCursor,
                 earliestCursor, newEarliestCursor)
-
-        return sortedResults
+        return resultCastings
     }
 
 
