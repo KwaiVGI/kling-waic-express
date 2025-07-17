@@ -14,7 +14,7 @@ public:
     explicit HttpClient(const std::string& host,
                        std::size_t pool_size = 8);
 
-    void setBearer(const std::string& token);
+    void setToken(const std::string& token);
     void setTimeout(long connMS, long readMS);
 
     json get(const std::string& path,

@@ -15,7 +15,7 @@ HttpClient::HttpClient(const std::string& host, std::size_t pool_size)
     pool_ = std::make_unique<ConnectPool>(pool_size, host_, connTimeout_, readTimeout_);
 }
 
-void HttpClient::setBearer(const std::string& token) { token_ = token; }
+void HttpClient::setToken(const std::string& token) { token_ = token; }
 void HttpClient::setTimeout(long c, long r) { connTimeout_ = c; readTimeout_ = r; }
 
 template <typename Conn>
@@ -27,7 +27,7 @@ static json doRequest(Conn& conn,
                       bool isPost) {
 
     httplib::Headers hdrs(headers.begin(), headers.end());
-    if (!token.empty()) hdrs.emplace("Authorization", "Bearer " + token);
+    if (!token.empty()) hdrs.emplace("Authorization", "Token " + token);
     hdrs.emplace("Content-Type", "application/json");
 
     httplib::Result res;
