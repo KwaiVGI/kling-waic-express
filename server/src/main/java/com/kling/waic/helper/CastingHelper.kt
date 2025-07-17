@@ -125,7 +125,7 @@ class CastingHelper(
 
         return CastingListResult(
             total = totalCount,
-            score = score ?: result.second.first().score,
+            score = score ?: result.second.firstOrNull()?.score,
             hasMore = result.first,
             castings = result.second
         )
