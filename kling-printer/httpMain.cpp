@@ -21,8 +21,5 @@ private:
 
 int main() {
     OutputRedirector redirect("log.txt");
-    HttpClient* client = new HttpClient("52.81.18.108:10238/api/tokens/latest/printings", 5);
-    client->setToken("wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9");
-    json result = client->post("fetch", {}, {});
-    std::cout << "[POST]" << result;
+    HttpClient::instance().fetchImageQueue();
 }

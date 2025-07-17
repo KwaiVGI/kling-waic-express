@@ -10,13 +10,9 @@ using namespace httplib;
 // };
 
 // ---------- ApiClient 实现 ----------
-HttpClient::HttpClient(const std::string& host, std::size_t pool_size)
-    : host_(host) {
-    pool_ = std::make_unique<ConnectPool>(pool_size, host_, connTimeout_, readTimeout_);
+HttpClient::HttpClient() {
+    pool_ = std::make_unique<ConnectPool>(5, host_, connTimeout_, readTimeout_);
 }
-
-void HttpClient::setToken(const std::string& token) { token_ = token; }
-void HttpClient::setTimeout(long c, long r) { connTimeout_ = c; readTimeout_ = r; }
 
 template <typename Conn>
 static json doRequest(Conn& conn,
@@ -25,7 +21,7 @@ static json doRequest(Conn& conn,
                       const json& body,
                       const std::vector<std::pair<std::string, std::string>>& headers,
                       bool isPost) {
-
+    std::cout << "doRequest" << std::endl;
     httplib::Headers hdrs(headers.begin(), headers.end());
     if (!token.empty()) hdrs.emplace("Authorization", "Token " + token);
     hdrs.emplace("Content-Type", "application/json");
@@ -36,14 +32,19 @@ static json doRequest(Conn& conn,
     } else {
         res = conn->Get(path.c_str(), hdrs);
     }
-
-    if (!res) throw std::runtime_error("transport error");
-    if (res->status != 200) throw std::runtime_error("HTTP " + std::to_string(res->status));
+    if (!res) {
+        std::cout << "res error " << res.error() << std::endl;
+        throw std::runtime_error("transport error");
+    }
+    if (res->status != 200) {
+        throw std::runtime_error("HTTP " + std::to_string(res->status));
+    }
+    std::cout << "status code:" << res->status << std::endl; 
     return json::parse(res->body);
 }
 
 json HttpClient::get(const std::string& path,
-                    const std::vector<std::pair<std::string, std::string>>& headers) {
+                    const std::vector<std::pair<std::string, std::string>>& headers = {}) {
     auto conn = pool_->acquire();
     auto ret = doRequest(conn->cli, token_, path, json(), headers, false);
     pool_->release(std::move(conn));
@@ -52,21 +53,24 @@ json HttpClient::get(const std::string& path,
 
 json HttpClient::post(const std::string& path,
                      const json& body,
-                     const std::vector<std::pair<std::string, std::string>>& headers) {
+                     const std::vector<std::pair<std::string, std::string>>& headers = {}) {
+    std::cout << "doPost" << std::endl;
     auto conn = pool_->acquire();
     auto ret = doRequest(conn->cli, token_, path, body, headers, true);
+    std::cout << "endRequest" << std::endl;
     pool_->release(std::move(conn));
     return ret;
 }
 
-// 更新图片的状态
-// bool HttpClient::updateImageStatus(const std::string& status) {
+bool HttpClient::fetchImageQueue() {
+    json ret = post("/api/printings/fetch", {});
+    return true;
+}
 
-// }
+bool HttpClient::downloadImage(const std::string& imgUrl) {
+    return true;
+}
 
-// bool HttpClient::DownloadImage(const std::string& imgUrl) {
-
-// }
-// bool HttpClient::fetchImageUrl() {
-
-// }
+bool HttpClient::updateImageStatus() {
+    return true;
+}
