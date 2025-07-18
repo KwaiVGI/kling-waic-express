@@ -46,13 +46,9 @@ class KlingOpenAPIClient(
             .post(body.toRequestBody(CONTENT_TYPE))
             .build()
 
-        log.info("Creating image task - URL: {}, Request: {}", url, body)
-        
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                log.info("Create image task response - Status: {}, Body: {}", resp.code, responseBody)
-                
                 return@withContext responseBody
                     ?.let { KlingOpenAPIResult.ok<CreateImageTaskResponse>(it) }
                     ?: throw IOException("Response body is empty")
@@ -80,8 +76,6 @@ class KlingOpenAPIClient(
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                log.info("Query image task response - URL: {}, Status: {}, Body: {}", url, resp.code, responseBody)
-                
                 return@withContext responseBody
                     ?.let { KlingOpenAPIResult.ok<QueryImageTaskResponse>(it) }
                     ?: throw IOException("Response body is empty")
@@ -107,13 +101,9 @@ class KlingOpenAPIClient(
             .post(body.toRequestBody(CONTENT_TYPE))
             .build()
 
-        log.info("Creating video task - URL: {}, Request: {}", url, body)
-        
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                log.info("Create video task response - Status: {}, Body: {}", resp.code, responseBody)
-                
                 return@withContext responseBody
                     ?.let { KlingOpenAPIResult.ok<CreateVideoTaskResponse>(it) }
                     ?: throw IOException("Response body is empty")
@@ -141,8 +131,6 @@ class KlingOpenAPIClient(
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                log.info("Query video task response - URL: {}, Status: {}, Body: {}", url, resp.code, responseBody)
-                
                 return@withContext responseBody
                     ?.let { KlingOpenAPIResult.ok<QueryVideoTaskResponse>(it) }
                     ?: throw IOException("Response body is empty")
