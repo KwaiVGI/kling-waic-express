@@ -17,7 +17,7 @@ class PrintingHelper(
 ) {
     private val printingQueue = "printing_queue_${TaskType.STYLED_IMAGE}"
 
-    fun addTaskToPrintingQueue(task: Task, fromConsole: Boolean): Printing {
+    fun addTaskToPrintingQueue(task: Task, fromConsole: Boolean = false): Printing {
         val printingName = "printing:${task.name}"
 
         if (!fromConsole) {
