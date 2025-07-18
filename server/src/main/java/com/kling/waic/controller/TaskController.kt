@@ -68,7 +68,7 @@ class TaskController (
     }
 
     @PostMapping("{type}/{name}/printFromConsole")
-    @Authorization(AuthorizationType.CREATE_TASK)
+    @Authorization(AuthorizationType.MANAGEMENT)
     fun printTaskFromConsole(
         @PathVariable type: TaskType,
         @PathVariable name: String): Result<Printing> {
