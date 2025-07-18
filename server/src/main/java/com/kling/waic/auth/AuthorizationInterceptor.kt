@@ -48,7 +48,8 @@ open class AuthorizationInterceptor (
         // Check token
         val token = authHeader.substring(6) // Remove "Token " prefix
         if (!validateToken(token, annotation.type)) {
-            log.warn("Authorization failed - invalid token: $token for uri: ${request.requestURI}")
+            log.warn("Authorization failed - invalid token: $token with type: ${annotation.type} " +
+                    "for uri: ${request.requestURI}")
             response.status = HttpServletResponse.SC_UNAUTHORIZED
             response.writer.write("Invalid token")
             return false

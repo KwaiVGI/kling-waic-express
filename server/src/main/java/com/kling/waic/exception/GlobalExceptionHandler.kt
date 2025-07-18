@@ -2,6 +2,7 @@ package com.kling.waic.exception
 
 import com.kling.waic.entity.Result
 import com.kling.waic.entity.ResultStatus
+import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import java.lang.Exception
@@ -11,6 +12,7 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(value = [Exception::class])
     fun handleRuntimeException(ex: Exception): Result<Any> {
+        log.error("handleRuntimeException", ex)
 
         if (ex is WAICException) {
             return Result(

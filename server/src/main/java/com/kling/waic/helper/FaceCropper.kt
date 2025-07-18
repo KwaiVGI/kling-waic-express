@@ -99,9 +99,14 @@ class FaceCropper(
             throw IllegalArgumentException("Invalid BufferedImage: width=${bufferedImage.width}, height=${bufferedImage.height}")
         }
 
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        val writeSuccess = ImageIO.write(bufferedImage, "jpg", byteArrayOutputStream)
+        // Convert to a format compatible with JPG
+        val convertedImage = BufferedImage(bufferedImage.width, bufferedImage.height, BufferedImage.TYPE_3BYTE_BGR)
+        val g = convertedImage.createGraphics()
+        g.drawImage(bufferedImage, 0, 0, null)
+        g.dispose()
 
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        val writeSuccess = ImageIO.write(convertedImage, "jpg", byteArrayOutputStream)
         if (!writeSuccess) {
             throw IllegalStateException("Failed to convert BufferedImage to JPG bytes")
         }

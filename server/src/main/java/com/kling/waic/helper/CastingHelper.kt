@@ -359,7 +359,7 @@ class CastingHelper(
 
         // If newEarliestCursor catch up with newLatestCursor, reset it to 0
         if (newEarliestCursor >= newLatestCursor) {
-            log.info("Earliest cursor reached end, resetting to 0")
+            log.debug("Earliest cursor reached end, resetting to 0")
             newEarliestCursor = 0L
         }
 
