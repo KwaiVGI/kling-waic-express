@@ -96,7 +96,7 @@ class VideoTaskService(
         log.info("Task ${task.name} convertedStatus: $convertedStatus")
 
         if (convertedStatus == task.status) {
-            log.info("Task ${task.name} status has not changed, returning existing task")
+            log.debug("Task ${task.name} status has not changed, returning existing task")
             return task // No status change, return existing task
         }
 

@@ -57,9 +57,9 @@ class ImageProcessHelper(
             )
         }
 
-        log.info("Creating Sudoku image for task: ${task.name} at $outputPath")
-        createKlingWAICSudokuImage(task, images, outputPath)
-        log.info("Created image ${images.size} from $outputPath")
+        val sudokuImage = createKlingWAICSudokuImage(task, images, outputPath)
+        log.info("Created Sudoku image for task: ${task.name} at $outputPath, " +
+                "imageResolution: {} x {}", sudokuImage.width, sudokuImage.height)
     }
 
     fun readImageWithProxy(url: String): BufferedImage? {
@@ -86,7 +86,7 @@ class ImageProcessHelper(
         task: Task,
         images: List<BufferedImage>,
         outputPath: String
-    ) {
+    ): BufferedImage {
         // Get actual image dimensions (assuming all images have the same size)
         val actualImageWidth = images[0].width
         val actualImageHeight = images[0].height
@@ -165,6 +165,6 @@ class ImageProcessHelper(
         
         g2d.dispose()
         ImageIO.write(canvas, "JPG", File(outputPath))
-        log.info("Saved Sudoku image to $outputPath with scale factor: $scaleFactor (${actualImageWidth}x${actualImageHeight} -> ${cellWidth}x${cellHeight})")
+        return canvas
     }
 }
