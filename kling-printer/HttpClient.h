@@ -5,9 +5,10 @@
 #include "include/httplib.h"
 #include "include/nlohmann/json.hpp"
 #include <string>
+#include <QImage>
 using namespace httplib;
 using json = nlohmann::json;
-
+namespace {
 class HttpClient {
 public:
     // host 形如 "api.example.com"
@@ -23,7 +24,7 @@ public:
 
     bool updateImageStatus();
 
-    bool downloadImage(const std::string& imgUrl);
+    bool downloadImage(const std::string& imgUrl, const std::string& downloadFile);
 
     bool fetchImageQueue();
 
@@ -34,11 +35,15 @@ private:
     std::string token_ = "wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9";
     long connTimeout_ = 5000, readTimeout_ = 5000;
     std::unique_ptr<ConnectPool> pool_;
-    json get(const std::string& path,
+    static const std::string DOWNLOAD_PATH;
+    json getJson(const std::string& path,
              const std::vector<std::pair<std::string, std::string>>& headers = {});
 
-    json post(const std::string& path,
+    json postJson(const std::string& path,
               const json& body,
               const std::vector<std::pair<std::string, std::string>>& headers = {});
+    QImage getImage(const std::string& path,
+              const std::vector<std::pair<std::string, std::string>>& headers = {});
 };
+}
 #endif

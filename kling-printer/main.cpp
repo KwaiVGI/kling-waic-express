@@ -70,6 +70,8 @@ private:
 };
 
 
+
+
 int main() {
     SetConsoleOutputCP(65001);
     // 开启一个控制台窗口，printf重定向至此
@@ -81,38 +83,47 @@ int main() {
     HGLOBAL hDevMode = NULL;
     std::vector<PrinterInfo> printerInfoList;
     // printerInfoList.push_back({L"Canon SELPHY CP1500 (test1)", 89, 119 , 300, true});
-    // printerInfoList.push_back({L"Canon SELPHY CP1500", 100, 148 , 300, true});
-    printerInfoList.push_back({L"Canon SELPHY CP1500 (test2)", 100, 148 , 300, true});
+    printerInfoList.push_back({L"Canon SELPHY CP1500", 100, 148 , 300, false});
+    printerInfoList.push_back({L"Canon SELPHY CP1500 (test2)", 100, 148 , 300, false});
     PrinterManager* printerManager = new PrinterManager(printerInfoList);
     bool running = true;
     printf("Please input image path to print. press Enter for end. input empty line for quit.\n");
     while (running) {
+        std::vector<string> inputs;
+        // if(HttpClient::instance().fetchImageQueue()) {
+        //     // 增加逻辑
+        //     inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
+        // }
         std::string input;
-        if(!std::getline(std::cin, input)) {
-            std::cout << "input stream closed" << std::endl;
-            if (std::cin.eof()) {
-                std::cout << "原因：EOF (End of File)\n";
-            }
-            if (std::cin.fail()) {
-                std::cout << "原因：failbit set (读取失败)\n";
-            }
-            if (std::cin.bad()) {
-                std::cout << "原因：badbit set (致命错误)\n";
-            }
-            running = false;
-            continue;
-        };
-        
-        if (input.empty()) {
-            running =false;
-            continue;
-        }
-        
-        if (!fileExists(input)) {
-            printf("Cannot find this file.\n");
-        } else {
+        // if(!std::getline(std::cin, input)) {
+        //     std::cout << "input stream closed" << std::endl;
+        //     if (std::cin.eof()) {
+        //         std::cout << "原因：EOF (End of File)\n";
+        //     }
+        //     if (std::cin.fail()) {
+        //         std::cout << "原因：failbit set (读取失败)\n";
+        //     }
+        //     if (std::cin.bad()) {
+        //         std::cout << "原因：badbit set (致命错误)\n";
+        //     }
+        //     running = false;
+        //     continue;
+        // };
+
+        for (auto input : inputs) {
             printerManager->addImage(input);
         }
+        
+        // if (input.empty()) {
+        //     running =false;
+        //     continue;
+        // }
+        
+        // if (!fileExists(input)) {
+        //     printf("Cannot find this file.\n");
+        // } else {
+        //     printerManager->addImage(input);
+        // }
         Sleep(10);
     }
     std::cout << "delete" << std::endl;

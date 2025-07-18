@@ -9,7 +9,6 @@
 #include <map>
 #include <QFile>
 #include <QString>
-#include <windows.h>
 #include <codecvt>
 #pragma comment(lib, "Gdiplus.lib")
 

@@ -5,9 +5,14 @@
 #include <chrono>
 
 enum class PrintingStatus {
+    SUBMITTED,
     QUEUING,
     PRINTING,
     COMPLETED
+};
+
+struct PrintingUpdateInput {
+    PrintingStatus status;
 };
 
 struct Printing {
@@ -21,25 +26,10 @@ struct PrintingUpdateInput {
     PrintingStatus status;
 };
 
-enum class TaskStatus {
-    SUBMITTED,
-    PROCESSING,
-    SUCCEED,
-    FAILED
-};
-
-enum class TaskOutputType {
-    IMAGE,
-    VIDEO
-};
-enum class TaskType : long long {
-    STYLED_IMAGE = 100000,
-    VIDEO_EFFECT = 500000
-};
-
-struct TaskOutput {
-    TaskOutputType type;
-    std::string url;
+struct ImgInfo {
+    std::string name;
+    std::string path;
+    PrintingStatus status;
 };
 
 struct Task {

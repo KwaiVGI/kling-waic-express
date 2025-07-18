@@ -24,18 +24,20 @@ set(OPENSSL_INCLUDE_DIR "D:\\vcpkg\\packages\\openssl_x64-windows\\include")
 
 find_package(Qt6 COMPONENTS 
     Core
+    Gui
     REQUIRED
 )
 find_package(OpenSSL REQUIRED)
 
 add_executable(${PROJECT_NAME} WIN32
-    httpMain.cpp Printer.cpp Printer.h PrinterManager.h PrinterManager.cpp
+    main.cpp Printer.cpp Printer.h PrinterManager.h PrinterManager.cpp
     ConnectPool.h ConnectPool.cpp HttpClient.h HttpClient.cpp ResultType.h
     # 其他源文件...
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-    Qt6::Core 
+    Qt6::Core
+    Qt6::Gui
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
     OpenSSL::SSL
