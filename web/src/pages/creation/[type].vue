@@ -2,7 +2,7 @@
   <div
     ref="containerRef"
     id="h5App"
-    class="creation-container h-100vh relative overflow-hidden flex flex-col items-center"
+    class="creation-container !h-100vh relative overflow-hidden flex flex-col items-center"
   >
     <div
       ref="step1Ref"
@@ -436,7 +436,7 @@ const handleGenerate = async () => {
   if (isGuided.value || type.value !== "image") {
     return;
   }
-  await wait(0);
+  await wait(200);
   // 启动引导
   startGuide([
     {
@@ -452,6 +452,13 @@ const handleGenerate = async () => {
       position: "top",
     },
   ]);
+  history.pushState(
+    null,
+    "",
+    `?token=${localStorage.getItem(
+      STORAGE_TOKEN_KEY
+    )}&result=${encodeURIComponent(generatedResult.value)}`
+  );
 };
 const onFinishGuide = () => {
   isGuided.value = true;

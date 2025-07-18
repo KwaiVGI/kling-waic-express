@@ -22,8 +22,8 @@ export default {
       appSelector: "#h5App",
       viewportWidth: 414,
       maxDisplayWidth: 600,
-      border: true,
       rootContainingBlockSelectorList,
+      selectorBlackList: [".pc-modal-mask"],
     },
   },
 };

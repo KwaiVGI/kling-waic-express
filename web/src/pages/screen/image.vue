@@ -121,8 +121,9 @@ onUnmounted(() => {
 .casting-image {
   height: 100%;
   width: 100%;
-  background-size: 100% auto;
+  background-size: auto 100%;
   background-position: center;
+  background-repeat: no-repeat;
   position: relative;
   display: flex;
   flex-direction: column;

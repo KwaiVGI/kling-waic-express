@@ -2,6 +2,7 @@ import type { TaskType } from "./type";
 import {
   getCastings,
   getPined,
+  getScreenList,
   operateCasting,
   TaskOperateAction,
 } from "./admin";
@@ -11,7 +12,7 @@ export interface CastingImage {
   id: string;
   name: string;
   url: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 // 分页结果类型
@@ -38,10 +39,6 @@ const mockImages: CastingImage[] = Array.from({ length: 50 }, (_, i) => ({
   isActive: i === 0, // 默认第一张图片为活动状态
 }));
 
-// 当前固定图片ID
-let pinnedImageId: string | null = mockImages[2].id;
-// 当前活动图片索引
-let activeIndex = 0;
 let lastScore = null;
 
 export const castingService = {
@@ -51,21 +48,28 @@ export const castingService = {
     num: number = 1
   ): Promise<CastingImage[]> {
     // 模拟网络延迟
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const res = await castingService.getPinedImage();
 
     // 如果有固定图片，返回固定图片
-    if (pinnedImageId) {
-      const pinnedImage = mockImages.find((img) => img.id === pinnedImageId);
-      return pinnedImage ? [pinnedImage] : [mockImages[activeIndex]];
+    if (res) {
+      return [
+        {
+          id: res.name,
+          name: res.name,
+          url: res.task.outputs.url,
+        },
+      ];
     }
+    const list = await getScreenList({
+      type,
+      num,
+    });
 
-    // 轮播模式，返回当前活动图片
-    const result = [mockImages[activeIndex]];
-
-    // 更新活动索引（模拟轮播）
-    activeIndex = (activeIndex + 1) % mockImages.length;
-
-    return result;
+    return list.map((item) => ({
+      id: item.name,
+      name: item.name,
+      url: item.task.outputs.url,
+    }));
   },
 
   // 获取分页图片列表
@@ -80,10 +84,6 @@ export const castingService = {
     page: number;
     limit: number;
   }): Promise<PaginatedResult<CastingImage>> {
-    // // 分页
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const paginated = mockImages.slice(start, end);
     const { castings, hasMore, score, total } = await getCastings({
       type,
       keyword,

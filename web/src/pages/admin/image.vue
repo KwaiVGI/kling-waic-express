@@ -140,6 +140,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+import { confirmDelete } from "@/utils/confirm";
 
 const route = useRoute();
 // 数据状态
@@ -222,8 +223,8 @@ const promoteImage = async (imageId: string) => {
 
 const getPinedImage = async () => {
   try {
-    const { name, task } = await castingService.getPinedImage("STYLED_IMAGE");
-    pinnedImageId.value = name;
+    const res = await castingService.getPinedImage("STYLED_IMAGE");
+    pinnedImageId.value = res?.name;
   } catch (error) {
     console.error("获取固定图片失败:", error);
     pinnedImageId.value = null;
@@ -255,10 +256,15 @@ const unpinImage = async () => {
 // 删除
 const deleteImage = async (imageId: string) => {
   try {
+    const confirmed = await confirmDelete({
+      title: "删除确认",
+      message: "确定要删除吗？删除后不会在大屏幕上显示。",
+    });
+    if (!confirmed) return;
     await castingService.deleteImage("STYLED_IMAGE", imageId);
     loadImages();
   } catch (error) {
-    console.error("取消固定失败:", error);
+    console.error("删除失败:", error);
   }
 };
 

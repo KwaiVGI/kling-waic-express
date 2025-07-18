@@ -1,28 +1,5 @@
 <template>
   <div class="video-wall-container">
-    <div class="configuration-bar">
-      <div class="config-item">
-        <label>网格尺寸:</label>
-        <input
-          type="number"
-          v-model.number="gridSize"
-          min="5"
-          max="20"
-          @change="updateGridSize"
-        />
-      </div>
-      <div class="config-item">
-        <label>轮询间隔(秒):</label>
-        <input
-          type="number"
-          v-model.number="pollIntervalSeconds"
-          min="1"
-          max="60"
-        />
-      </div>
-      <button @click="applyConfig" class="apply-btn">应用配置</button>
-    </div>
-
     <div class="video-grid">
       <div
         v-for="(video, index) in displayedVideos"
@@ -46,16 +23,17 @@
       </div>
     </div>
 
-    <div class="status-bar">
+    <!-- <div class="status-bar">
       <span>最后更新: {{ lastUpdateTime }}</span>
       <span>网格尺寸: {{ gridSize }}×{{ gridSize }}</span>
       <span>轮询间隔: {{ pollIntervalSeconds }}秒</span>
       <span>新视频待替换: {{ newVideosPending }}</span>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
+import { castingService } from "@/api/castingService";
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 
 interface VideoItem {
@@ -65,7 +43,7 @@ interface VideoItem {
 }
 
 // 配置参数
-const gridSize = ref(10); // 默认10×10网格
+const gridSize = ref(4); // 默认10×10网格
 const pollIntervalSeconds = ref(10); // 默认10秒轮询间隔
 const pollInterval = ref<NodeJS.Timeout | null>(null);
 
@@ -74,29 +52,6 @@ const displayedVideos = ref<VideoItem[]>([]);
 const lastUpdateTime = ref("");
 const newVideosPending = ref(0);
 const totalVideos = computed(() => gridSize.value * gridSize.value);
-
-// 真实可用的测试视频URL列表（100个不同的视频）
-const REAL_VIDEO_URLS = Array(100)
-  .fill(null)
-  .map((_, i) => {
-    // 使用不同的视频源确保多样性
-    const sources = [
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-      "https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4",
-      "https://assets.mixkit.co/videos/preview/mixkit-clouds-and-blue-sky-1170-large.mp4",
-      "https://assets.mixkit.co/videos/preview/mixkit-going-down-a-curved-highway-down-a-mountain-41576-large.mp4",
-      "https://assets.mixkit.co/videos/preview/mixkit-woman-walking-on-a-street-at-night-3982-large.mp4",
-    ];
-
-    // 每个视频添加唯一参数确保URL不同
-    const source = sources[i % sources.length];
-    return `${source}?v=${i}&t=${Date.now()}`;
-  });
 
 // 获取当前显示的所有视频URL
 const getCurrentVideoUrls = () => {
@@ -119,28 +74,6 @@ const initVideoSlots = () => {
     }));
 };
 
-// 应用配置
-const applyConfig = () => {
-  // 清除旧的轮询
-  if (pollInterval.value) {
-    clearInterval(pollInterval.value);
-  }
-
-  // 重新初始化网格
-  initVideoSlots();
-
-  // 开始新的轮询
-  startPolling();
-};
-
-// 更新网格大小
-const updateGridSize = () => {
-  // 确保网格尺寸在合理范围内
-  if (gridSize.value < 5) gridSize.value = 5;
-  if (gridSize.value > 20) gridSize.value = 20;
-  applyConfig();
-};
-
 // 获取视频数据
 const fetchVideos = async () => {
   try {
@@ -149,7 +82,11 @@ const fetchVideos = async () => {
     // const videos = await response.json()
 
     // 使用Mock数据
-    const mockVideos = generateMockVideos(totalVideos.value);
+    // const mockVideos = generateMockVideos(totalVideos.value);
+    const mockVideos = await castingService.getCurrentCasting(
+      "VIDEO_EFFECT",
+      gridSize.value * gridSize.value
+    );
 
     // 更新最后更新时间
     lastUpdateTime.value = new Date().toLocaleTimeString();
@@ -172,24 +109,6 @@ const fetchVideos = async () => {
   } catch (error) {
     console.error("获取视频失败:", error);
   }
-};
-
-// 生成Mock视频数据
-const generateMockVideos = (count: number) => {
-  const mockVideos = [];
-
-  for (let i = 0; i < count; i++) {
-    // 随机选择一个视频URL
-    const randomIndex = Math.floor(Math.random() * REAL_VIDEO_URLS.length);
-    const url = REAL_VIDEO_URLS[randomIndex];
-
-    mockVideos.push({
-      id: `video-${Date.now()}-${i}`,
-      url: url,
-    });
-  }
-
-  return mockVideos;
 };
 
 // 随机替换视频
@@ -260,10 +179,12 @@ watch(pollIntervalSeconds, (newVal) => {
 
 <style scoped>
 .video-wall-container {
-  width: 100vw;
-  height: calc(177.78vw - 40px); /* 9:16 比例 */
-  max-height: calc(100vh - 40px);
-  max-width: calc(56.25vh - 40px); /* 保持比例 */
+  height: 100vh;
+  width: calc(100vh * 9 / 16);
+  /* height: calc(177.78vw);  */
+  /* 9:16 比例 */
+  /* max-height: calc(100vh); */
+  /* max-width: calc(56.25vh); 保持比例 */
   margin: 0 auto;
   overflow: hidden;
   background-color: #000;
@@ -322,7 +243,7 @@ watch(pollIntervalSeconds, (newVal) => {
   grid-template-rows: repeat(v-bind(gridSize), 1fr);
   width: 100%;
   height: 100%;
-  gap: 1px;
+  gap: 0;
 }
 
 .video-cell {
@@ -381,20 +302,5 @@ watch(pollIntervalSeconds, (newVal) => {
   background-color: rgba(0, 0, 0, 0.7);
   color: #fff;
   font-size: 12px;
-}
-
-/* 响应式调整 */
-@media (orientation: portrait) {
-  .video-wall-container {
-    height: calc(177.78vw - 40px);
-    width: 100vw;
-  }
-}
-
-@media (orientation: landscape) {
-  .video-wall-container {
-    width: calc(56.25vh - 40px);
-    height: calc(100vh - 40px);
-  }
 }
 </style>

@@ -78,6 +78,6 @@ export async function getScreenList({
 }: {
   type: TaskType;
   num: number;
-}): Promise<TaskOutput[]> {
+}): Promise<CastingImage[]> {
   return request.get(`/api/castings/${type}/screen`, { params });
 }
