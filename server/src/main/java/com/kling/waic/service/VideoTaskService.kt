@@ -142,7 +142,8 @@ class VideoTaskService(
 
     override suspend fun printTask(
         type: TaskType,
-        name: String
+        name: String,
+        fromConsole: Boolean
     ): Printing {
         throw UnsupportedOperationException("Print video is not implemented yet")
     }

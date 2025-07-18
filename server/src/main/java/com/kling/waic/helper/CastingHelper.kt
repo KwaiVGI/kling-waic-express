@@ -11,7 +11,6 @@ import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Component
 import redis.clients.jedis.Jedis
 import java.time.Instant
-import kotlin.collections.emptyList
 
 @Component
 class CastingHelper(
@@ -400,6 +399,4 @@ class CastingHelper(
         )
         return resultCastings
     }
-
-
 }

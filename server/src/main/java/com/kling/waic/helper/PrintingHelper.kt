@@ -17,20 +17,24 @@ class PrintingHelper(
 ) {
     private val printingQueue = "printing_queue_${TaskType.STYLED_IMAGE}"
 
-    fun addTaskToPrintingQueue(task: Task): Printing {
+    fun addTaskToPrintingQueue(task: Task, fromConsole: Boolean): Printing {
         val printingName = "printing:${task.name}"
 
-        val existingPrinting = jedis.get(printingName)
-        if (existingPrinting != null) {
-            throw DuplicatePrintException(
-                "Printing Task already exist for name: $printingName, value: $existingPrinting")
+        if (!fromConsole) {
+            val existingPrinting = jedis.get(printingName)
+            if (existingPrinting != null) {
+                throw DuplicatePrintException(
+                    "Printing Task already exist for name: $printingName, value: $existingPrinting"
+                )
+            }
         }
 
         val printing = Printing(
             id = IdUtils.generateId(),
             name = printingName,
             task = task,
-            status = PrintingStatus.SUBMITTED
+            status = PrintingStatus.SUBMITTED,
+            aheadCount = calculateAheadCount(printingName)
         )
         val value = ObjectMapperUtils.toJSON(printing)
 
@@ -41,6 +45,13 @@ class PrintingHelper(
         log.info("Lpush printing in Redis queue: ${printing.name}, printingName: $printingName")
 
         return printing
+    }
+
+    private fun calculateAheadCount(printingName: String): Int {
+        val allElements = jedis.lrange(printingQueue, 0, -1)
+        val index = allElements.indexOf(printingName)
+
+        return if (index >= 0) allElements.size - 1 - index else -1
     }
 
     fun pollOneFromPrintingQueue(): Printing? {
