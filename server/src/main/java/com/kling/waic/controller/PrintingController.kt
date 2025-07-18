@@ -23,10 +23,10 @@ class PrintingController(
     @PostMapping("fetch")
     @Authorization(AuthorizationType.MANAGEMENT)
     fun fetchPrinting(): Result<Printing> {
-        log.info("Fetching printing from queue")
+        log.debug("Fetching printing from queue")
 
         val printing = printingHelper.pollOneFromPrintingQueue()
-        log.info("Fetched printing: ${printing}")
+        log.debug("Fetched printing: ${printing}")
 
         return Result(printing)
     }
@@ -35,10 +35,10 @@ class PrintingController(
     @Authorization(AuthorizationType.MANAGEMENT)
     fun updatePrinting(@PathVariable name: String,
                        @RequestBody input: PrintingUpdateInput): Result<Printing> {
-        log.info("Update printing: ${name}, status: ${input.status}")
+        log.debug("Update printing: ${name}, status: ${input.status}")
 
         val printing = printingHelper.updatePrintingStatus(name, input.status)
-        log.info("Updated printing: $printing")
+        log.debug("Updated printing: $printing")
 
         return Result(printing)
     }

@@ -68,7 +68,7 @@ class ImageTaskService(
         log.info("Input image size: ${inputImage.width}x${inputImage.height}")
 
         val outputImage = if (cropImageWithOpenCV && faceCropper != null) {
-            log.info("OpenCV face cropping is enabled, processing image with face detection")
+            log.debug("OpenCV face cropping is enabled, processing image with face detection")
             faceCropper!!.cropFaceToAspectRatio(inputImage, taskName)
         } else {
             log.info("OpenCV face cropping is disabled or FaceCropper not available, using original image")
@@ -187,7 +187,7 @@ class ImageTaskService(
 
         val finalValue = ObjectMapperUtils.toJSON(finalTask)
         jedis.set(task.name, finalValue)
-        log.info("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
+        log.debug("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
 
         val casting = castingHelper.addToCastingQueue(finalTask)
         log.info("Added task ${finalTask.name} to casting queue, casting: $casting")

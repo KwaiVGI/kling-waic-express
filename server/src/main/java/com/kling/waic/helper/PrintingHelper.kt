@@ -27,7 +27,7 @@ class PrintingHelper(
         val value = ObjectMapperUtils.toJSON(printing)
 
         jedis.set(printingName, value)
-        log.info("Set printing in Redis: ${printing.name}, value: $value")
+        log.debug("Set printing in Redis: ${printing.name}, value: $value")
 
         jedis.lpush(printingQueue, printingName)
         log.info("Lpush printing in Redis queue: ${printing.name}, printingName: $printingName")
@@ -37,7 +37,7 @@ class PrintingHelper(
 
     fun pollOneFromPrintingQueue(): Printing? {
         val printingName = jedis.rpop(printingQueue) ?: return null
-        log.info("Rpop printingName from Redis queue: $printingName")
+        log.debug("Rpop printingName from Redis queue: $printingName")
 
         val value = jedis.get(printingName) ?: return null
         log.info("Get printing value from Redis: $printingName, value: $value")
@@ -48,7 +48,7 @@ class PrintingHelper(
     fun getPrinting(name: String): Printing {
         val value = jedis.get(name)
             ?: throw IllegalArgumentException("$name is not exists")
-        log.info("Get printing value from Redis: $name, value: $value")
+        log.debug("Get printing value from Redis: $name, value: $value")
         return ObjectMapperUtils.fromJSON(value, Printing::class.java)!!
     }
 
@@ -64,7 +64,7 @@ class PrintingHelper(
 
     fun peekAllPrintingNames(): List<String> {
         val printingNames = jedis.lrange(printingQueue, 0, -1).reversed()
-        log.info("Peek all printingNames: {}", printingNames)
+        log.debug("Peek all printingNames: {}", printingNames)
         return printingNames
     }
 }

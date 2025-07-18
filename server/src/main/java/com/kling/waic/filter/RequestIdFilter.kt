@@ -27,7 +27,5 @@ open class RequestIdFilter : Filter {
         } finally {
             MDC.remove(REQUEST_ID)
         }
-
-        chain.doFilter(request, response)
     }
 }

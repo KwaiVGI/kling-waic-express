@@ -50,7 +50,7 @@ class CastingHelper(
     fun getPinned(type: TaskType): Casting? {
         val castingPinnedKey = "${castingPinnedPrefix}${type}"
         val castingName = jedis.get(castingPinnedKey) ?: return null
-        log.info("Got pinned castingName: {}", castingName)
+        log.debug("Got pinned castingName: {}", castingName)
 
         val castingValue = jedis.get(castingName)
             ?: throw IllegalArgumentException("Casting not exists for castingName: $castingName")
@@ -176,7 +176,7 @@ class CastingHelper(
             jedis.zrevrange(castingQueue, offset.toLong(), (offset + pageSize).toLong())
         }
 
-        log.info("Retrieved casting names (no keyword): queue={}, score={}, pageSize={}, pageNum={}, offset={}, names={}",
+        log.debug("Retrieved casting names (no keyword): queue={}, score={}, pageSize={}, pageNum={}, offset={}, names={}",
                 castingQueue, score, pageSize, pageNum, offset, castingNames.size)
 
         if (castingNames.isEmpty()) {
@@ -265,7 +265,7 @@ class CastingHelper(
             }
         }
 
-        log.info("List castings result (with keyword): keyword='{}', score={}, pageSize={}, pageNum={}, " +
+        log.debug("List castings result (with keyword): keyword='{}', score={}, pageSize={}, pageNum={}, " +
                 "returned={}, hasMore={}", keyword, score, pageSize, pageNum, resultCastings.size, hasMore)
         return Pair(hasMore, resultCastings)
     }
@@ -290,8 +290,14 @@ class CastingHelper(
             log.info("Screen existing pinned, added to resultCastings")
         }
         val actualNum = num - resultCastings.size
-        log.info("Screen with actualNum: {}, num: {}", actualNum, num)
+        log.debug("doScreen with actualNum: {}, num: {}", actualNum, num)
 
+        doScreen(type, actualNum, resultCastings)
+        return resultCastings
+    }
+
+    private fun doScreen(type: TaskType, actualNum: Long,
+                         resultCastings: MutableList<Casting>): List<Casting> {
         val castingQueue = "${castingQueuePrefix}${type}"
         val screenLatestCursorKey = "${screenLatestCursorPrefix}${type}"
         val screenEarliestCursorKey = "${screenEarliestCursorPrefix}${type}"
@@ -299,11 +305,11 @@ class CastingHelper(
         // Get total count of items in the queue
         val totalCount = jedis.zcard(castingQueue)
         if (totalCount == 0L) {
-            log.info("No castings available for screen display, type: {}", type)
+//            log.info("No castings available for screen display, type: {}", type)
             return emptyList()
         }
 
-        log.info("Screen display request: type={}, actualNum={}, totalCount={}", type, actualNum, totalCount)
+        log.debug("Screen display request: type={}, actualNum={}, totalCount={}", type, actualNum, totalCount)
 
         // Get current cursor positions (default to 0 if not exists)
         val latestCursor = jedis.get(screenLatestCursorKey)?.toLongOrNull() ?: 0L
@@ -324,7 +330,7 @@ class CastingHelper(
             resultCastings.addAll(latestCastings)
             newLatestCursor = latestCursor + latestToTake
 
-            log.info(
+            log.debug(
                 "Retrieved {} latest castings, cursor moved from {} to {}",
                 latestCastings.size, latestCursor, newLatestCursor
             )
@@ -344,7 +350,7 @@ class CastingHelper(
                 resultCastings.addAll(earliestCastings)
                 newEarliestCursor = earliestCursor + earliestToTake
 
-                log.info(
+                log.debug(
                     "Retrieved {} earliest castings, cursor moved from {} to {}",
                     earliestCastings.size, earliestCursor, newEarliestCursor
                 )
@@ -361,12 +367,12 @@ class CastingHelper(
         jedis.set(screenLatestCursorKey, newLatestCursor.toString())
         jedis.set(screenEarliestCursorKey, newEarliestCursor.toString())
 
-        // If num > resultCastings.size, add remaining screens
+        // If actualNum > resultCastings.size, add remaining screens
         if (actualNum > resultCastings.size) {
-            resultCastings.addAll(screen(type, actualNum - resultCastings.size))
+            doScreen(type, actualNum - resultCastings.size, resultCastings)
         }
 
-        log.info(
+        log.debug(
             "Screen display completed: type={}, requested={}, returned={}, " +
                     "latestCursor: {}→{}, earliestCursor: {}→{}",
             type, actualNum, resultCastings.size, latestCursor, newLatestCursor,
