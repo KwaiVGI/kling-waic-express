@@ -14,14 +14,14 @@ using namespace httplib;
 // };
 
 // ---------- ApiClient 实现 ----------
-const std::string HttpClient::DOWNLOAD_PATH = "/cppcode/kling-waic-express/kling-printer/download";
+const std::string HttpClient::DOWNLOAD_PATH = "/cppcode/kling-waic-express/kling-printer/download/";
 
 std::string stringPrefix(const std::string& s) {
-    static const std::regex prefix(R"(^https://waic.staging.kuaishou.com)");
+    static const std::regex prefix(R"(^https://waic-api.klingai.com::6443)");
     return std::regex_replace(s, prefix, "");
 }
 HttpClient::HttpClient() {
-    pool_ = std::make_unique<ConnectPool>(5, host_, connTimeout_, readTimeout_);
+    pool_ = std::make_unique<ConnectPool>(5, host_, port_, connTimeout_, readTimeout_);
 }
 
 template <typename Conn>
@@ -39,6 +39,7 @@ static Result doRequest(Conn& conn,
     httplib::Result res;
     if (isPost) {
         res = conn->Post(path.c_str(), hdrs, body.dump(), "application/json");
+        std::cout << "isPost" << std::endl;
     } else {
         res = conn->Get(path.c_str(), hdrs);
     }
@@ -49,7 +50,6 @@ static Result doRequest(Conn& conn,
     if (res->status != 200) {
         throw std::runtime_error("HTTP " + std::to_string(res->status));
     }
-    // std::cout << "res" << res->body << std::endl;
     return res; 
 }
 
@@ -64,11 +64,10 @@ json HttpClient::getJson(const std::string& path,
 json HttpClient::postJson(const std::string& path,
                     const json& body,
                     const std::vector<std::pair<std::string, std::string>>& headers) {
-    std::cout << "doPost" << std::endl;
     auto conn = pool_->acquire();
     httplib::Result ret = doRequest(conn->cli, token_, path, body, headers, true);
-    std::cout << "endRequest" << std::endl;
     pool_->release(std::move(conn));
+    std::cout << "postJoson:" << path << " result:" << ret << std::endl;
     return json::parse(ret->body);
 }
 
@@ -103,28 +102,32 @@ QImage HttpClient::getImage(const std::string& path,
 
 bool HttpClient::fetchImageQueue() {
     json ret = postJson("/api/printings/fetch", {});
+    std::cout << ret["data"] << std::endl;
     if (!ret.contains("data") || ret["data"].is_null() || ret["status"] != "SUCCEED") {
         // 队列为空
+        std::cout << "[INFO] No data." << std::endl;
         return false;
     }
     std::string name = ret.at("data").at("name");
-    std::string download_url = stringPrefix(ret.at("data").at("task").at("url"));
+    std::cout << "name:" << name << std::endl;
+    std::string download_url = stringPrefix(ret.at("data").at("task").at("outputs").at("url"));
+    std::cout << "[INFO] ready to download. name: " + name + "url:" + download_url << std::endl;
     if (!downloadImage(download_url, DOWNLOAD_PATH + name + ".jpg")) {
         std::cout << "[INFO] DownLoad image failed. url:" << download_url << std::endl; 
         return false;
     }
+    std::cout << "[INFO] download Image Success. name:" << name << std::endl;
     return true;
 }
 
 bool HttpClient::downloadImage(const std::string& imgUrl, const std::string& downloadFile) {
     QImage img = getImage(imgUrl);
-    std::cout << "endGetImage\n";
     if (img.isNull()) {
         return false;
     }
-    std::cout << "ready to save";
+    std::cout << "[INFO] ready to save. imgUrl:" + imgUrl + "fileName:" + downloadFile << std::endl;
     QFileInfo fi(QString::fromStdString(downloadFile));
-    std::cout << fi.absoluteFilePath().toStdString();
+    std::cout << fi.absoluteFilePath().toStdString() << std::endl;
     QDir().mkpath(fi.absolutePath());
     return img.save(QString::fromStdString(downloadFile), "JPG", 100);
 }

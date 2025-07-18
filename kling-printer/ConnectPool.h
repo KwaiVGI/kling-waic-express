@@ -14,7 +14,7 @@ class ConnectPool {
 public:
     using Clock = std::chrono::steady_clock;
 
-    explicit ConnectPool(std::size_t max, std::string host_, long connectMS, long readMS);
+    explicit ConnectPool(std::size_t max, std::string host_, int port, long connectMS, long readMS);
     
     ~ConnectPool() = default;
     
@@ -24,11 +24,12 @@ public:
 
 
 private:
-    std::shared_ptr<HttpsConn> create(const std::string& host, long connectMS, long readMS);
+    std::shared_ptr<HttpsConn> create(const std::string& host, const int port, long connectMS, long readMS);
     std::queue<std::shared_ptr<HttpsConn>> pool_;
     std::mutex m_;
     std::size_t max_;
     std::string host_;
+    int port_;
     long cto_;
     long rto_;
 };

@@ -28,7 +28,8 @@ public:
 private:
     
     HttpClient();
-    const std::string host_ = "waic.staging.kuaishou.com";
+    const std::string host_ = "waic-api.klingai.com";
+    const int port_ = 6443;
     std::string token_ = "wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9";
     long connTimeout_ = 5000, readTimeout_ = 5000;
     std::unique_ptr<ConnectPool> pool_;
