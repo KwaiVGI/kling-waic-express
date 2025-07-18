@@ -50,10 +50,10 @@ class PrintingController(
         return Result(printing)
     }
 
-//    @GetMapping("peekAll")
-//    @Authorization(AuthorizationType.MANAGEMENT)
-//    fun peek(): Result<List<String>> {
-//        val allPrintingNames = printingHelper.peekAllPrintingNames()
-//        return Result(allPrintingNames)
-//    }
+    @GetMapping("peekAll")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun peekAll(): Result<List<Printing>> {
+        val allPrintings = printingHelper.peekAll()
+        return Result(allPrintings)
+    }
 }

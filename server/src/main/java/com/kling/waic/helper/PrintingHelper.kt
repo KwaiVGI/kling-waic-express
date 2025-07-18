@@ -34,7 +34,6 @@ class PrintingHelper(
             name = printingName,
             task = task,
             status = PrintingStatus.SUBMITTED,
-            aheadCount = calculateAheadCount(printingName)
         )
         val value = ObjectMapperUtils.toJSON(printing)
 
@@ -68,7 +67,10 @@ class PrintingHelper(
         val value = jedis.get(name)
             ?: throw IllegalArgumentException("$name is not exists")
         log.debug("Get printing value from Redis: $name, value: $value")
-        return ObjectMapperUtils.fromJSON(value, Printing::class.java)!!
+        val printing = ObjectMapperUtils.fromJSON(value, Printing::class.java)!!
+        return printing.copy(
+            aheadCount = calculateAheadCount(name)
+        )
     }
 
     fun updatePrintingStatus(name: String, status: PrintingStatus): Printing {
@@ -81,9 +83,11 @@ class PrintingHelper(
         return newPrinting
     }
 
-    fun peekAllPrintingNames(): List<String> {
+    fun peekAll(): List<Printing> {
         val printingNames = jedis.lrange(printingQueue, 0, -1).reversed()
         log.debug("Peek all printingNames: {}", printingNames)
-        return printingNames
+        return printingNames.map {
+            getPrinting(it)
+        }
     }
 }
