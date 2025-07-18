@@ -37,7 +37,7 @@ class PrintingHelper(
 
     fun pollOneFromPrintingQueue(): Printing? {
         val printingName = jedis.rpop(printingQueue) ?: return null
-        log.debug("Rpop printingName from Redis queue: $printingName")
+        log.info("Rpop printingName from Redis queue: $printingName")
 
         val value = jedis.get(printingName) ?: return null
         log.info("Get printing value from Redis: $printingName, value: $value")
