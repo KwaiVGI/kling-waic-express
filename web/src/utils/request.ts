@@ -5,7 +5,7 @@ import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 
 // 这里是用于设定请求后端时，所用的 Token KEY
 export const REQUEST_TOKEN_KEY = "Authorization";
-console.log(import.meta.env.DEV);
+console.log(import.meta.env);
 // 创建 axios 实例
 const request = axios.create({
   // API 请求的默认前缀

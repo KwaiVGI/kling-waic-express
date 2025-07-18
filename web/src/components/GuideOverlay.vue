@@ -36,7 +36,6 @@
 <script lang="ts" setup>
 const props = defineProps<{
   guides: any[];
-  theme: any;
 }>();
 const emit = defineEmits(["finish"]);
 const showGuide = defineModel({ type: Boolean, default: false });

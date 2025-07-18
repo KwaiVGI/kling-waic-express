@@ -77,12 +77,6 @@ const initVideoSlots = () => {
 // 获取视频数据
 const fetchVideos = async () => {
   try {
-    // 模拟API调用 - 实际项目中替换为真实API
-    // const response = await fetch(`/castings/video/${totalVideos.value}`)
-    // const videos = await response.json()
-
-    // 使用Mock数据
-    // const mockVideos = generateMockVideos(totalVideos.value);
     const mockVideos = await castingService.getCurrentCasting(
       "VIDEO_EFFECT",
       gridSize.value * gridSize.value

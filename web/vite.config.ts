@@ -18,8 +18,8 @@ export default ({ mode }: ConfigEnv): UserConfig => {
       port: 3000,
       proxy: {
         "/api": {
-          target: "https://waic.staging.kuaishou.com",
-          // target: "https://waic-api.klingai.com:6443",
+          // target: "https://waic.staging.kuaishou.com",
+          target: "https://waic-api.klingai.com:6443",
           changeOrigin: true,
         },
       },

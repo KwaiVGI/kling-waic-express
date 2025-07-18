@@ -1,6 +1,11 @@
 <template>
   <div class="qr-container">
     <div ref="qrCodeElement" class="qr-code"></div>
+    <span class="mt-16px">{{
+      $route.params.type === "image"
+        ? "可灵 AI 图片-风格转绘"
+        : "可灵 AI 视频-特效盲盒"
+    }}</span>
   </div>
 </template>
 
@@ -23,7 +28,6 @@ const tokenPollingInterval = 1000 * 5;
 const fetchToken = async (): Promise<string> => {
   try {
     const data = await getLatestToken();
-    console.log("获取token成功:", data);
     return data.value;
   } catch (error) {
     console.warn("获取token失败:", error);

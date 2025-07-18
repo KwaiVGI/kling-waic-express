@@ -33,7 +33,7 @@
       </div>
       <!-- 上传区域 -->
       <div
-        v-show="!uploadedImage"
+        v-show="!uploadedImage && !generatedResult"
         class="w-360px h-360px box-border bg-white rounded-24px p-20px text-center relative"
       >
         <van-uploader
@@ -268,6 +268,7 @@
           v-else
           :src="generatedResult"
           controls
+          :poster="uploadedImage"
           class="guide-video w-full h-full object-contain relative z-10"
         ></video>
       </div>
@@ -306,7 +307,6 @@
       v-if="showGuide"
       v-model="showGuide"
       :guides="currentGuides"
-      :theme="currentTheme"
       @finish="onFinishGuide"
     />
   </div>
@@ -338,7 +338,6 @@ const {
   fileList,
   uploadedImage,
   generatedResult,
-  isLoading,
   isGenerating,
   isSaving,
   isPrinting,
@@ -359,8 +358,7 @@ const {
 } = useCreation(type.value as "image" | "video");
 
 const isGuided = ref(!!localStorage.getItem(STORAGE_GUIDE_KEY));
-const { currentGuides, showGuide, startGuide, currentTheme, finishGuide } =
-  useGuide();
+const { currentGuides, showGuide, startGuide, finishGuide } = useGuide();
 
 const wait = async (delay: number) =>
   new Promise((resolve) => setTimeout(resolve, delay));
@@ -433,6 +431,14 @@ const handleGenerate = async () => {
   }
 
   await generate(doGenerate);
+  // 将图片URL放到查询参数上
+  history.pushState(
+    null,
+    "",
+    `?token=${localStorage.getItem(
+      STORAGE_TOKEN_KEY
+    )}&result=${encodeURIComponent(generatedResult.value)}`
+  );
   if (isGuided.value || type.value !== "image") {
     return;
   }
@@ -452,13 +458,6 @@ const handleGenerate = async () => {
       position: "top",
     },
   ]);
-  history.pushState(
-    null,
-    "",
-    `?token=${localStorage.getItem(
-      STORAGE_TOKEN_KEY
-    )}&result=${encodeURIComponent(generatedResult.value)}`
-  );
 };
 const onFinishGuide = () => {
   isGuided.value = true;
