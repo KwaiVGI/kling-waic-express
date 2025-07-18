@@ -26,12 +26,20 @@ open class WebConfig(
             )
     }
 
+    companion object {
+        val ALLOWED_ORIGINS = listOf(
+            "https://waic.staging.kuaishou.com",
+            "https://waic.klingai.com",
+            "https://waic.kchuang.com"
+        )
+    }
+
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/**")
-            .allowedOrigins("*")
+            .allowedOrigins(*ALLOWED_ORIGINS.toTypedArray())
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowedHeaders("*")
-            .allowCredentials(false)
+            .allowCredentials(true)
             .maxAge(3600)
     }
 }

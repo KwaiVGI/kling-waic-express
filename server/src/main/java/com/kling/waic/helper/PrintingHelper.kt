@@ -61,4 +61,10 @@ class PrintingHelper(
         log.info("Updated printing: $name, newValue: $newValue")
         return newPrinting
     }
+
+    fun peekAllPrintingNames(): List<String> {
+        val printingNames = jedis.lrange(printingQueue, 0, -1).reversed()
+        log.info("Peek all printingNames: {}", printingNames)
+        return printingNames
+    }
 }

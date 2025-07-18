@@ -76,4 +76,10 @@ class PrintingHelperTest : SpringBaseTest() {
         printingHelper.updatePrintingStatus("printing:Test_No.100023", PrintingStatus.PRINTING)
         printingHelper.updatePrintingStatus("printing:Test_No.100024", PrintingStatus.COMPLETED)
     }
+
+    @Test
+    fun testPeekAllPrintingNames() {
+        val allPrintingNames = printingHelper.peekAllPrintingNames()
+        println(allPrintingNames)
+    }
 }

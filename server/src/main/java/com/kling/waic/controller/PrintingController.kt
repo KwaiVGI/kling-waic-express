@@ -49,4 +49,11 @@ class PrintingController(
         val printing = printingHelper.getPrinting(name)
         return Result(printing)
     }
+
+    @PostMapping("peekAll")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun peek(): Result<List<String>> {
+        val allPrintingNames = printingHelper.peekAllPrintingNames()
+        return Result(allPrintingNames)
+    }
 }
