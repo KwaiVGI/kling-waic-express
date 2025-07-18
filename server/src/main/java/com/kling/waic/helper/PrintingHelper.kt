@@ -4,6 +4,7 @@ import com.kling.waic.entity.Printing
 import com.kling.waic.entity.PrintingStatus
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskType
+import com.kling.waic.exception.DuplicatePrintException
 import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
@@ -18,6 +19,13 @@ class PrintingHelper(
 
     fun addTaskToPrintingQueue(task: Task): Printing {
         val printingName = "printing:${task.name}"
+
+        val existingPrinting = jedis.get(printingName)
+        if (existingPrinting != null) {
+            throw DuplicatePrintException(
+                "Printing Task already exist for name: $printingName, value: $existingPrinting")
+        }
+
         val printing = Printing(
             id = IdUtils.generateId(),
             name = printingName,
