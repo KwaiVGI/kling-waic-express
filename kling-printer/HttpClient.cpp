@@ -14,6 +14,7 @@ using namespace httplib;
 // };
 
 // ---------- ApiClient 实现 ----------
+
 const std::string HttpClient::DOWNLOAD_PATH = "/cppcode/kling-waic-express/kling-printer/download/";
 
 std::string stringPrefix(const std::string& s) {
@@ -108,11 +109,13 @@ bool HttpClient::fetchImageQueue() {
         std::cout << "[INFO] No data." << std::endl;
         return false;
     }
-    std::string name = ret.at("data").at("name");
+    long long id = ret.at("data").at("id");
+    std::cout << "id" << id << std::endl;
+    std::string name = std::to_string(id);
     std::cout << "name:" << name << std::endl;
     std::string download_url = stringPrefix(ret.at("data").at("task").at("outputs").at("url"));
     std::cout << "[INFO] ready to download. name: " + name + "url:" + download_url << std::endl;
-    if (!downloadImage(download_url, DOWNLOAD_PATH + name + ".jpg")) {
+    if (!downloadImage(download_url, DOWNLOAD_PATH, name + ".jpg")) {
         std::cout << "[INFO] DownLoad image failed. url:" << download_url << std::endl; 
         return false;
     }
@@ -120,16 +123,16 @@ bool HttpClient::fetchImageQueue() {
     return true;
 }
 
-bool HttpClient::downloadImage(const std::string& imgUrl, const std::string& downloadFile) {
+bool HttpClient::downloadImage(const std::string& imgUrl, const std::string& dir, const std::string& name) {
     QImage img = getImage(imgUrl);
     if (img.isNull()) {
         return false;
     }
-    std::cout << "[INFO] ready to save. imgUrl:" + imgUrl + "fileName:" + downloadFile << std::endl;
-    QFileInfo fi(QString::fromStdString(downloadFile));
+    std::cout << "[INFO] ready to save. imgUrl:" + imgUrl + "dir:" + dir + " fileName:" + name << std::endl;
+    QFileInfo fi(QString::fromStdString(dir));
     std::cout << fi.absoluteFilePath().toStdString() << std::endl;
     QDir().mkpath(fi.absolutePath());
-    return img.save(QString::fromStdString(downloadFile), "JPG", 100);
+    return img.save(QString::fromStdString(dir + name), "JPG", 100);
 }
 
 bool HttpClient::updateImageStatus() {

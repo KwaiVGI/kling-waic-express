@@ -81,14 +81,15 @@ int main() {
             inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
         }
         for (auto input : inputs) {
-            input = "/download/" + input;
+            input = ".\\download\\" + input;
+            std::cout << input << std::endl;
             if (!fileExists(input)) {
                 printf("Cannot find this file.\n");
             } else {
                 printerManager->addImage(input);
             }
         }
-        Sleep(10);
+        Sleep(1000);
     }
     std::cout << "delete" << std::endl;
     delete printerManager;

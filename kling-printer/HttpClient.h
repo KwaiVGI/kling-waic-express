@@ -21,7 +21,7 @@ public:
 
     bool updateImageStatus();
 
-    bool downloadImage(const std::string& imgUrl, const std::string& downloadFile);
+    bool downloadImage(const std::string& imgUrl, const std::string& dir, const std::string& name);
 
     bool fetchImageQueue();
 
