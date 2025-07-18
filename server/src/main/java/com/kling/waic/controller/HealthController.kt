@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.time.Instant
 
 @RestController
-@RequestMapping("/api/health")
+@RequestMapping("/health")
 class HealthController {
 
     @GetMapping("/heartbeat")
