@@ -66,7 +66,7 @@ class PrintingHelperTest : SpringBaseTest() {
 
     @Test
     fun testGetPrinting() {
-        val printing = printingHelper.getPrinting("printing:Test_No.100022")
+        val printing = printingHelper.getPrinting("printing:Test_No.100029")
         println(printing)
     }
 
@@ -79,7 +79,7 @@ class PrintingHelperTest : SpringBaseTest() {
 
     @Test
     fun testPeekAll() {
-        val allPrintingNames = printingHelper.peekAll()
-        println(allPrintingNames)
+        val allPrintings = printingHelper.peekAll()
+        println(allPrintings)
     }
 }
