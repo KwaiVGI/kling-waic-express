@@ -17,6 +17,7 @@ import com.kling.waic.helper.FaceCropper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.helper.PrintingHelper
 import com.kling.waic.repository.CodeGenerateRepository
+import com.kling.waic.helper.AESCipherHelper
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
@@ -49,7 +50,8 @@ class ImageTaskService(
     @Value("\${waic.crop-image-with-opencv}")
     private val cropImageWithOpenCV: Boolean,
     private val printingHelper: PrintingHelper,
-    private val castingHelper: CastingHelper
+    private val castingHelper: CastingHelper,
+    private val aesCipherHelper: AESCipherHelper
 ) : TaskService {
 
     @Autowired(required = false)
@@ -203,13 +205,14 @@ class ImageTaskService(
             .flatMap { it.taskResult.images ?: emptyList() }
             .map { it.url }
 
-        val outputPath = "$sudokuImagesDir/sudoku-${task.name}.jpg"
+        val encodedImageName = aesCipherHelper.encrypt("sudoku-${task.name}")
+        val outputPath = "$sudokuImagesDir/${encodedImageName}.jpg"
         imageProcessHelper.downloadAndCreateSudoku(
             task,
             imageUrls,
             outputPath
         )
-        return "$sudokuServerDomain/api$sudokuUrlPrefix/sudoku-${task.name}.jpg"
+        return "$sudokuServerDomain/api$sudokuUrlPrefix/${encodedImageName}.jpg"
     }
 
     private fun calculateStatus(taskResponseMap: Map<String, QueryImageTaskResponse>): TaskStatus {
