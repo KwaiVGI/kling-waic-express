@@ -284,15 +284,15 @@ class CastingHelper(
     fun screen(type: TaskType, num: Long): List<Casting> {
         val resultCastings = mutableListOf<Casting>()
 
-        val pinned = getPinned(type)
-        if (pinned != null) {
-            resultCastings.add(pinned)
-            log.info("Screen existing pinned, added to resultCastings")
-        }
-        val actualNum = num - resultCastings.size
-        log.debug("doScreen with actualNum: {}, num: {}", actualNum, num)
+//        val pinned = getPinned(type)
+//        if (pinned != null) {
+//            resultCastings.add(pinned)
+//            log.info("Screen existing pinned, added to resultCastings")
+//        }
+//        val actualNum = num - resultCastings.size
+//        log.debug("doScreen with actualNum: {}, num: {}", actualNum, num)
 
-        doScreen(type, actualNum, resultCastings)
+        doScreen(type, num, resultCastings)
         return resultCastings
     }
 
