@@ -33,7 +33,12 @@
           }"
         >
           <div class="image-container">
-            <video class="w-full h-full" :src="image.url" controls></video>
+            <video
+              class="w-full h-full"
+              :src="image.url"
+              controls
+              preload="metadata"
+            ></video>
             <span class="image-id">{{ image.name }}</span>
 
             <div class="item-actions">
@@ -169,7 +174,9 @@ const deleteImage = async (imageId: string) => {
 
 // 初始化加载图片
 onMounted(() => {
-  localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+  if (route.query.token) {
+    localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+  }
   loadImages();
 });
 

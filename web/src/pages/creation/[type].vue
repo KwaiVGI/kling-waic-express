@@ -86,8 +86,7 @@
             :src="uploadedImage"
             alt="上传的图片"
             @click="openPreview(uploadedImage)"
-            class="h-254px object-cover object-center relative z-10"
-            :class="type === 'image' ? 'w-169px' : 'w-143px'"
+            class="h-full w-full object-contain object-center relative z-10"
           />
         </div>
         <div class="w-full h-48px flex justify-between gap-8px mt-16px">
@@ -145,7 +144,7 @@
       class="result-section-bg absolute left-0 top-0 right-0 bottom-0"
     ></div>
     <div
-      v-show="generatedResult"
+      v-if="generatedResult"
       ref="step2Ref"
       :style="{ zoom: step2Zoom }"
       class="result-section w-full box-border px-18px py-40px flex flex-col items-center relative z-10"
@@ -161,6 +160,9 @@
         <video
           v-else
           :src="generatedResult"
+          :poster="uploadedImage"
+          playsinline
+          webkit-playsinline
           controls
           autoplay
           preload="auto"
@@ -174,7 +176,6 @@
 
       <div class="result-actions w-full h-48px flex gap-8px mt-24px">
         <van-button
-          icon="revoke"
           type="default"
           @click="backToEdit"
           class="action-btn w-33% h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
@@ -194,7 +195,6 @@
           </van-button>
 
           <van-button
-            icon="down"
             type="primary"
             @click="handleSave"
             :loading="isSaving"
@@ -235,74 +235,6 @@
       ></video>
     </van-popup>
 
-    <!-- 保存指导弹窗 -->
-    <van-dialog
-      v-model:show="showSaveGuide"
-      :width="vw(368)"
-      show-cancel-button
-      @confirm="handleSaveGuideConfirm"
-    >
-      <template #title>
-        <p class="text-center text-20px font-bold">
-          {{ type === "image" ? "图片" : "视频" }}保存
-        </p>
-      </template>
-      <p class="p-14px text-center text-black mb-24px">
-        长按下方{{ type === "image" ? "图片" : "视频" }}，选择"保存{{
-          type === "image" ? "图片" : "视频"
-        }}"
-      </p>
-      <div class="mx-24px h-254px relative rounded-12px overflow-hidden">
-        <div
-          v-if="type === 'image'"
-          class="blur-bg blur-20px absolute left-0 top-0 w-full h-full bg-cover bg-center"
-          :style="{ backgroundImage: `url(${generatedResult})` }"
-        ></div>
-        <img
-          v-if="type === 'image'"
-          :src="generatedResult"
-          alt="保存指导"
-          class="guide-image w-full h-full object-contain relative z-10"
-        />
-        <video
-          v-else
-          :src="generatedResult"
-          controls
-          :poster="uploadedImage"
-          class="guide-video w-full h-full object-contain relative z-10"
-        ></video>
-      </div>
-      <template #footer>
-        <div class="flex flex-col gap-24px mt-16px px-24px pb-24px box-border">
-          <div class="flex items-center gap-8px">
-            <!-- <van-button
-              type="default"
-              @click="showSaveGuide = false"
-              class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none color-black !bg-#09090A0A !text-14px"
-            >
-              取消
-            </van-button> -->
-
-            <van-button
-              type="primary"
-              @click="showSaveGuide = false"
-              :loading="isSaving"
-              round
-              class="action-btn flex-1 h-full text-16px font-500 !border-none shadow-sm !text-14px !bg-#0B8A1B"
-            >
-              我知道了
-            </van-button>
-          </div>
-          <p
-            class="text-13px text-#EB9109ff leading-1 text-center flex justify-center gap-4px items-center"
-          >
-            <IconSvg name="inform" :size="14" /><span
-              >如无法保存，请使用浏览器打开本页面</span
-            >
-          </p>
-        </div>
-      </template>
-    </van-dialog>
     <guide-overlay
       v-if="showGuide"
       v-model="showGuide"
@@ -316,8 +248,10 @@
 import { showToast } from "vant";
 import useCreation, { type CreationType } from "@/composables/useCreation";
 import { getTaskStatus, newTask } from "@/api/creation";
-import { STORAGE_TOKEN_KEY, STORAGE_GUIDE_KEY } from "@/stores/mutation-type";
-import vw from "@/utils/inline-px-to-vw";
+import {
+  STORAGE_USER_TOKEN_KEY,
+  STORAGE_GUIDE_KEY,
+} from "@/stores/mutation-type";
 import { useZoom } from "@/composables/useZoom";
 import { useGuide } from "@/composables/useGuide";
 
@@ -344,7 +278,6 @@ const {
   showPreview,
   previewItems,
   previewIndex,
-  showSaveGuide,
   handleUpload,
   onOversize,
   openPreview,
@@ -353,7 +286,6 @@ const {
   generate,
   save,
   backToEdit,
-  handleSaveGuideConfirm,
   printImage,
 } = useCreation(type.value as "image" | "video");
 
@@ -421,7 +353,6 @@ const doGenerate = async (file: File, type: CreationType): Promise<string> => {
 
 // 处理生成
 const handleGenerate = async () => {
-  // TODO: 禁用态判断
   if (isGenerating.value) {
     return;
   }
@@ -429,14 +360,23 @@ const handleGenerate = async () => {
     showToast("请先上传图片");
     return;
   }
+  try {
+    await generate(doGenerate);
+  } catch (error) {
+    if (error.message === "NO_HUMAN_DETECTED") {
+      showToast("未检测到人像，换张照片试试吧~");
+    } else {
+      showToast("哎呀失败了，换张照片试试吧~");
+    }
+    return;
+  }
 
-  await generate(doGenerate);
   // 将图片URL放到查询参数上
   history.pushState(
     null,
     "",
     `?token=${localStorage.getItem(
-      STORAGE_TOKEN_KEY
+      STORAGE_USER_TOKEN_KEY
     )}&result=${encodeURIComponent(generatedResult.value)}`
   );
   if (isGuided.value || type.value !== "image") {
@@ -482,7 +422,9 @@ const step2Zoom = useZoom(step2Ref, containerRef);
 
 // 设置文件大小限制
 onMounted(() => {
-  localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+  if (route.query.token) {
+    localStorage.setItem(STORAGE_USER_TOKEN_KEY, route.query.token as string);
+  }
   console.log({ userAgent: navigator.userAgent });
   if (route.query.result) {
     generatedResult.value = decodeURIComponent(route.query.result as string);

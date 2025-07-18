@@ -1,6 +1,7 @@
 import { ref, computed } from "vue";
 import { showToast } from "vant";
 import { printImageTask } from "@/api/creation";
+import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
 
 export type CreationType = "image" | "video";
 
@@ -103,15 +104,14 @@ export default function useCreation(creationType: CreationType) {
     try {
       const result = await generateFn(uploadedFile.value, creationType);
       generatedResult.value = result;
-      // showToast({
-      //   type: "success",
-      //   message: "创作成功！",
-      //   duration: 1500,
-      // })
+      showToast({
+        message: "创作成功！",
+        duration: 1500,
+      });
     } catch (error) {
       generatedResult.value = null;
       showToast({
-        message: "哎呀失败了，换一张图试试吧~",
+        message: "哎呀失败了，换张照片试试吧~",
         duration: 2000,
       });
       console.error("生成失败:", error);
@@ -133,9 +133,51 @@ export default function useCreation(creationType: CreationType) {
     const isHarmonyOS = /Harmony|HwBrowser|HuaweiBrowser/i.test(
       navigator.userAgent
     );
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isWeChat) {
+      if (creationType === "image") {
+        showToast({
+          message: "请长按图片进行保存",
+          duration: 2000,
+        });
+      } else {
+        showToast({
+          message: "请在浏览器中打开本页面进行保存",
+          duration: 2000,
+        });
+      }
+      return;
+    }
 
-    if (isWeChat || isHarmonyOS) {
+    if (isHarmonyOS) {
       showSaveGuide.value = true;
+      if (creationType === "image") {
+        showToast({
+          message: "请长按图片进行保存",
+          duration: 2000,
+        });
+      } else {
+        // TODO: 待调研
+        showToast({
+          message: "暂不支持保存视频",
+          duration: 2000,
+        });
+      }
+      return;
+    }
+    if (isIOS) {
+      if (creationType === "image") {
+        showToast({
+          message: "请长按图片进行保存",
+          duration: 2000,
+        });
+      } else {
+        // TODO: 待调研
+        showToast({
+          message: "暂不支持保存视频",
+          duration: 2000,
+        });
+      }
       return;
     }
 
@@ -168,6 +210,11 @@ export default function useCreation(creationType: CreationType) {
   // 返回编辑
   const backToEdit = () => {
     generatedResult.value = null;
+    history.replaceState(
+      null,
+      "",
+      `?token=${localStorage.getItem(STORAGE_USER_TOKEN_KEY)}`
+    );
   };
 
   // 处理保存指导弹窗确认
@@ -184,9 +231,8 @@ export default function useCreation(creationType: CreationType) {
 
     isPrinting.value = true;
     try {
-      const res = await printImageTask({ type: "STYLED_IMAGE", name });
+      await printImageTask({ type: "STYLED_IMAGE", name });
       showToast({
-        // type: "success",
         message: "打印任务已发送",
         duration: 1500,
       });

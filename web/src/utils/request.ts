@@ -1,7 +1,10 @@
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 import { showNotify } from "vant";
-import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+import {
+  STORAGE_TOKEN_KEY,
+  STORAGE_USER_TOKEN_KEY,
+} from "@/stores/mutation-type";
 
 // 这里是用于设定请求后端时，所用的 Token KEY
 export const REQUEST_TOKEN_KEY = "Authorization";
@@ -49,10 +52,15 @@ function requestHandler(
   config: InternalAxiosRequestConfig
 ): InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig> {
   const savedToken = localStorage.getItem(STORAGE_TOKEN_KEY);
+  const savedUserToken = localStorage.getItem(STORAGE_USER_TOKEN_KEY);
+  const isUserPage = location.pathname.startsWith("/creation");
   // 如果 token 存在
   // 让每个请求携带自定义 token, 请根据实际情况修改
-  if (savedToken && !config.headers[REQUEST_TOKEN_KEY])
-    config.headers[REQUEST_TOKEN_KEY] = `Token ${savedToken}`;
+  if ((savedToken || savedUserToken) && !config.headers[REQUEST_TOKEN_KEY]) {
+    config.headers[REQUEST_TOKEN_KEY] = `Token ${
+      isUserPage ? savedUserToken : savedToken
+    }`;
+  }
 
   return config;
 }
@@ -61,7 +69,10 @@ function requestHandler(
 request.interceptors.request.use(requestHandler, errorHandler);
 
 // 响应拦截器
-function responseHandler(response: { data: any }) {
+function responseHandler(response: { data: any; status: string }) {
+  if (response.data.status !== "SUCCEED") {
+    throw new Error(response.data.status);
+  }
   return response.data.data;
 }
 

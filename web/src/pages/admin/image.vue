@@ -270,7 +270,9 @@ const deleteImage = async (imageId: string) => {
 
 // 初始化加载图片
 onMounted(() => {
-  localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+  if (route.query.token) {
+    localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+  }
   loadImages();
 });
 
