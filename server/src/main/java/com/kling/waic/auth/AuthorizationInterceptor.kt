@@ -23,16 +23,20 @@ open class AuthorizationInterceptor (
 //        }
         
         if (handler !is HandlerMethod) {
-            log.info("AuthorizationInterceptor preHandle called for request: ${request.requestURI}," +
-                    " method: ${request.method}, handler class: ${handler.javaClass}")
+            log.debug(
+                "AuthorizationInterceptor preHandle called for request: {}, method: {}, handler class: {}",
+                request.requestURI,
+                request.method,
+                handler.javaClass
+            )
             return true
         }
         val annotation = handler.getMethodAnnotation(Authorization::class.java)
         if (annotation == null) {
             return true
         }
-        
-        log.info("Authorization required for: ${request.requestURI}, type: ${annotation.type}")
+
+        log.debug("Authorization required for: {}, type: {}", request.requestURI, annotation.type)
         
         val authHeader = request.getHeader("Authorization")
         if (authHeader == null || !authHeader.startsWith("Token ")) {
@@ -50,7 +54,7 @@ open class AuthorizationInterceptor (
             return false
         }
         
-        log.info("Authorization successful for: ${request.requestURI}")
+        log.debug("Authorization successful for: ${request.requestURI}")
         return true
     }
 
