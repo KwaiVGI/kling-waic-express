@@ -46,10 +46,19 @@ class KlingOpenAPIClient(
             .post(body.toRequestBody(CONTENT_TYPE))
             .build()
 
-        okHttpClient.newCall(request).execute().use { resp ->
-            return@withContext resp.body
-                ?.let { KlingOpenAPIResult.ok<CreateImageTaskResponse>(it.string()) }
-                ?: throw IOException("Response body is empty")
+        try {
+            okHttpClient.newCall(request).execute().use { resp ->
+                val responseBody = resp.body?.string()
+                return@withContext responseBody
+                    ?.let { KlingOpenAPIResult.ok<CreateImageTaskResponse>(it) }
+                    ?: throw IOException("Response body is empty")
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            log.error("Socket timeout when creating image task - URL: {}", url, e)
+            throw IOException("Request timeout when creating image task", e)
+        } catch (e: Exception) {
+            log.error("Error creating image task - URL: {}", url, e)
+            throw e
         }
     }
 
@@ -64,14 +73,19 @@ class KlingOpenAPIClient(
             .get()
             .build()
 
-        okHttpClient.newCall(request).execute().use { resp ->
-            return@withContext resp.body
-                ?.let {
-                    val respStr = it.string()
-                    log.info("Request url: {}, Response body: {}", url, respStr)
-                    KlingOpenAPIResult.ok<QueryImageTaskResponse>(respStr)
-                }
-                ?: throw IOException("Response body is empty")
+        try {
+            okHttpClient.newCall(request).execute().use { resp ->
+                val responseBody = resp.body?.string()
+                return@withContext responseBody
+                    ?.let { KlingOpenAPIResult.ok<QueryImageTaskResponse>(it) }
+                    ?: throw IOException("Response body is empty")
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            log.error("Socket timeout when querying image task - URL: {}", url, e)
+            throw IOException("Request timeout when querying image task", e)
+        } catch (e: Exception) {
+            log.error("Error querying image task - URL: {}", url, e)
+            throw e
         }
     }
 
@@ -87,10 +101,19 @@ class KlingOpenAPIClient(
             .post(body.toRequestBody(CONTENT_TYPE))
             .build()
 
-        okHttpClient.newCall(request).execute().use { resp ->
-            return@withContext resp.body
-                ?.let { KlingOpenAPIResult.ok<CreateVideoTaskResponse>(it.string()) }
-                ?: throw IOException("Response body is empty")
+        try {
+            okHttpClient.newCall(request).execute().use { resp ->
+                val responseBody = resp.body?.string()
+                return@withContext responseBody
+                    ?.let { KlingOpenAPIResult.ok<CreateVideoTaskResponse>(it) }
+                    ?: throw IOException("Response body is empty")
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            log.error("Socket timeout when creating video task - URL: {}", url, e)
+            throw IOException("Request timeout when creating video task", e)
+        } catch (e: Exception) {
+            log.error("Error creating video task - URL: {}", url, e)
+            throw e
         }
     }
 
@@ -105,14 +128,19 @@ class KlingOpenAPIClient(
             .get()
             .build()
 
-        okHttpClient.newCall(request).execute().use { resp ->
-            return@withContext resp.body
-                ?.let {
-                    val respStr = it.string()
-                    log.info("Request url: {}, Response body: {}", url, respStr)
-                    KlingOpenAPIResult.ok<QueryVideoTaskResponse>(respStr)
-                }
-                ?: throw IOException("Response body is empty")
+        try {
+            okHttpClient.newCall(request).execute().use { resp ->
+                val responseBody = resp.body?.string()
+                return@withContext responseBody
+                    ?.let { KlingOpenAPIResult.ok<QueryVideoTaskResponse>(it) }
+                    ?: throw IOException("Response body is empty")
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            log.error("Socket timeout when querying video task - URL: {}", url, e)
+            throw IOException("Request timeout when querying video task", e)
+        } catch (e: Exception) {
+            log.error("Error querying video task - URL: {}", url, e)
+            throw e
         }
     }
 

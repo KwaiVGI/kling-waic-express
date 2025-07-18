@@ -35,6 +35,11 @@ open class ServiceConfig(
     @Bean
     open fun okHttpClient(): OkHttpClient {
         val builder = OkHttpClient.Builder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+            .callTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
+        
         if (useProxy) {
             builder.proxy(
                 Proxy(
@@ -44,6 +49,8 @@ open class ServiceConfig(
             )
             log.info("Using proxy for okHttpClient: $proxyHost:$proxyPort")
         }
+        
+        log.info("OkHttpClient configured with timeouts - connect: 30s, write: 60s, read: 120s, call: 180s")
         return builder.build()
     }
 
