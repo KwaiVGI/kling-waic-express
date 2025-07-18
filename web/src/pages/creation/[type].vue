@@ -436,7 +436,7 @@ const handleGenerate = async () => {
   if (isGuided.value || type.value !== "image") {
     return;
   }
-  await wait(200);
+  await wait(300);
   // 启动引导
   startGuide([
     {
@@ -485,6 +485,9 @@ const step2Zoom = useZoom(step2Ref, containerRef);
 onMounted(() => {
   localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
   console.log({ userAgent: navigator.userAgent });
+  if (route.query.result) {
+    generatedResult.value = decodeURIComponent(route.query.result as string);
+  }
 });
 </script>
 
