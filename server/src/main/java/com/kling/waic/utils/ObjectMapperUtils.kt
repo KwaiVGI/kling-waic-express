@@ -2,14 +2,13 @@ package com.kling.waic.utils
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
-import com.kling.waic.exception.WAICJsonProcessingException
+import com.kling.waic.exception.JsonProcessingException
 import java.io.IOException
 
 
@@ -30,8 +29,8 @@ class ObjectMapperUtils {
             }
             try {
                 return MAPPER.writeValueAsString(obj)
-            } catch (e: JsonProcessingException) {
-                throw WAICJsonProcessingException(e)
+            } catch (e: IOException) {
+                throw JsonProcessingException(e)
             }
         }
 
@@ -42,15 +41,15 @@ class ObjectMapperUtils {
             try {
                 return MAPPER.readValue<T>(json, valueType)
             } catch (e: IOException) {
-                throw WAICJsonProcessingException(e)
+                throw JsonProcessingException(e)
             }
         }
 
         inline fun <reified T> fromJSON(json: String, typeRef: TypeReference<T>): T? {
             return try {
                 MAPPER.readValue(json, typeRef)
-            } catch (e: Exception) {
-                throw WAICJsonProcessingException(e)
+            } catch (e: IOException) {
+                throw JsonProcessingException(e)
             }
         }
     }
