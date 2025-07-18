@@ -4,6 +4,7 @@ import com.kling.waic.entity.Printing
 import com.kling.waic.entity.PrintingStatus
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskType
+import com.kling.waic.exception.DuplicatePrintException
 import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
@@ -16,13 +17,23 @@ class PrintingHelper(
 ) {
     private val printingQueue = "printing_queue_${TaskType.STYLED_IMAGE}"
 
-    fun addTaskToPrintingQueue(task: Task): Printing {
+    fun addTaskToPrintingQueue(task: Task, fromConsole: Boolean = false): Printing {
         val printingName = "printing:${task.name}"
+
+        if (!fromConsole) {
+            val existingPrinting = jedis.get(printingName)
+            if (existingPrinting != null) {
+                throw DuplicatePrintException(
+                    "Printing Task already exist for name: $printingName, value: $existingPrinting"
+                )
+            }
+        }
+
         val printing = Printing(
             id = IdUtils.generateId(),
             name = printingName,
             task = task,
-            status = PrintingStatus.SUBMITTED
+            status = PrintingStatus.SUBMITTED,
         )
         val value = ObjectMapperUtils.toJSON(printing)
 
@@ -33,6 +44,13 @@ class PrintingHelper(
         log.info("Lpush printing in Redis queue: ${printing.name}, printingName: $printingName")
 
         return printing
+    }
+
+    private fun calculateAheadCount(printingName: String): Int {
+        val allElements = jedis.lrange(printingQueue, 0, -1)
+        val index = allElements.indexOf(printingName)
+
+        return if (index >= 0) allElements.size - 1 - index else -1
     }
 
     fun pollOneFromPrintingQueue(): Printing? {
@@ -49,7 +67,10 @@ class PrintingHelper(
         val value = jedis.get(name)
             ?: throw IllegalArgumentException("$name is not exists")
         log.debug("Get printing value from Redis: $name, value: $value")
-        return ObjectMapperUtils.fromJSON(value, Printing::class.java)!!
+        val printing = ObjectMapperUtils.fromJSON(value, Printing::class.java)!!
+        return printing.copy(
+            aheadCount = calculateAheadCount(name)
+        )
     }
 
     fun updatePrintingStatus(name: String, status: PrintingStatus): Printing {
@@ -62,9 +83,11 @@ class PrintingHelper(
         return newPrinting
     }
 
-    fun peekAllPrintingNames(): List<String> {
+    fun peekAll(): List<Printing> {
         val printingNames = jedis.lrange(printingQueue, 0, -1).reversed()
         log.debug("Peek all printingNames: {}", printingNames)
-        return printingNames
+        return printingNames.map {
+            getPrinting(it)
+        }
     }
 }

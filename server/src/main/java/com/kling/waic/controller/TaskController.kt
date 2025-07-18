@@ -55,17 +55,28 @@ class TaskController (
     }
 
     @PostMapping("{type}/{name}/print")
+    @Authorization(AuthorizationType.CREATE_TASK)
     fun printTask(
         @PathVariable type: TaskType,
         @PathVariable name: String): Result<Printing> {
-        log.debug("Print task of type: {}, name: {}", type, name)
 
         val printing = CoroutineUtils.runSuspend {
             taskServiceSelector.selectTaskService(type)
                 .printTask(type, name)
         }
+        return Result(printing)
+    }
 
-        log.debug("Print task with result, printing: {}", printing)
+    @PostMapping("{type}/{name}/printFromConsole")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun printTaskFromConsole(
+        @PathVariable type: TaskType,
+        @PathVariable name: String): Result<Printing> {
+
+        val printing = CoroutineUtils.runSuspend {
+            taskServiceSelector.selectTaskService(type)
+                .printTask(type, name, true)
+        }
         return Result(printing)
     }
 

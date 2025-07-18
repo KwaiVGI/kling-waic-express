@@ -5,4 +5,5 @@ enum class ResultStatus {
     FAILED,
     NO_HUMAN_DETECTED,
     JSON_EXCEPTION,
+    DUPLICATE_PRINT,
 }

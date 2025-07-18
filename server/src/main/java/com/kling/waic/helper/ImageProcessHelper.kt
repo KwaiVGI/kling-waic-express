@@ -65,11 +65,11 @@ class ImageProcessHelper(
     fun readImageWithProxy(url: String): BufferedImage? {
         val url = URL(url)
         val connection = if (useProxy) {
-            log.info("Using proxy to connect to $url via $proxyHost:$proxyPort")
+            log.info("Proxy connect to $url via $proxyHost:$proxyPort")
             val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort))
             url.openConnection(proxy) as HttpURLConnection
         } else {
-            log.info("Not using proxy to connect to $url")
+            log.info("Direct connect to $url")
             url.openConnection() as HttpURLConnection
         }
 

@@ -11,5 +11,5 @@ interface TaskService {
 
     suspend fun queryTask(type: TaskType, name: String): Task
 
-    suspend fun printTask(type: TaskType, name: String): Printing
+    suspend fun printTask(type: TaskType, name: String, fromConsole: Boolean = false): Printing
 }

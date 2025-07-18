@@ -223,13 +223,14 @@ class ImageTaskService(
 
     override suspend fun printTask(
         type: TaskType,
-        name: String
+        name: String,
+        fromConsole: Boolean
     ): Printing {
         val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
         if (task == null || task.type != type) {
             throw IllegalArgumentException("Task not found or type mismatch")
         }
 
-        return printingHelper.addTaskToPrintingQueue(task)
+        return printingHelper.addTaskToPrintingQueue(task, fromConsole)
     }
 }
