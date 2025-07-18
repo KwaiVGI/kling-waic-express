@@ -17,6 +17,11 @@ open class AuthorizationInterceptor (
 ) : HandlerInterceptor {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
+//        if ("OPTIONS".equals(request.method, ignoreCase = true)) {
+//            log.info("CORS preflight request allowed: ${request.requestURI}")
+//            return true
+//        }
+        
         if (handler !is HandlerMethod) {
             log.info("AuthorizationInterceptor preHandle called for request: ${request.requestURI}," +
                     " method: ${request.method}, handler class: ${handler.javaClass}")
@@ -26,18 +31,26 @@ open class AuthorizationInterceptor (
         if (annotation == null) {
             return true
         }
+        
+        log.info("Authorization required for: ${request.requestURI}, type: ${annotation.type}")
+        
         val authHeader = request.getHeader("Authorization")
         if (authHeader == null || !authHeader.startsWith("Token ")) {
             response.status = HttpServletResponse.SC_UNAUTHORIZED
             response.writer.write("No authorization data detected")
             return false
         }
+        
+        // Check token
         val token = authHeader.substring(6) // Remove "Token " prefix
         if (!validateToken(token, annotation.type)) {
+            log.warn("Authorization failed - invalid token for: ${request.requestURI}")
             response.status = HttpServletResponse.SC_UNAUTHORIZED
             response.writer.write("Invalid token")
             return false
         }
+        
+        log.info("Authorization successful for: ${request.requestURI}")
         return true
     }
 

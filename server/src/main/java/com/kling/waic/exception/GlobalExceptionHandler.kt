@@ -14,12 +14,14 @@ class GlobalExceptionHandler {
 
         if (ex is WAICException) {
             return Result(
-                status = ex.resultStatus()
+                status = ex.resultStatus(),
+                message = ex.message ?: ""
             )
         }
 
         return Result(
-            status = ResultStatus.FAILED
+            status = ResultStatus.FAILED,
+            message = ex.message ?: ""
         )
     }
 }
