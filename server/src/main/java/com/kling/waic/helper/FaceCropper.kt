@@ -1,5 +1,6 @@
 package com.kling.waic.helper
 
+import com.kling.waic.utils.Slf4j.Companion.log
 import nu.pattern.OpenCV
 import org.opencv.core.Mat
 import org.opencv.core.MatOfByte
@@ -86,7 +87,9 @@ class FaceCropper(
         Imgcodecs.imwrite(outputPath, cropped)
 
         // Convert Mat back to BufferedImage
-        return matToBufferedImage(cropped)
+        val bufferedImage = matToBufferedImage(cropped)
+        log.info("Cropped Image generated, bufferedImage: {} x {}", bufferedImage.width, bufferedImage.height)
+        return bufferedImage
     }
 
     private fun bufferedImageToMat(bufferedImage: BufferedImage): Mat {
