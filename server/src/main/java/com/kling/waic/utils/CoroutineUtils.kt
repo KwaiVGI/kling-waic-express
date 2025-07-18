@@ -1,6 +1,7 @@
 package com.kling.waic.utils
 
 import kotlinx.coroutines.*
+import org.slf4j.MDC
 import org.springframework.stereotype.Component
 import java.util.concurrent.CompletableFuture
 
@@ -14,8 +15,20 @@ class CoroutineUtils {
          * Execute a suspend function in a blocking manner for Spring controllers
          */
         fun <T> runSuspend(block: suspend CoroutineScope.() -> T): T {
+            val contextMap = MDC.getCopyOfContextMap()
+
             return runBlocking(Dispatchers.Default) {
-                block()
+                if (contextMap != null) {
+                    MDC.setContextMap(contextMap)
+                } else {
+                    MDC.clear()
+                }
+
+                try {
+                    block()
+                } finally {
+                    MDC.clear() // 避免线程复用导致的污染
+                }
             }
         }
         
