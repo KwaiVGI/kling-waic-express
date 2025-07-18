@@ -94,7 +94,7 @@ class CastingHelperTest : SpringBaseTest() {
 
     @Test
     fun testOperatePromote() {
-        val castingName = "casting:Test_No.100035"
+        val castingName = "casting:Test_No.100040"
         val result =
             castingHelper.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.PROMOTE)
         assertTrue(result)
@@ -138,9 +138,7 @@ class CastingHelperTest : SpringBaseTest() {
 
     @Test
     fun testScreen() {
-        for (i in 1..10) {
-            val castings = castingHelper.screen(TaskType.STYLED_IMAGE, 1)
-            println(castings.size)
-        }
+        val castings = castingHelper.screen(TaskType.STYLED_IMAGE, 1)
+        println(castings.size)
     }
 }

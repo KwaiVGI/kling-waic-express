@@ -82,7 +82,7 @@ class CastingHelper(
             }
 
             TaskOperateAction.PROMOTE -> {
-                jedis.zrem(castingQueue, name)
+                removeFromCastingQueue(type, name)
                 addToCastingQueue(casting.task)
             }
 
@@ -92,6 +92,26 @@ class CastingHelper(
         }
         log.info("Operated casting: {}, action: {}", name, action)
         return true
+    }
+
+    private fun removeFromCastingQueue(type: TaskType, name: String) {
+        val castingQueue = "${castingQueuePrefix}${type}"
+
+        val screenLatestCursorKey = "${screenLatestCursorPrefix}${type}"
+        val screenEarliestCursorKey = "${screenEarliestCursorPrefix}${type}"
+        val cursor = jedis.zrank(castingQueue, name)
+
+        val screenLatestCursor = jedis.get(screenLatestCursorKey)
+        val screenEarliestCursor = jedis.get(screenEarliestCursorKey)
+        if (cursor < (screenLatestCursor.toLongOrNull() ?: 0L)) {
+            jedis.decr(screenLatestCursorKey)
+        }
+        if (cursor < (screenEarliestCursor.toLongOrNull() ?: 0L)) {
+            jedis.decr(screenEarliestCursorKey)
+        }
+        log.info("removeFromCastingQueue, type: $type, name: $name, " +
+                "cursor: $cursor, screenLatestCursor: $screenLatestCursor, screenEarliestCursor: $screenEarliestCursor")
+        jedis.zrem(castingQueue, name)
     }
 
     fun list(type: TaskType,
