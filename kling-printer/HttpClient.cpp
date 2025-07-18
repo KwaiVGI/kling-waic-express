@@ -8,13 +8,6 @@
 #include <QDir>
 using namespace httplib;
 
-// ---------- 连接包装 ----------
-// struct ConnFactory {
-//     static 
-// };
-
-// ---------- ApiClient 实现 ----------
-
 const std::string HttpClient::DOWNLOAD_PATH = "/cppcode/kling-waic-express/kling-printer/download/";
 
 std::string stringPrefix(const std::string& s) {
@@ -94,14 +87,11 @@ QImage HttpClient::getImage(const std::string& path,
     if (!r.canRead())
         std::cout << r.errorString().toStdString();
     img = r.read();
-    // if (!img.loadFromData(raw, "JPEG")) {
-    //     std::cout << "load JPEG failed\n";
-    //     return {};
-    // }
     return img;
 }
 
 bool HttpClient::fetchImageQueue() {
+    std::cout << "[INFO] begin fetch Image Queue" << std::endl;
     json ret = postJson("/api/printings/fetch", {});
     std::cout << ret["data"] << std::endl;
     if (!ret.contains("data") || ret["data"].is_null() || ret["status"] != "SUCCEED") {
