@@ -2,6 +2,12 @@
   <div class="control-view">
     <div class="header">
       <h1>WAIC 大屏控制系统</h1>
+      <div class="text-12px text-left text-yellow-500">
+        固定：将某张图片固定在大屏上一直展示直到被另一张固定的图片冲掉或被取消固定<br />
+        置顶：将某张图片放到队头展示，不影响轮播，后置顶的在先置顶的前面<br />
+        删除：不会大屏上展示，已经在展示的不受影响<br />
+        打印：协助现场用户打印照片
+      </div>
     </div>
 
     <div class="control-panel">

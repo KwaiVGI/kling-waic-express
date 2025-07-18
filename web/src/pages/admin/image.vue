@@ -23,10 +23,10 @@
           <span class="pinned-image-id">{{ pinnedImageId }}</span>
         </template>
 
-        <template v-if="promotedImageId">
+        <!-- <template v-if="promotedImageId">
           <span class="status-label">置顶图片:</span>
           <span class="promoted-image-id">{{ promotedImageId }}</span>
-        </template>
+        </template> -->
       </div>
 
       <div class="action-buttons">
@@ -56,7 +56,6 @@
           class="gallery-item"
           :class="{
             pinned: image.id === pinnedImageId,
-            promoted: image.id === promotedImageId,
           }"
         >
           <div
@@ -65,20 +64,17 @@
           >
             <span class="image-id">{{ image.name }}</span>
             <div class="item-badges">
-              <span v-if="image.id === pinnedImageId" class="badge pinned-badge"
-                >固定</span
+              <button
+                @click="printImage(image.name)"
+                class="action-button print"
               >
-              <span
-                v-if="image.id === promotedImageId"
-                class="badge promoted-badge"
-                >置顶</span
-              >
+                打印
+              </button>
             </div>
             <div class="item-actions">
               <button
                 @click="promoteImage(image.id)"
                 class="action-button promote"
-                :disabled="image.id === promotedImageId"
               >
                 置顶
               </button>
@@ -141,13 +137,14 @@ import { ref, computed, onMounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 import { confirmDelete } from "@/utils/confirm";
+import { showToast } from "vant";
 
 const route = useRoute();
 // 数据状态
 const images = ref<CastingImage[]>([]);
 const loading = ref(false);
 const currentPage = ref(1);
-const pageSize = ref(20);
+const pageSize = ref(24);
 const totalPages = ref(1);
 const totalImages = ref(0);
 const searchQuery = ref("");
@@ -216,7 +213,9 @@ const promoteImage = async (imageId: string) => {
     await castingService.promoteImage("STYLED_IMAGE", imageId);
     promotedImageId.value = imageId;
     loadImages();
+    showToast("操作成功");
   } catch (error) {
+    showToast("操作失败");
     console.error("置顶图片失败:", error);
   }
 };
@@ -237,7 +236,9 @@ const pinImage = async (imageId: string) => {
     await castingService.pinImage("STYLED_IMAGE", imageId);
     // loadImages();
     getPinedImage();
+    showToast("操作成功");
   } catch (error) {
+    showToast("操作失败");
     console.error("固定图片失败:", error);
   }
 };
@@ -248,7 +249,9 @@ const unpinImage = async () => {
     await castingService.unpinImage("STYLED_IMAGE", pinnedImageId.value);
     pinnedImageId.value = null;
     // loadImages();
+    showToast("操作成功");
   } catch (error) {
+    showToast("操作失败");
     console.error("取消固定失败:", error);
   }
 };
@@ -263,8 +266,20 @@ const deleteImage = async (imageId: string) => {
     if (!confirmed) return;
     await castingService.deleteImage("STYLED_IMAGE", imageId);
     loadImages();
+    showToast("操作成功");
   } catch (error) {
+    showToast("操作失败");
     console.error("删除失败:", error);
+  }
+};
+
+const printImage = async (imageId: string) => {
+  try {
+    await castingService.printImage(imageId);
+    showToast("打印任务已发送");
+  } catch (error) {
+    showToast("打印失败，请重试");
+    console.error("打印图片失败:", error);
   }
 };
 
@@ -589,6 +604,14 @@ watch(searchQuery, (newVal) => {
   background-color: #e0e0e0;
   color: #999;
   cursor: not-allowed;
+}
+.action-button.print {
+  background-color: rgb(10, 150, 54);
+  color: white;
+}
+
+.action-button.print:hover:not(:disabled) {
+  background-color: rgb(85, 200, 18);
 }
 
 .pagination-controls {

@@ -93,13 +93,14 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+import { confirmDelete } from "@/utils/confirm";
 
 const route = useRoute();
 // 数据状态
 const images = ref<CastingImage[]>([]);
 const loading = ref(false);
 const currentPage = ref(1);
-const pageSize = ref(20);
+const pageSize = ref(24);
 const totalPages = ref(1);
 const totalImages = ref(0);
 const searchQuery = ref("");
@@ -165,10 +166,15 @@ const goToPage = (page: number) => {
 // 删除
 const deleteImage = async (imageId: string) => {
   try {
+    const confirmed = await confirmDelete({
+      title: "删除确认",
+      message: "确定要删除吗？删除后不会在大屏幕上显示。",
+    });
+    if (!confirmed) return;
     await castingService.deleteImage(currentType, imageId);
     loadImages();
   } catch (error) {
-    console.error("取消固定失败:", error);
+    console.error("删除失败:", error);
   }
 };
 

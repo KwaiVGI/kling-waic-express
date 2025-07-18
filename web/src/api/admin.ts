@@ -81,3 +81,19 @@ export async function getScreenList({
 }): Promise<CastingImage[]> {
   return request.get(`/api/castings/${type}/screen`, { params });
 }
+
+// 获取打印队列列表
+export async function getPrintList(): Promise<CastingImage[]> {
+  return request.get(`/api/printings/peekAll`);
+}
+
+// 管理后台打印照片
+export async function printImageFromConsole({
+  name,
+  type,
+}: {
+  name: string;
+  type: "STYLED_IMAGE" | "VIDEO_EFFECT";
+}): Promise<{ status: TaskStatus; outputs: TaskOutput }> {
+  return request.post(`/api/tasks/${type}/${name}/printFromConsole`);
+}

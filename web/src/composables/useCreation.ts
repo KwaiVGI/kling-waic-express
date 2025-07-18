@@ -64,7 +64,7 @@ export default function useCreation(creationType: CreationType) {
       showToast({
         // type: "fail",
         message: "上传失败，请重试",
-        duration: 1500,
+        duration: 2500,
       });
     }
   };
@@ -106,13 +106,13 @@ export default function useCreation(creationType: CreationType) {
       generatedResult.value = result;
       showToast({
         message: "创作成功！",
-        duration: 1500,
+        duration: 2500,
       });
     } catch (error) {
       generatedResult.value = null;
       showToast({
         message: "哎呀失败了，换张照片试试吧~",
-        duration: 2000,
+        duration: 3000,
       });
       console.error("生成失败:", error);
       throw error;
@@ -138,12 +138,12 @@ export default function useCreation(creationType: CreationType) {
       if (creationType === "image") {
         showToast({
           message: "请长按图片进行保存",
-          duration: 2000,
+          duration: 3000,
         });
       } else {
         showToast({
           message: "请在浏览器中打开本页面进行保存",
-          duration: 2000,
+          duration: 3000,
         });
       }
       return;
@@ -154,13 +154,13 @@ export default function useCreation(creationType: CreationType) {
       if (creationType === "image") {
         showToast({
           message: "请长按图片进行保存",
-          duration: 2000,
+          duration: 3000,
         });
       } else {
         // TODO: 待调研
         showToast({
           message: "暂不支持保存视频",
-          duration: 2000,
+          duration: 3000,
         });
       }
       return;
@@ -169,13 +169,13 @@ export default function useCreation(creationType: CreationType) {
       if (creationType === "image") {
         showToast({
           message: "请长按图片进行保存",
-          duration: 2000,
+          duration: 3000,
         });
       } else {
         // TODO: 待调研
         showToast({
           message: "暂不支持保存视频",
-          duration: 2000,
+          duration: 3000,
         });
       }
       return;
@@ -193,13 +193,13 @@ export default function useCreation(creationType: CreationType) {
       showToast({
         // type: "success",
         message: "保存成功！",
-        duration: 1500,
+        duration: 2500,
       });
     } catch (error) {
       showToast({
         // type: "fail",
         message: "保存失败，请重试",
-        duration: 1500,
+        duration: 2500,
       });
       console.error("保存失败:", error);
     } finally {
@@ -234,10 +234,14 @@ export default function useCreation(creationType: CreationType) {
       await printImageTask({ type: "STYLED_IMAGE", name });
       showToast({
         message: "打印任务已发送",
-        duration: 1500,
+        duration: 3500,
       });
     } catch (error) {
-      showToast("操作失败，请重试");
+      if (error.message === "DUPLICATE_PRINT") {
+        showToast("请不要重复打印哈~");
+      } else {
+        showToast("操作失败，请重试");
+      }
     } finally {
       isPrinting.value = false;
     }

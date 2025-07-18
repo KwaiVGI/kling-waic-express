@@ -2,8 +2,10 @@ import type { TaskType } from "./type";
 import {
   getCastings,
   getPined,
+  getPrintList,
   getScreenList,
   operateCasting,
+  printImageFromConsole,
   TaskOperateAction,
 } from "./admin";
 
@@ -99,9 +101,6 @@ export const castingService = {
         id: item.name,
         name: item.name.replace("casting:", ""),
         url: item.task.outputs.url,
-        createdAt: item.task.createTime,
-        isPinned: false,
-        isActive: false,
       })),
       total,
       page,
@@ -163,5 +162,22 @@ export const castingService = {
       action: TaskOperateAction.UNPIN,
     });
     return res;
+  },
+  async printImage(name: string) {
+    const res = await printImageFromConsole({
+      type: "STYLED_IMAGE",
+      name,
+    });
+    return res;
+  },
+  async getPrintList() {
+    const res = await getPrintList();
+    console.log(res);
+    const items = res.map((item) => ({
+      id: item.name,
+      name: item.name.replace("printing:No.", ""),
+      url: item.task.outputs.url,
+    }));
+    return items;
   },
 };
