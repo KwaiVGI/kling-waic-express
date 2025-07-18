@@ -15,12 +15,12 @@ struct PrintingUpdateInput {
     PrintingStatus status;
 };
 
-struct Printing {
-    long id;
-    std::string name;
-    Task task;
-    PrintingStatus status;
-};
+// struct Printing {
+//     long id;
+//     std::string name;
+//     Task task;
+//     PrintingStatus status;
+// };
 
 struct PrintingUpdateInput {
     PrintingStatus status;
@@ -32,16 +32,16 @@ struct ImgInfo {
     PrintingStatus status;
 };
 
-struct Task {
-    long long id;
-    std::string name;
-    std::vector<std::string> taskIds;
-    TaskStatus status;
-    TaskType type;
-    std::string filename;
-    TaskOutput outputs;
-    std::chrono::system_clock::time_point createTime;
-    std::chrono::system_clock::time_point updateTime;
+// struct Task {
+//     long long id;
+//     std::string name;
+//     std::vector<std::string> taskIds;
+//     TaskStatus status;
+//     TaskType type;
+//     std::string filename;
+//     TaskOutput outputs;
+//     std::chrono::system_clock::time_point createTime;
+//     std::chrono::system_clock::time_point updateTime;
     
-};
+// };
 #endif

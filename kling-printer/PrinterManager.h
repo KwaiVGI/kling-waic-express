@@ -1,7 +1,5 @@
 #ifndef PRINTER_MANAGER_H
 #define PRINTER_MANAGER_H
-#include <windows.h>
-#include <winspool.h>
 #include <vector>
 #include <string>
 #include <mutex>

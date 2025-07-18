@@ -1,14 +1,11 @@
 #ifndef HTTP_CLIENT_H
 #define HTTP_CLIENT_H
 #include "ConnectPool.h"
-#include <stdexcept>
-#include "include/httplib.h"
 #include "include/nlohmann/json.hpp"
 #include <string>
 #include <QImage>
 using namespace httplib;
 using json = nlohmann::json;
-namespace {
 class HttpClient {
 public:
     // host 形如 "api.example.com"
@@ -45,5 +42,4 @@ private:
     QImage getImage(const std::string& path,
               const std::vector<std::pair<std::string, std::string>>& headers = {});
 };
-}
 #endif

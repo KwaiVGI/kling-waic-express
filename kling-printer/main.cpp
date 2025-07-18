@@ -3,38 +3,14 @@
 #include <streambuf>
 #include <fstream>
 #include <conio.h>
-#include <windows.h>
 #include <fstream>
-#include "Printer.h"
+#include "HttpClient.h"
 #include "PrinterManager.h"
 
 
 using namespace std;
 
 DWORD cnt = 0;
-
-PRINTER_INFO_2* getPrinterList() {
-    PRINTER_INFO_2*    list;
-    DWORD            sz = 0;
-    DWORD Level = 2;
-    int            i;
-    int            sl;
-
-    EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS, NULL, Level, NULL, 0, &sz, &cnt);
-    if ((list = (PRINTER_INFO_2*)malloc(sz)) == 0)    return nullptr;
-    
-    if (!EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS, NULL, Level, (LPBYTE)list, sz, &sz, &cnt))
-    {
-        free(list);
-        return nullptr;
-    }
-    for (int i = 0 ; i < (int) cnt; ++i) {
-        if (list[i].Attributes & PRINTER_ATTRIBUTE_NETWORK) continue;
-        printf("%d-th Local Printer Name: %ls\n", i+1, list[i].pPrinterName);
-        fflush(stdout);
-    }
-    return list;
-}
 
 bool fileExists(const std::string& path) {
     std::ifstream file(path);
@@ -69,8 +45,19 @@ private:
     std::streambuf* old_buf;
 };
 
-
-
+std::vector<std::string> collectJpgRelative(const std::string& dir)
+{
+    std::vector<std::string> out;
+    std::filesystem::path root(dir);
+    for (const auto& e : std::filesystem::directory_iterator(root))
+        if (e.is_regular_file()) {
+            auto ext = e.path().extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+            if (ext == ".jpg" || ext == ".jpeg")
+                out.push_back(std::filesystem::relative(e.path(), root).string());
+        }
+    return out;
+}
 
 int main() {
     SetConsoleOutputCP(65001);
@@ -79,7 +66,6 @@ int main() {
     // cout 定向至指定txt
     OutputRedirector redirect("log.txt");
     std::cout << "Program Begin" << std::endl;
-    getPrinterList();
     HGLOBAL hDevMode = NULL;
     std::vector<PrinterInfo> printerInfoList;
     // printerInfoList.push_back({L"Canon SELPHY CP1500 (test1)", 89, 119 , 300, true});
@@ -90,40 +76,40 @@ int main() {
     printf("Please input image path to print. press Enter for end. input empty line for quit.\n");
     while (running) {
         std::vector<string> inputs;
-        // if(HttpClient::instance().fetchImageQueue()) {
-        //     // 增加逻辑
-        //     inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
-        // }
+        if(HttpClient::instance().fetchImageQueue()) {
+            // 增加逻辑
+            inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
+        }
         std::string input;
-        // if(!std::getline(std::cin, input)) {
-        //     std::cout << "input stream closed" << std::endl;
-        //     if (std::cin.eof()) {
-        //         std::cout << "原因：EOF (End of File)\n";
-        //     }
-        //     if (std::cin.fail()) {
-        //         std::cout << "原因：failbit set (读取失败)\n";
-        //     }
-        //     if (std::cin.bad()) {
-        //         std::cout << "原因：badbit set (致命错误)\n";
-        //     }
-        //     running = false;
-        //     continue;
-        // };
+        if(!std::getline(std::cin, input)) {
+            std::cout << "input stream closed" << std::endl;
+            if (std::cin.eof()) {
+                std::cout << "原因：EOF (End of File)\n";
+            }
+            if (std::cin.fail()) {
+                std::cout << "原因：failbit set (读取失败)\n";
+            }
+            if (std::cin.bad()) {
+                std::cout << "原因：badbit set (致命错误)\n";
+            }
+            running = false;
+            continue;
+        };
 
         for (auto input : inputs) {
             printerManager->addImage(input);
         }
         
-        // if (input.empty()) {
-        //     running =false;
-        //     continue;
-        // }
+        if (input.empty()) {
+            running =false;
+            continue;
+        }
         
-        // if (!fileExists(input)) {
-        //     printf("Cannot find this file.\n");
-        // } else {
-        //     printerManager->addImage(input);
-        // }
+        if (!fileExists(input)) {
+            printf("Cannot find this file.\n");
+        } else {
+            printerManager->addImage(input);
+        }
         Sleep(10);
     }
     std::cout << "delete" << std::endl;
