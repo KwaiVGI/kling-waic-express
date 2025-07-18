@@ -139,7 +139,7 @@ class CastingHelperTest : SpringBaseTest() {
     @Test
     fun testScreen() {
         for (i in 1..10) {
-            val castings = castingHelper.screen(TaskType.STYLED_IMAGE, 3)
+            val castings = castingHelper.screen(TaskType.STYLED_IMAGE, 1)
             println(castings.size)
         }
     }

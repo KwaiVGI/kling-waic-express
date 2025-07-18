@@ -1,4 +1,4 @@
-package com.kling.waic.config
+package com.kling.waic.filter
 
 import com.kling.waic.utils.Slf4j.Companion.log
 import jakarta.servlet.Filter
@@ -12,7 +12,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 class CorsFilter : Filter {
 
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
@@ -20,7 +20,7 @@ class CorsFilter : Filter {
         val httpResponse = response as HttpServletResponse
 
         val origin = httpRequest.getHeader("Origin")
-        
+
         // Setting CORS Header
         if (origin != null) {
             httpResponse.setHeader("Access-Control-Allow-Origin", origin)
@@ -30,13 +30,12 @@ class CorsFilter : Filter {
 
         httpResponse.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH")
         httpResponse.setHeader("Access-Control-Allow-Headers", "*")
-//        httpResponse.setHeader("Access-Control-Expose-Headers", "Authorization")
         httpResponse.setHeader("Access-Control-Allow-Credentials", "true")
         httpResponse.setHeader("Access-Control-Max-Age", "3600")
 
         // Processing Precheck
         if ("OPTIONS".equals(httpRequest.method, ignoreCase = true)) {
-            log.info("CORS preflight request: {} {}", httpRequest.method, httpRequest.requestURI)
+            log.debug("CORS preflight request: {} {}", httpRequest.method, httpRequest.requestURI)
             httpResponse.status = HttpServletResponse.SC_OK
             return
         }

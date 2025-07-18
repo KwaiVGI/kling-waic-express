@@ -23,16 +23,20 @@ open class AuthorizationInterceptor (
 //        }
         
         if (handler !is HandlerMethod) {
-            log.info("AuthorizationInterceptor preHandle called for request: ${request.requestURI}," +
-                    " method: ${request.method}, handler class: ${handler.javaClass}")
+            log.debug(
+                "AuthorizationInterceptor preHandle called for request: {}, method: {}, handler class: {}",
+                request.requestURI,
+                request.method,
+                handler.javaClass
+            )
             return true
         }
         val annotation = handler.getMethodAnnotation(Authorization::class.java)
         if (annotation == null) {
             return true
         }
-        
-        log.info("Authorization required for: ${request.requestURI}, type: ${annotation.type}")
+
+        log.debug("Authorization required for: {}, type: {}", request.requestURI, annotation.type)
         
         val authHeader = request.getHeader("Authorization")
         if (authHeader == null || !authHeader.startsWith("Token ")) {
@@ -44,13 +48,14 @@ open class AuthorizationInterceptor (
         // Check token
         val token = authHeader.substring(6) // Remove "Token " prefix
         if (!validateToken(token, annotation.type)) {
-            log.warn("Authorization failed - invalid token for: ${request.requestURI}")
+            log.warn("Authorization failed - invalid token: $token with type: ${annotation.type} " +
+                    "for uri: ${request.requestURI}")
             response.status = HttpServletResponse.SC_UNAUTHORIZED
             response.writer.write("Invalid token")
             return false
         }
         
-        log.info("Authorization successful for: ${request.requestURI}")
+        log.debug("Authorization successful for: ${request.requestURI}")
         return true
     }
 

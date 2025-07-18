@@ -2,7 +2,6 @@ package com.kling.waic.config
 
 import com.kling.waic.auth.AuthorizationInterceptor
 import org.springframework.context.annotation.Configuration
-import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
@@ -13,7 +12,7 @@ open class WebConfig(
 
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(authorizationInterceptor)
-            .addPathPatterns("/**") // Intercept all requests
+            .addPathPatterns("/api/**") // Intercept all requests
             .excludePathPatterns(
                 "/**/*.html", // Exclude static HTML files
                 "/**/*.js", // Exclude static JS files
@@ -22,7 +21,7 @@ open class WebConfig(
                 "/**/*.jpeg", // Exclude JPEG images
                 "/**/*.png", // Exclude PNG images
                 "/**/*.gif", // Exclude GIF images
-                "/**/health/heartbeat"
+                "/api/health/**", // Exclude health check endpoints
             )
     }
 

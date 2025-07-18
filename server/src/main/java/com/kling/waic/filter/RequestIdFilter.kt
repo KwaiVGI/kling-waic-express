@@ -5,10 +5,12 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import org.slf4j.MDC
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import java.util.*
 
-
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @Component
 open class RequestIdFilter : Filter {
     companion object {

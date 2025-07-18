@@ -27,14 +27,14 @@ class TaskController (
     @Authorization(AuthorizationType.CREATE_TASK)
     fun newTask(@PathVariable type: TaskType,
                 @RequestParam("file") file: MultipartFile): Result<Task> {
-        log.info("Creating new task of type: {}, file: {}", type, file.originalFilename)
+        log.debug("Creating new task of type: {}, file: {}", type, file.originalFilename)
 
         val task = CoroutineUtils.runSuspend {
             taskServiceSelector.selectTaskService(type)
                 .createTask(type, file)
         }
 
-        log.info("Created new task of type: {}, file: {}, task: {}",
+        log.debug("Created new task of type: {}, file: {}, task: {}",
             type, file.originalFilename, task)
         return Result(task)
     }
@@ -43,14 +43,14 @@ class TaskController (
     @Authorization(AuthorizationType.CREATE_TASK)
     fun queryTask(@PathVariable type: TaskType,
                   @PathVariable name: String): Result<Task> {
-        log.info("Query task of type: {}, name: {}", type, name)
+        log.debug("Query task of type: {}, name: {}", type, name)
 
         val task = CoroutineUtils.runSuspend {
             taskServiceSelector.selectTaskService(type)
                 .queryTask(type, name)
         }
 
-        log.info("Query task with result, taskId: {}, taskStatus: {}", task.id, task.status)
+        log.debug("Query task with result, taskId: {}, taskStatus: {}", task.id, task.status)
         return Result(task)
     }
 
@@ -58,14 +58,14 @@ class TaskController (
     fun printTask(
         @PathVariable type: TaskType,
         @PathVariable name: String): Result<Printing> {
-        log.info("Print task of type: {}, name: {}", type, name)
+        log.debug("Print task of type: {}, name: {}", type, name)
 
         val printing = CoroutineUtils.runSuspend {
             taskServiceSelector.selectTaskService(type)
                 .printTask(type, name)
         }
 
-        log.info("Print task with result, printing: {}", printing)
+        log.debug("Print task with result, printing: {}", printing)
         return Result(printing)
     }
 

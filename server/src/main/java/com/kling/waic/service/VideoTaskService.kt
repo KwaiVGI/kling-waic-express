@@ -85,7 +85,7 @@ class VideoTaskService(
         val taskId = task.taskIds.first()
         val request = QueryVideoTaskRequest(taskId)
         val result = klingOpenAPIClient.queryVideoTask(request)
-        log.info(
+        log.debug(
             "Query task with result, taskId: {}, taskStatus: {}",
             taskId,
             result.data?.taskStatus ?: "null"
@@ -96,7 +96,7 @@ class VideoTaskService(
         log.info("Task ${task.name} convertedStatus: $convertedStatus")
 
         if (convertedStatus == task.status) {
-            log.info("Task ${task.name} status has not changed, returning existing task")
+            log.debug("Task ${task.name} status has not changed, returning existing task")
             return task // No status change, return existing task
         }
 
@@ -123,7 +123,7 @@ class VideoTaskService(
 
         val finalValue = ObjectMapperUtils.toJSON(finalTask)
         jedis.set(task.name, finalValue)
-        log.info("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
+        log.debug("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
 
         val casting = castingHelper.addToCastingQueue(finalTask)
         log.info("Added task ${finalTask.name} to casting queue, casting: $casting")
