@@ -30,17 +30,59 @@ void initConsoleOutput() {
 
 class OutputRedirector {
 public:
-    OutputRedirector(const std::string& filename) {
-        file.open(filename);
-        old_buf = std::cout.rdbuf(file.rdbuf());
+    explicit OutputRedirector(const std::string& filename) {
+        file.open(filename, std::ios::app); // 追加模式
+        if (!file.is_open()) {
+            throw std::runtime_error("Failed to open log file: " + filename);
+        }
+
+        // 创建带时间戳的 buffer，接管 file.rdbuf()
+        old_buf = std::cout.rdbuf(new TimestampBuffer(file.rdbuf()));
     }
 
     ~OutputRedirector() {
-        std::cout.rdbuf(old_buf);
+        delete std::cout.rdbuf(); // 删除我们注入的 buffer
+        std::cout.rdbuf(old_buf); // 恢复原 buffer
         file.close();
     }
 
 private:
+class TimestampBuffer : public std::streambuf {
+    std::streambuf* dest;
+    char time_buf[128];
+    bool need_time = true;
+
+    int overflow(int c) override {
+        if (c == EOF) return sync();
+
+        if (need_time) {
+            auto now = std::chrono::system_clock::now();
+            auto t = std::chrono::system_clock::to_time_t(now);
+            auto tm = *std::localtime(&t);
+            dest->sputn(time_buf,
+                        std::strftime(time_buf, sizeof(time_buf),
+                                      "[%Y-%m-%d %H:%M:%S] ", &tm));
+            need_time = false;
+        }
+
+        int result = dest->sputc(c);
+
+        if (c == '\n') {
+            need_time = true;
+            sync(); // 关键：刷新缓冲区
+        }
+
+        return result;
+    }
+
+    int sync() override {
+        return dest->pubsync(); // 强制刷新
+    }
+
+public:
+    explicit TimestampBuffer(std::streambuf* d) : dest(d) {}
+};
+
     std::ofstream file;
     std::streambuf* old_buf;
 };
@@ -60,20 +102,17 @@ std::vector<std::string> collectJpgRelative(const std::string& dir)
 }
 
 int main() {
-    SetConsoleOutputCP(65001);
-    // 开启一个控制台窗口，printf重定向至此
-    initConsoleOutput();
     // cout 定向至指定txt
     OutputRedirector redirect("log.txt");
+    // 开启一个控制台窗口，printf重定向至此
+    initConsoleOutput();
     std::cout << "Program Begin" << std::endl;
-    HGLOBAL hDevMode = NULL;
     std::vector<PrinterInfo> printerInfoList;
-    // printerInfoList.push_back({L"Canon SELPHY CP1500 (test1)", 89, 119 , 300, true});
-    printerInfoList.push_back({L"Canon SELPHY CP1500(1)", 100, 148 , 300, true});
+    printerInfoList.push_back({L"Canon SELPHY CP1500(1)", 100, 148 , 300, false});
     printerInfoList.push_back({L"Canon SELPHY CP1500(2)", 100, 148 , 300, false});
-    printerInfoList.push_back({L"Canon SELPHY CP1500(3)", 100, 148 , 300, true});
+    printerInfoList.push_back({L"Canon SELPHY CP1500(3)", 100, 148 , 300, false});
     printerInfoList.push_back({L"Canon SELPHY CP1500(4)", 100, 148 , 300, false});
-    printerInfoList.push_back({L"Canon SELPHY CP1500(5)", 100, 148 , 300, true});
+    printerInfoList.push_back({L"Canon SELPHY CP1500(5)", 100, 148 , 300, false});
     PrinterManager* printerManager = new PrinterManager(printerInfoList);
     bool running = true;
     printf("Please input image path to print. press Enter for end. input empty line for quit.\n");

@@ -85,7 +85,6 @@ Printer::Printer(const std::wstring& printerName, int printerPageWidth /* = 0*/,
         m_hDevMode = NULL;
         throw std::runtime_error("DocumentProperties 获取 DevMode 失败，错误码: " + std::to_string(GetLastError()));
     }
-    std::cout << "begin Thread" << std::endl;
     m_printThread = std::thread(&Printer::run, this);
     m_monitorThread = std::thread(&Printer::monitorLoop, this);
 }
@@ -293,7 +292,6 @@ bool Printer::preparePrinterSetting()
     // 创建打印机设备上下文 (DC)
     // 注意：需要获取打印机驱动名称和设备名称
     DWORD needed = 0;
-    std::cout << "begin prepare\n";
     // 先获取信息缓冲区大小
     if (!GetPrinter(m_hPrinter, 2, nullptr, 0, &needed)) {
         // 可预见错误为122，因为第一次是nullptr
@@ -314,7 +312,6 @@ bool Printer::preparePrinterSetting()
         printf("printer: 获取打印机信息失败\n");
         return false;
     }
-    std::cout << "code run after GetPrinterW\n";
     // 创建打印机 DC
     HDC hPrintDC = CreateDC(
         printerInfo->pDriverName,  // 驱动名称
@@ -322,7 +319,6 @@ bool Printer::preparePrinterSetting()
         NULL,                     // 输出端口（NULL 表示使用默认）
         NULL                      // 默认设备模式
     );
-    std::cout << "code run now\n";
     free((void*)printerInfo);
     if (!hPrintDC) {
         printf("printer: 创建打印机 DC 失败\n");

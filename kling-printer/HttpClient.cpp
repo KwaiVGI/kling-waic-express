@@ -52,6 +52,7 @@ json HttpClient::getJson(const std::string& path,
     auto conn = pool_->acquire();
     httplib::Result ret = doRequest(conn->cli, token_, path, json(), headers, false);
     pool_->release(std::move(conn));
+    std::cout << "getJson:" << path << " result status:" << ret->status << std::endl;
     return json::parse(ret->body);
 }
 
@@ -72,24 +73,30 @@ json HttpClient::postJson(const std::string& path,
 QImage HttpClient::getImage(const std::string& path,
                     const std::vector<std::pair<std::string, std::string>>& headers) {
     std::cout << "doGetImage" << std::endl;
+    for (auto header : headers) {
+        std::cout << header.first << " " << header.second << std::endl;
+    }
     auto conn = pool_->acquire();
-    httplib::Result ret = doRequest(conn->cli, token_, path, json(), headers, false);
+    httplib::Result ret = doRequest(conn->cli, "", path, json(), headers, false);
     std::cout << "endRequest" << std::endl;
     pool_->release(std::move(conn));
+  
+    if (!ret || ret->status != 200) {
+        std::cout << "HTTP request failed" << std::endl;
+    }
     if (auto ct = ret->get_header_value("Content-Type");
         ct.find("image/jpeg") == std::string::npos) {
         std::cout << "Content-Type not image/jpeg:" << ct.c_str() << std::endl;
         return {};
     }
-    std::cout << "size\n";
-    std::cout << ret->body.size();
     QByteArray raw(ret->body.data(), static_cast<int>(ret->body.size()));
     QImage img;
     QBuffer buf(&raw);
     buf.open(QIODevice::ReadOnly);
-    QImageReader r(&buf);
+    QImageReader r(&buf, "JPEG");
     if (!r.canRead())
-        std::cout << r.errorString().toStdString();
+        std::cout << "ImageRader use failed" << std::endl;
+        std::cout << r.errorString().toStdString() << std::endl;
     img = r.read();
     return img;
 }
@@ -117,7 +124,7 @@ bool HttpClient::fetchImageQueue() {
     std::string name = std::to_string(id);
     std::cout << "name:" << name << std::endl;
     std::string download_url = stringPrefix(ret.at("data").at("task").at("outputs").at("url"));
-    std::cout << "[INFO] ready to download. name: " + name + "url:" + download_url << std::endl;
+    std::cout << "[INFO] ready to download. name: " + name + " url:" + download_url << std::endl;
     if (!downloadImage(download_url, DOWNLOAD_PATH, name + ".jpg")) {
         std::cout << "[INFO] DownLoad image failed. url:" << download_url << std::endl; 
         return false;
@@ -127,7 +134,9 @@ bool HttpClient::fetchImageQueue() {
 }
 
 bool HttpClient::downloadImage(const std::string& imgUrl, const std::string& dir, const std::string& name) {
-    QImage img = getImage(imgUrl);
+    std::vector<std::pair<std::string, std::string>> hdrs;
+    // hdrs.push_back(std::make_pair("nocache", "1"));
+    QImage img = getImage(imgUrl, hdrs);
     if (img.isNull()) {
         return false;
     }
