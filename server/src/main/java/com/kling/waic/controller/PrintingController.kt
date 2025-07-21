@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -50,10 +51,10 @@ class PrintingController(
         return Result(printing)
     }
 
-    @GetMapping("peekAll")
+    @GetMapping("queryAll")
     @Authorization(AuthorizationType.MANAGEMENT)
-    fun peekAll(): Result<List<Printing>> {
-        val allPrintings = printingHelper.peekAll()
+    fun queryAll(@RequestParam(required = false) keyword: String = "",): Result<List<Printing>> {
+        val allPrintings = printingHelper.queryAll(keyword)
         return Result(allPrintings)
     }
 }

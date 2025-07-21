@@ -36,6 +36,9 @@ waic:
     access-key: ${WAIC_OPENAPI_ACCESS_KEY}
     secret-key: ${WAIC_OPENAPI_SECRET_KEY}
   crop-image-with-opencv: ${WAIC_CROP_IMAGE_WITH_OPENCV:true}
+  cipher:
+    key: ${WAIC_OPENAPI_ACCESS_KEY}
+    iv: ${WAIC_CIPHER_IV:KlingAIWAICBest!}
 
 kling:
   open-api:
