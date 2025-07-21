@@ -78,8 +78,10 @@ class PrintingHelperTest : SpringBaseTest() {
     }
 
     @Test
-    fun testPeekAll() {
-        val allPrintings = printingHelper.peekAll()
+    fun testQueryAll() {
+        val allPrintings = printingHelper.queryAll("")
         println(allPrintings)
+        val allPrintings2 = printingHelper.queryAll("10002")
+        println(allPrintings2)
     }
 }

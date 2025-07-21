@@ -83,10 +83,15 @@ class PrintingHelper(
         return newPrinting
     }
 
-    fun peekAll(): List<Printing> {
+    fun queryAll(keyword: String): List<Printing> {
         val printingNames = jedis.lrange(printingQueue, 0, -1).reversed()
-        log.debug("Peek all printingNames: {}", printingNames)
-        return printingNames.map {
+        val finalNames = if (keyword.isNotEmpty()) {
+            printingNames.filter { it.contains(keyword) }
+        } else {
+            printingNames
+        }
+        log.debug("Query all with finalNames: {}", finalNames)
+        return finalNames.map {
             getPrinting(it)
         }
     }
