@@ -1,6 +1,7 @@
 package com.kling.waic.service
 
 import com.google.errorprone.annotations.concurrent.LazyInit
+import com.kling.waic.entity.Locale
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskInput
@@ -144,7 +145,7 @@ class ImageTaskService(
         return task
     }
 
-    override suspend fun queryTask(type: TaskType, name: String): Task {
+    override suspend fun queryTask(type: TaskType, name: String, locale: Locale): Task {
         val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
         if (task == null || task.type != type) {
             throw IllegalArgumentException("Task not found or type mismatch")
@@ -207,7 +208,7 @@ class ImageTaskService(
         }
 
         log.info("Generating Sudoku image URL for task: ${newTask.name}")
-        val url = generateSudokuImageUrl(newTask, taskResponseMap)
+        val url = generateSudokuImageUrl(newTask, taskResponseMap, locale)
 
         val finalTask = newTask.copy(
             outputs = TaskOutput(
@@ -229,7 +230,8 @@ class ImageTaskService(
 
     private suspend fun generateSudokuImageUrl(
         task: Task,
-        taskResponseMap: Map<String, QueryImageTaskResponse>
+        taskResponseMap: Map<String, QueryImageTaskResponse>,
+        locale: Locale
     ): String {
         val imageUrls: List<String> = taskResponseMap.values
             .flatMap { it.taskResult.images ?: emptyList() }
@@ -238,6 +240,7 @@ class ImageTaskService(
         val outputImageUrl = imageProcessHelper.downloadAndCreateSudoku(
             task,
             imageUrls,
+            locale
         )
         return outputImageUrl
     }

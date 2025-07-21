@@ -1,5 +1,6 @@
 package com.kling.waic.test.service
 
+import com.kling.waic.entity.Locale
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
 import com.kling.waic.service.TaskService
@@ -18,10 +19,11 @@ class ImageTaskServiceTest : SpringBaseTest() {
 
     @Test
     fun testImageTaskService() {
+        val filename = "request-No.100228.jpg"
         val type = TaskType.STYLED_IMAGE
         val file = MockMultipartFile(
-            "request-No.100228.jpg",
-            FileUtils.readBytesFromResources("request-No.100228.jpg")
+            filename,
+            FileUtils.readBytesFromResources(filename)
         )
 
         CoroutineUtils.runSuspend {
@@ -29,7 +31,7 @@ class ImageTaskServiceTest : SpringBaseTest() {
 
             while (task.status !in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
                 delay(1000) // Use delay instead of sleep
-                task = imageTaskService.queryTask(type, task.name)
+                task = imageTaskService.queryTask(type, task.name, Locale.CN)
             }
             assert(task.status == TaskStatus.SUCCEED) { "Task failed with status: ${task.status}" }
             println(task)
