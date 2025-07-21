@@ -217,7 +217,7 @@ class ImageTaskService(
             .flatMap { it.taskResult.images ?: emptyList() }
             .map { it.url }
 
-        val encodedImageName = aesCipherHelper.encrypt("sudoku-${task.name}.jpg")
+        val encodedImageName = aesCipherHelper.encrypt("sudoku-${task.name}") + ".jpg"
         val outputPath = "$sudokuImagesDir/$encodedImageName"
         imageProcessHelper.downloadAndCreateSudoku(
             task,
