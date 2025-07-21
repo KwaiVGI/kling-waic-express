@@ -103,6 +103,7 @@ class VideoTaskService(
     ): Task {
         val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
         if (task == null || task.type != type) {
+            log.error("Task type $type not found or type mismatch for task: $name, task: $task")
             throw IllegalArgumentException("Task not found or type mismatch")
         }
 

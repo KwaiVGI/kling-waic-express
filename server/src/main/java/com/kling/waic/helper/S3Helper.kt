@@ -50,6 +50,8 @@ class S3Helper(
         val putRequest = PutObjectRequest.builder()
             .bucket(bucket)
             .key(key)
+            .contentType("image/jpeg")
+            .contentDisposition("inline")
             .build()
 
         val response = s3Client.putObject(putRequest, requestBody)
