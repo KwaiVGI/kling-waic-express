@@ -6,6 +6,7 @@ import com.kling.waic.entity.TaskOutput
 import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
+import com.kling.waic.exception.KlingOpenAPIException
 import com.kling.waic.external.KlingOpenAPIClient
 import com.kling.waic.external.model.CreateVideoTaskInput
 import com.kling.waic.external.model.CreateVideoTaskRequest
@@ -49,6 +50,9 @@ class VideoTaskService(
             )
         )
         val result = klingOpenAPIClient.createVideoTask(request)
+        if (result.code != 0) {
+            throw KlingOpenAPIException(result)
+        }
         log.info("Create video task with effectScene: $effectScene, taskId: ${result.data?.taskId ?: "null"}")
 
         val task = Task(
@@ -85,6 +89,9 @@ class VideoTaskService(
         val taskId = task.taskIds.first()
         val request = QueryVideoTaskRequest(taskId)
         val result = klingOpenAPIClient.queryVideoTask(request)
+        if (result.code != 0) {
+            throw KlingOpenAPIException(result)
+        }
         log.debug(
             "Query task with result, taskId: {}, taskStatus: {}",
             taskId,

@@ -160,6 +160,9 @@ class ImageTaskService(
                     val request = QueryImageTaskRequest(taskId = taskId)
 
                     val result = klingOpenAPIClient.queryImageTask(request)
+                    if (result.code != 0) {
+                        throw KlingOpenAPIException(result)
+                    }
                     log.info(
                         "Query task with result, taskId: {}, taskStatus: {}",
                         result.data?.taskId ?: "null", result.data?.taskStatus ?: "null"
