@@ -2,3 +2,4 @@ jedis:
   host: 172.28.199.165
   port: 6389
   password: ${REDIS_PASS_WAIC}
+  cluster-mode: false

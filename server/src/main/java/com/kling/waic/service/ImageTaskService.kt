@@ -3,6 +3,7 @@ package com.kling.waic.service
 import com.google.errorprone.annotations.concurrent.LazyInit
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskInput
 import com.kling.waic.entity.TaskOutput
 import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
@@ -31,7 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import redis.clients.jedis.Jedis
+import redis.clients.jedis.commands.JedisCommands
 import java.io.File
 import java.time.Instant
 import javax.imageio.ImageIO
@@ -41,7 +42,7 @@ class ImageTaskService(
     private val klingOpenAPIClient: KlingOpenAPIClient,
     private val styleImagePrompts: List<String>,
     private val codeGenerateRepository: CodeGenerateRepository,
-    private val jedis: Jedis,
+    private val jedis: JedisCommands,
     private val imageProcessHelper: ImageProcessHelper,
     @Value("\${waic.sudoku.images-dir}")
     private val sudokuImagesDir: String,
@@ -126,6 +127,10 @@ class ImageTaskService(
         val task = Task(
             id = IdUtils.generateId(),
             name = taskName,
+            input = TaskInput(
+                type = type,
+                image = requestImageUrl,
+            ),
             taskIds = taskIds,
             status = TaskStatus.SUBMITTED,
             type = type,

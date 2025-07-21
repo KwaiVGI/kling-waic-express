@@ -1,35 +1,23 @@
 package com.kling.waic.test.redis
 
+import com.kling.waic.test.SpringBaseTest
 import org.junit.jupiter.api.Test
-import redis.clients.jedis.ConnectionPoolConfig
-import redis.clients.jedis.DefaultJedisClientConfig
-import redis.clients.jedis.HostAndPort
-import redis.clients.jedis.JedisClientConfig
-import redis.clients.jedis.JedisCluster
+import org.springframework.beans.factory.annotation.Autowired
+import redis.clients.jedis.commands.JedisCommands
 import kotlin.test.assertEquals
 
 
-class JedisTest {
+class JedisTest : SpringBaseTest() {
+
+    @Autowired
+    private lateinit var jedis: JedisCommands
 
     @Test
     fun testJedis() {
-        val maxAttempts = 5
-
-        val clientConfig: JedisClientConfig? = DefaultJedisClientConfig.builder()
-            .ssl(true)
-            .build()
-
-        val jedisCluster = JedisCluster(
-            HostAndPort("kling-waic-fblxb2.serverless.cnn1.cache.amazonaws.com.cn", 6379),
-            clientConfig,
-            maxAttempts,
-            ConnectionPoolConfig()
-        )
-
         // Set and assert key-value
-        assertEquals(jedisCluster.set("key", "value"), "OK")
+        assertEquals(jedis.set("key", "value"), "OK")
         // Get and assert the value
-        assertEquals(jedisCluster.get("key"), "value")
+        assertEquals(jedis.get("key"), "value")
     }
 
     @Test

@@ -9,7 +9,13 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import redis.clients.jedis.ConnectionPoolConfig
+import redis.clients.jedis.DefaultJedisClientConfig
+import redis.clients.jedis.HostAndPort
 import redis.clients.jedis.Jedis
+import redis.clients.jedis.JedisClientConfig
+import redis.clients.jedis.JedisCluster
+import redis.clients.jedis.commands.JedisCommands
 import java.io.File
 import java.io.FileOutputStream
 import java.net.InetSocketAddress
@@ -20,13 +26,40 @@ open class ServiceConfig(
     @param:Value("\${jedis.host}") private val jedisHost: String,
     @param:Value("\${jedis.port}") private val jedisPort: Int,
     @param:Value("\${jedis.password}") private val jedisPassword: String,
+    @param:Value("\${jedis.cluster-mode}") private val jedisClusterMode: Boolean,
     @param:Value("\${kling.proxy.host}") private val proxyHost: String,
     @param:Value("\${kling.proxy.port}") private val proxyPort: Int,
     @param:Value("\${kling.proxy.use-proxy}") private val useProxy: Boolean,
 ) {
 
     @Bean
-    open fun jedis(): Jedis {
+    open fun jedis(): JedisCommands {
+
+        val jedisCommands = if (jedisClusterMode) {
+            createJedisCluster()
+        } else {
+            createStandaloneJedis()
+        }
+        return jedisCommands
+    }
+
+    private fun createJedisCluster(): JedisCluster {
+        val maxAttempts = 5
+
+        val clientConfig: JedisClientConfig? = DefaultJedisClientConfig.builder()
+            .ssl(true)
+            .build()
+
+        val jedisCluster = JedisCluster(
+            HostAndPort(jedisHost, jedisPort),
+            clientConfig,
+            maxAttempts,
+            ConnectionPoolConfig()
+        )
+        return jedisCluster
+    }
+
+    private fun createStandaloneJedis(): Jedis {
         val jedis = Jedis(jedisHost, jedisPort)
         jedis.auth(jedisPassword)
         return jedis

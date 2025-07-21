@@ -2,11 +2,11 @@ package com.kling.waic.repository
 
 import com.kling.waic.entity.TaskType
 import org.springframework.stereotype.Repository
-import redis.clients.jedis.Jedis
+import redis.clients.jedis.commands.JedisCommands
 
 @Repository
 class CodeGenerateRepository(
-    private val jedis: Jedis,
+    private val jedis: JedisCommands,
     private val nextCodeLuaScript: String
 ) {
 

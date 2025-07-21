@@ -4,13 +4,13 @@ import com.kling.waic.entity.Token
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Repository
-import redis.clients.jedis.Jedis
+import redis.clients.jedis.commands.JedisCommands
 import java.time.Instant
 import java.util.*
 
 @Repository
 class TokenRepository(
-    private val jedis: Jedis
+    private val jedis: JedisCommands
 ) {
     @Volatile
     private var latestToken: Token? = null
