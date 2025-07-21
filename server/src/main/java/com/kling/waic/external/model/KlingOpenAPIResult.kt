@@ -1,9 +1,11 @@
 package com.kling.waic.external.model
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.type.TypeReference
 import com.kling.waic.utils.ObjectMapperUtils
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class KlingOpenAPIResult<T>(
     val code: Int = 0,
     val message: String = "",
