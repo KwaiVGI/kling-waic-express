@@ -18,7 +18,6 @@ import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.helper.PrintingHelper
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.helper.AESCipherHelper
-import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
@@ -32,7 +31,9 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import redis.clients.jedis.Jedis
+import java.io.File
 import java.time.Instant
+import javax.imageio.ImageIO
 
 @Service
 class ImageTaskService(
@@ -49,6 +50,8 @@ class ImageTaskService(
     private val sudokuServerDomain: String,
     @Value("\${waic.crop-image-with-opencv}")
     private val cropImageWithOpenCV: Boolean,
+    @Value("\${spring.mvc.servlet.path}")
+    private val servletPath: String,
     private val printingHelper: PrintingHelper,
     private val castingHelper: CastingHelper,
     private val aesCipherHelper: AESCipherHelper
@@ -69,17 +72,21 @@ class ImageTaskService(
         val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
         log.info("Input image size: ${inputImage.width}x${inputImage.height}")
 
-        val outputImage = if (cropImageWithOpenCV && faceCropper != null) {
+        val requestImage = if (cropImageWithOpenCV && faceCropper != null) {
             log.debug("OpenCV face cropping is enabled, processing image with face detection")
             faceCropper!!.cropFaceToAspectRatio(inputImage, taskName)
         } else {
             log.info("OpenCV face cropping is disabled or FaceCropper not available, using original image")
             inputImage
         }
-        log.info("Output image size: ${outputImage.width}x${outputImage.height}")
 
-        val imageBase64 = FileUtils.convertImageToBase64(outputImage)
+        val requestFilename = "request-${taskName}.jpg"
+        val requestPath = "$sudokuImagesDir/$requestFilename"
+        val requestFile = File(requestPath)
+        ImageIO.write(requestImage, "jpg", requestFile)
+        log.info("Saved input image to $requestPath, size: ${requestImage.width} x ${requestImage.height}")
 
+        val requestImageUrl = "$sudokuServerDomain/$servletPath$sudokuUrlPrefix/$requestFilename"
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
 
         // Use coroutineScope instead of runBlocking
@@ -87,12 +94,15 @@ class ImageTaskService(
             val deferredResults = randomPrompts.map { prompt ->
                 async(Dispatchers.IO) {
                     val request = CreateImageTaskRequest(
-                        image = imageBase64,
+                        image = requestImageUrl,
                         prompt = prompt
                     )
 
                     val result = klingOpenAPIClient.createImageTask(request)
-                    log.info("Create image task with prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}")
+                    log.info(
+                        "Create image task with image: $requestImageUrl, " +
+                                "prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}"
+                    )
                     result.data?.taskId
                 }
             }
@@ -134,7 +144,7 @@ class ImageTaskService(
 
         // Use coroutineScope instead of runBlocking
         val taskResponseMap = coroutineScope {
-            val deferredResults = taskIds.map { taskId ->
+            val queryTaskRequests = taskIds.map { taskId ->
                 async(Dispatchers.IO) {
                     val request = QueryImageTaskRequest(taskId = taskId)
 
@@ -148,7 +158,7 @@ class ImageTaskService(
             }
 
             // Wait for all deferred results to complete
-            val results = deferredResults.awaitAll()
+            val results = queryTaskRequests.awaitAll()
             mutableMapOf<String, QueryImageTaskResponse>().apply {
                 results.forEach { (taskId, data) ->
                     data?.let { this[taskId] = it }
@@ -156,8 +166,10 @@ class ImageTaskService(
             }
         }
 
-        val overallStatus = calculateStatus(taskResponseMap)
-        log.info("Task ${task.name} overallStatus: $overallStatus")
+        val summaryMap = summaryResponse(taskResponseMap)
+        val overallStatus = calculateOverallStatus(summaryMap, taskIds.size)
+        log.info("Task ${task.name} overallStatus: $overallStatus, " +
+                "summaryInfo: ${summaryInfo(overallStatus, summaryMap, taskIds.size)}")
 
         if (overallStatus == task.status) {
             log.debug("Task ${task.name} status has not changed, returning existing task")
@@ -205,22 +217,59 @@ class ImageTaskService(
             .flatMap { it.taskResult.images ?: emptyList() }
             .map { it.url }
 
-        val encodedImageName = aesCipherHelper.encrypt("sudoku-${task.name}")
-        val outputPath = "$sudokuImagesDir/${encodedImageName}.jpg"
+        val encodedImageName = aesCipherHelper.encrypt("sudoku-${task.name}.jpg")
+        val outputPath = "$sudokuImagesDir/$encodedImageName"
         imageProcessHelper.downloadAndCreateSudoku(
             task,
             imageUrls,
             outputPath
         )
-        return "$sudokuServerDomain/api$sudokuUrlPrefix/${encodedImageName}.jpg"
+        return "$sudokuServerDomain/$servletPath$sudokuUrlPrefix/$encodedImageName"
     }
 
-    private fun calculateStatus(taskResponseMap: Map<String, QueryImageTaskResponse>): TaskStatus {
+    private fun summaryResponse(taskResponseMap: Map<String, QueryImageTaskResponse>):
+            MutableMap<KlingOpenAPITaskStatus, MutableList<String>> {
+        val summaryMap = mutableMapOf<KlingOpenAPITaskStatus, MutableList<String>>()
+        taskResponseMap.forEach { taskId, response ->
+            {
+                summaryMap.computeIfAbsent(response.taskStatus, { mutableListOf() }).add(taskId)
+            }
+        }
+        return summaryMap
+    }
+
+    private fun calculateOverallStatus(
+        summaryMap: MutableMap<KlingOpenAPITaskStatus, MutableList<String>>,
+        totalCount: Int
+    ): TaskStatus {
         return when {
-            taskResponseMap.values.all { it.taskStatus == KlingOpenAPITaskStatus.submitted } -> TaskStatus.SUBMITTED
-            taskResponseMap.values.all { it.taskStatus == KlingOpenAPITaskStatus.succeed } -> TaskStatus.SUCCEED
-            taskResponseMap.values.any { it.taskStatus == KlingOpenAPITaskStatus.failed } -> TaskStatus.FAILED
+            (summaryMap[KlingOpenAPITaskStatus.submitted]?.size
+                ?: 0) == totalCount -> TaskStatus.SUBMITTED
+
+            (summaryMap[KlingOpenAPITaskStatus.succeed]?.size
+                ?: 0) == totalCount -> TaskStatus.SUCCEED
+
+            !summaryMap[KlingOpenAPITaskStatus.failed].isNullOrEmpty() -> TaskStatus.FAILED
             else -> TaskStatus.PROCESSING
+        }
+    }
+
+    private fun summaryInfo(
+        overallStatus: TaskStatus,
+        summaryMap: MutableMap<KlingOpenAPITaskStatus, MutableList<String>>,
+        totalCount: Int
+    ): String {
+        return when (overallStatus) {
+            TaskStatus.SUBMITTED -> "All tasks are submitted: $totalCount."
+            TaskStatus.SUCCEED -> "All tasks succeeded: $totalCount."
+            TaskStatus.FAILED -> "Some tasks failed: " +
+                    "${summaryMap[KlingOpenAPITaskStatus.failed]?.size ?: 0} / $totalCount," +
+                    "failed taskIds: ${summaryMap[KlingOpenAPITaskStatus.failed]?.joinToString(", ") ?: "none"}."
+
+            TaskStatus.PROCESSING -> "Tasks are still processing, " +
+                    "submitted: ${summaryMap[KlingOpenAPITaskStatus.submitted]?.size ?: 0} / $totalCount, " +
+                    "processing: ${summaryMap[KlingOpenAPITaskStatus.processing]?.size ?: 0} / $totalCount, " +
+                    "succeed: ${summaryMap[KlingOpenAPITaskStatus.succeed]?.size ?: 0} / $totalCount."
         }
     }
 

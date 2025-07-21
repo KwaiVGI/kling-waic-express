@@ -84,31 +84,25 @@ class FaceCropper(
         val rect = Rect(cropX, cropY, maxCropWidth, maxCropHeight)
         val cropped = Mat(mat, rect)
 
-        val outputPath = "$sudokuImagesDir/cropped-${taskName}.jpg"
-        Imgcodecs.imwrite(outputPath, cropped)
-
         // Convert Mat back to BufferedImage
         val bufferedImage = matToBufferedImage(cropped)
-        log.info("Cropped Image generated, bufferedImage: {} x {}", bufferedImage.width, bufferedImage.height)
+        log.debug("Cropped Image generated, bufferedImage: {} x {}", bufferedImage.width, bufferedImage.height)
         return bufferedImage
     }
 
-    private fun bufferedImageToMat(bufferedImage: BufferedImage): Mat {
+    private fun bufferedImageToMat(inputImage: BufferedImage): Mat {
         // Validate input
-        if (bufferedImage.width <= 0 || bufferedImage.height <= 0) {
-            throw IllegalArgumentException("Invalid BufferedImage: width=${bufferedImage.width}, height=${bufferedImage.height}")
+        if (inputImage.width <= 0 || inputImage.height <= 0) {
+            throw IllegalArgumentException("Invalid BufferedImage: width=${inputImage.width}, height=${inputImage.height}")
         }
 
-        // Convert to a format compatible with JPG
-        val convertedImage = BufferedImage(bufferedImage.width, bufferedImage.height, BufferedImage.TYPE_3BYTE_BGR)
-        val g = convertedImage.createGraphics()
-        g.drawImage(bufferedImage, 0, 0, null)
-        g.dispose()
+        // Ensure the image is in a format compatible with JPG
+        val jpgCompatibleImage = ensureJpgCompatibleImage(inputImage)
 
         val byteArrayOutputStream = ByteArrayOutputStream()
-        val writeSuccess = ImageIO.write(convertedImage, "jpg", byteArrayOutputStream)
+        val writeSuccess = ImageIO.write(jpgCompatibleImage, "jpg", byteArrayOutputStream)
         if (!writeSuccess) {
-            throw IllegalStateException("Failed to convert BufferedImage to JPG bytes")
+            throw IllegalStateException("Failed to convert jpgCompatibleImage to JPG bytes")
         }
 
         val imageBytes = byteArrayOutputStream.toByteArray()
@@ -125,6 +119,27 @@ class FaceCropper(
         }
 
         return mat
+    }
+
+    fun ensureJpgCompatibleImage(inputImage: BufferedImage): BufferedImage {
+        return if (inputImage.type == BufferedImage.TYPE_3BYTE_BGR) {
+            inputImage
+        } else {
+            val outputImage = BufferedImage(
+                inputImage.width,
+                inputImage.height,
+                BufferedImage.TYPE_3BYTE_BGR
+            )
+
+            val g = outputImage.createGraphics()
+            g.drawImage(inputImage, 0, 0, null)
+            g.dispose()
+
+            log.info("Converted inputImage to TYPE_3BYTE_BGR for JPG compatibility, " +
+                    "inputImage size: {} x {}, outputImage size: {} x {}",
+                inputImage.width, inputImage.height, outputImage.width, inputImage.height)
+            outputImage
+        }
     }
 
     private fun matToBufferedImage(mat: Mat): BufferedImage {

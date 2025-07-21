@@ -37,8 +37,8 @@ class FileUtils {
         }
 
         fun convertImageToBase64(bufferedImage: BufferedImage): String {
-            val file = File.createTempFile("temp_image", ".png")
-            ImageIO.write(bufferedImage, "png", file)
+            val file = File.createTempFile("temp_image", ".jpg")
+            ImageIO.write(bufferedImage, "jpg", file)
             return convertImageToBase64(file)
         }
 
