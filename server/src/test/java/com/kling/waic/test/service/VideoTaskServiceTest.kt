@@ -18,10 +18,11 @@ class VideoTaskServiceTest : SpringBaseTest() {
 
     @Test
     fun testVideoTaskService() {
+        val filename = "origin_17530997642371778_IMG_3654.JPG"
         val type = TaskType.VIDEO_EFFECT
         val file = MockMultipartFile(
-            "test_girl.png",
-            FileUtils.readBytesFromResources("test_girl.png")
+            filename,
+            FileUtils.readBytesFromResources(filename)
         )
 
         CoroutineUtils.runSuspend {

@@ -1,5 +1,7 @@
 package com.kling.waic.helper
 
+import com.drew.imaging.ImageMetadataReader
+import com.drew.metadata.exif.ExifIFD0Directory
 import com.kling.waic.entity.Task
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.Slf4j.Companion.log
@@ -15,6 +17,8 @@ import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.font.TextLayout
+import java.awt.geom.AffineTransform
+import java.awt.image.AffineTransformOp
 import java.awt.image.BufferedImage
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
@@ -34,9 +38,33 @@ class ImageProcessHelper(
 ) {
 
     fun multipartFileToBufferedImage(file: MultipartFile): BufferedImage {
-        file.inputStream.use { inputStream ->
-            return ImageIO.read(inputStream)
+        val inputStream = file.inputStream
+        val originalImage = ImageIO.read(inputStream)
+        inputStream.close()
+
+        // Open the file as an InputStream to read EXIF data
+        file.inputStream.use { exifInputStream ->
+            val metadata = ImageMetadataReader.readMetadata(exifInputStream)
+            val directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory::class.java)
+            val orientation = directory?.getInt(ExifIFD0Directory.TAG_ORIENTATION) ?: 1
+
+            return rotateImageIfNeeded(originalImage, orientation)
         }
+    }
+
+    fun rotateImageIfNeeded(image: BufferedImage, orientation: Int): BufferedImage {
+        val transform = AffineTransform()
+        when (orientation) {
+            6 -> transform.rotate(Math.toRadians(90.0), image.height / 2.0, image.height / 2.0)
+            3 -> transform.rotate(Math.toRadians(180.0), image.width / 2.0, image.height / 2.0)
+            8 -> transform.rotate(Math.toRadians(270.0), image.width / 2.0, image.width / 2.0)
+            else -> return image // No need to rotate
+        }
+
+        val op = AffineTransformOp(transform, AffineTransformOp.TYPE_BICUBIC)
+        val newImage = BufferedImage(image.height, image.width, image.type)
+        op.filter(image, newImage)
+        return newImage
     }
 
     suspend fun downloadAndCreateSudoku(
