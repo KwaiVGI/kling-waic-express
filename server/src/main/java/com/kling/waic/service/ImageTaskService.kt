@@ -231,9 +231,7 @@ class ImageTaskService(
             MutableMap<KlingOpenAPITaskStatus, MutableList<String>> {
         val summaryMap = mutableMapOf<KlingOpenAPITaskStatus, MutableList<String>>()
         taskResponseMap.forEach { taskId, response ->
-            {
-                summaryMap.computeIfAbsent(response.taskStatus, { mutableListOf() }).add(taskId)
-            }
+            summaryMap.computeIfAbsent(response.taskStatus) { mutableListOf() }.add(taskId)
         }
         return summaryMap
     }
