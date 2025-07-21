@@ -62,7 +62,8 @@ json HttpClient::postJson(const std::string& path,
     httplib::Result ret = doRequest(conn->cli, token_, path, body, headers, true);
     pool_->release(std::move(conn));
     std::cout << "postJoson:" << path << " result status:" << ret->status << std::endl;
-    if (!ret && ret->status != 200) {
+    if (!ret || ret->status != 200) {
+        std::cout << "postJson return empty json" << std::endl;
         return json::object();
     }
     return json::parse(ret->body);
