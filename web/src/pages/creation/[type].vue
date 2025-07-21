@@ -53,9 +53,6 @@
           >
             <IconSvg name="add-image" :size="32" />
             <p class="mt-10px text-14px text-white">上传照片</p>
-            <p class="upload-tip mt-4px text-12px text-#B0B4B8">
-              支持JPG、PNG格式，大小不超过{{ maxFileSizeMB }}MB
-            </p>
           </div>
         </van-uploader>
         <div
@@ -366,7 +363,7 @@ const handleGenerate = async () => {
   if (!uploadedImage.value) {
     showToast({
       // icon: "https://tx.a.yximgs.com/kos/nlav12119/bIzvPqKP_2025-07-21-19-58-29.png",
-      message: "当前操作暂未生效，我们正在持续优化体验，欢迎稍后再试～",
+      message: "请上传图片",
       position: "bottom",
     });
     return;

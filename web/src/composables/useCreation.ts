@@ -8,7 +8,7 @@ export type CreationType = "image" | "video";
 
 export default function useCreation(creationType: CreationType) {
   // 图片上传大小限制（单位：字节）
-  const maxFileSize = ref<number>(20 * 1024 * 1024); // 默认10MB
+  const maxFileSize = ref<number>(30 * 1024 * 1024); // 默认10MB
   const maxFileSizeMB = computed(() =>
     Math.floor(maxFileSize.value / (1024 * 1024))
   );
