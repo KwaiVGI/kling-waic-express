@@ -16,6 +16,9 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisClientConfig
 import redis.clients.jedis.JedisCluster
 import redis.clients.jedis.commands.JedisCommands
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
 import java.io.File
 import java.io.FileOutputStream
 import java.net.InetSocketAddress
@@ -30,6 +33,7 @@ open class ServiceConfig(
     @param:Value("\${kling.proxy.host}") private val proxyHost: String,
     @param:Value("\${kling.proxy.port}") private val proxyPort: Int,
     @param:Value("\${kling.proxy.use-proxy}") private val useProxy: Boolean,
+    @param:Value("\${s3.profileName}") private val s3ProfileName: String
 ) {
 
     @Bean
@@ -130,5 +134,19 @@ open class ServiceConfig(
         }
 
         return CascadeClassifier(tempFile.absolutePath)
+    }
+
+    @Bean
+    open fun s3Client(): S3Client {
+        val credentialsProviderBuilder = DefaultCredentialsProvider.builder()
+        if (s3ProfileName.isNotEmpty()) {
+            credentialsProviderBuilder.profileName(s3ProfileName)
+        }
+
+        val s3Client = S3Client.builder()
+            .region(Region.CN_NORTH_1)
+            .credentialsProvider(credentialsProviderBuilder.build())
+            .build()
+        return s3Client
     }
 }

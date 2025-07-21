@@ -16,7 +16,6 @@ import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.font.TextLayout
 import java.awt.image.BufferedImage
-import java.io.File
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -29,6 +28,9 @@ class ImageProcessHelper(
     @param:Value("\${kling.proxy.host}") private val proxyHost: String,
     @param:Value("\${kling.proxy.port}") private val proxyPort: Int,
     @param:Value("\${kling.proxy.use-proxy}") private val useProxy: Boolean,
+    @param:Value("\${s3.bucket}") private val bucket: String,
+    private val s3Helper: S3Helper,
+    private val aesCipherHelper: AESCipherHelper,
 ) {
 
     fun multipartFileToBufferedImage(file: MultipartFile): BufferedImage {
@@ -40,8 +42,8 @@ class ImageProcessHelper(
     suspend fun downloadAndCreateSudoku(
         task: Task,
         imageUrls:
-        List<String>, outputPath: String
-    ) {
+        List<String>,
+    ): String {
         val images = withContext(Dispatchers.IO) {
             imageUrls.mapIndexed { index, url ->
                 async {
@@ -57,9 +59,13 @@ class ImageProcessHelper(
             )
         }
 
-        val sudokuImage = createKlingWAICSudokuImage(task, images, outputPath)
-        log.info("Created Sudoku image for task: ${task.name} at $outputPath, " +
-                "imageResolution: {} x {}", sudokuImage.width, sudokuImage.height)
+        val sudokuImage = createKlingWAICSudokuImage(task, images)
+
+        val outputFilename = aesCipherHelper.encrypt("sudoku-${task.name}") + ".jpg"
+        val outputImageUrl = s3Helper.uploadBufferedImage(bucket,
+            "output-images/$outputFilename",
+            sudokuImage, "jpg")
+        return outputImageUrl
     }
 
     fun readImageWithProxy(url: String): BufferedImage? {
@@ -85,7 +91,6 @@ class ImageProcessHelper(
     private fun createKlingWAICSudokuImage(
         task: Task,
         images: List<BufferedImage>,
-        outputPath: String
     ): BufferedImage {
         // Get actual image dimensions (assuming all images have the same size)
         val actualImageWidth = images[0].width
@@ -164,7 +169,6 @@ class ImageProcessHelper(
         g2d.drawString(taskName, drawX, taskNameTopLeftY)
         
         g2d.dispose()
-        ImageIO.write(canvas, "JPG", File(outputPath))
         return canvas
     }
 }

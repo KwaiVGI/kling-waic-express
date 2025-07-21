@@ -48,3 +48,7 @@ kling:
     use-proxy: ${WAIC_KLING_USE_PROXY:true}
     host: 10.52.57.90
     port: 11080
+
+s3:
+  bucket: ${S3_BUCKET_NAME:kling-waic}
+  profileName: ${S3_PROFILE_NAME:}
