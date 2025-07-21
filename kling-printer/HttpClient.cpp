@@ -35,15 +35,15 @@ static Result doRequest(Conn& conn,
     } else {
         res = conn->Get(path.c_str(), hdrs);
     }
-    if (!res) {
-        std::cout << "res error " << res.error() << std::endl;
-        return res;
-        // throw std::runtime_error("transport error");
-    }
-    if (res->status != 200) {
-        return res;
-        // throw std::runtime_error("HTTP " + std::to_string(res->status));
-    }
+    // if (!res) {
+    //     std::cout << "res error " << res.error() << std::endl;
+    //     return res;
+    //     // throw std::runtime_error("transport error");
+    // }
+    // if (res->status != 200) {
+    //     return res;
+    //     // throw std::runtime_error("HTTP " + std::to_string(res->status));
+    // }
     return res; 
 }
 
@@ -61,7 +61,10 @@ json HttpClient::postJson(const std::string& path,
     auto conn = pool_->acquire();
     httplib::Result ret = doRequest(conn->cli, token_, path, body, headers, true);
     pool_->release(std::move(conn));
-    std::cout << "postJoson:" << path << " result:" << ret << std::endl;
+    std::cout << "postJoson:" << path << " result status:" << ret->status << std::endl;
+    if (!ret && ret->status != 200) {
+        return json::object();
+    }
     return json::parse(ret->body);
 }
 
@@ -93,6 +96,10 @@ QImage HttpClient::getImage(const std::string& path,
 bool HttpClient::fetchImageQueue() {
     std::cout << "[INFO] begin fetch Image Queue" << std::endl;
     json ret = postJson("/api/printings/fetch", {});
+    std::cout << "post success!" << std::endl;
+    if (ret.empty()) {
+        return false;
+    }
     if (ret["status"] == "FAILED") {
         std::cout << "HTTP ERROR! CANNOT CONNECT" << std::endl;
         return false;
