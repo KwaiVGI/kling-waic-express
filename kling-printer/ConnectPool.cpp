@@ -23,12 +23,12 @@ std::shared_ptr<HttpsConn> ConnectPool::acquire() {
             return ptr;
         }
     }
-    return create(host_, port_, cto_, rto_);
+    return create(host_, cto_, rto_);
 }
 
-std::shared_ptr<HttpsConn> ConnectPool::create(const std::string& host, const int port, long connectMS, long readMS) {
+std::shared_ptr<HttpsConn> ConnectPool::create(const std::string& host, long connectMS, long readMS) {
     auto c = std::make_shared<HttpsConn>();
-    c->cli = std::make_unique<httplib::SSLClient>(host.c_str(), port);
+    c->cli = std::make_unique<httplib::SSLClient>(host.c_str());
     c->cli->set_connection_timeout(connectMS / 1000, (connectMS % 1000) * 1000);
     c->cli->set_read_timeout(readMS / 1000, (readMS % 1000) * 1000);
     return c;

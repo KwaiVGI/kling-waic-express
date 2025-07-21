@@ -25,7 +25,6 @@ static Result doRequest(Conn& conn,
                     const json& body,
                     const std::vector<std::pair<std::string, std::string>>& headers,
                     bool isPost) {
-    std::cout << "doRequest" << std::endl;
     httplib::Headers hdrs(headers.begin(), headers.end());
     if (!token.empty()) hdrs.emplace("Authorization", "Token " + token);
     hdrs.emplace("Content-Type", "application/json");
@@ -33,16 +32,17 @@ static Result doRequest(Conn& conn,
     httplib::Result res;
     if (isPost) {
         res = conn->Post(path.c_str(), hdrs, body.dump(), "application/json");
-        std::cout << "isPost" << std::endl;
     } else {
         res = conn->Get(path.c_str(), hdrs);
     }
     if (!res) {
         std::cout << "res error " << res.error() << std::endl;
-        throw std::runtime_error("transport error");
+        return res;
+        // throw std::runtime_error("transport error");
     }
     if (res->status != 200) {
-        throw std::runtime_error("HTTP " + std::to_string(res->status));
+        return res;
+        // throw std::runtime_error("HTTP " + std::to_string(res->status));
     }
     return res; 
 }
@@ -93,7 +93,12 @@ QImage HttpClient::getImage(const std::string& path,
 bool HttpClient::fetchImageQueue() {
     std::cout << "[INFO] begin fetch Image Queue" << std::endl;
     json ret = postJson("/api/printings/fetch", {});
+    if (ret["status"] == "FAILED") {
+        std::cout << "HTTP ERROR! CANNOT CONNECT" << std::endl;
+        return false;
+    }
     std::cout << ret["data"] << std::endl;
+
     if (!ret.contains("data") || ret["data"].is_null() || ret["status"] != "SUCCEED") {
         // 队列为空
         std::cout << "[INFO] No data." << std::endl;
