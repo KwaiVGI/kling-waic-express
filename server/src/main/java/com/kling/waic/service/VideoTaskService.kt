@@ -15,6 +15,7 @@ import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryVideoTaskRequest
 import com.kling.waic.helper.CastingHelper
 import com.kling.waic.helper.ImageProcessHelper
+import com.kling.waic.helper.S3Helper
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
@@ -23,9 +24,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import redis.clients.jedis.commands.JedisCommands
-import java.io.File
 import java.time.Instant
-import javax.imageio.ImageIO
 
 @Service
 class VideoTaskService(
@@ -44,7 +43,9 @@ class VideoTaskService(
     @Value("\${spring.mvc.servlet.path}")
     private val servletPath: String,
     private val jedis: JedisCommands,
-    private val castingHelper: CastingHelper
+    private val castingHelper: CastingHelper,
+    private val s3Helper: S3Helper,
+    @param:Value("\${s3.bucket}") private val bucket: String,
 ) : TaskService {
 
     override suspend fun createTask(type: TaskType, file: MultipartFile): Task {
@@ -58,12 +59,12 @@ class VideoTaskService(
 
         val requestImage = inputImage
         val requestFilename = "request-${taskName}.jpg"
-        val requestPath = "$sudokuImagesDir/$requestFilename"
-        val requestFile = File(requestPath)
-        ImageIO.write(requestImage, "jpg", requestFile)
-        log.info("Saved input image to $requestPath, size: ${requestImage.width} x ${requestImage.height}")
+        val requestImageUrl = s3Helper.uploadBufferedImage(
+            bucket,
+            "request-images/$requestFilename",
+            requestImage, "jpg"
+        )
 
-        val requestImageUrl = "$sudokuServerDomain$servletPath$sudokuUrlPrefix/$requestFilename"
         val request = CreateVideoTaskRequest(
             effectScene = effectScene,
             input = CreateVideoTaskInput(
