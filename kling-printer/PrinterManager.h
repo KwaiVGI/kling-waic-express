@@ -28,6 +28,5 @@ private:
     std::mutex m_mutex;
     // 返回idx
     int getMostIdlePrinter();
-    
 };
 #endif

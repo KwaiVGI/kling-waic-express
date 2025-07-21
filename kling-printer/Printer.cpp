@@ -157,6 +157,44 @@ void Printer::monitorLoop() {
     }
 }
 
+void PrintImage(HDC hdcPrint, const std::shared_ptr<Gdiplus::Image>& img)
+{
+    // 1. 获取打印机可打印区域（像素）
+    int printW = GetDeviceCaps(hdcPrint, HORZRES);
+    int printH = GetDeviceCaps(hdcPrint, VERTRES);
+
+    // 2. 计算等比缩放
+    int imgW  = img->GetWidth();
+    int imgH  = img->GetHeight();
+    double scale = std::min((double)printW / imgW, (double)printH / imgH);
+    int dstW = static_cast<int>(imgW * scale);
+    int dstH = static_cast<int>(imgH * scale);
+
+    // 3. 创建兼容内存 DC
+    HDC hMemDC = CreateCompatibleDC(hdcPrint);
+    HBITMAP hMemBmp = CreateCompatibleBitmap(hdcPrint, dstW, dstH);
+    HGDIOBJ hOld = SelectObject(hMemDC, hMemBmp);
+
+    // 4. 用 GDI+ 把图片缩放到内存 DC
+    Gdiplus::Graphics g(hMemDC);
+    g.DrawImage(img.get(),
+                Gdiplus::Rect(0, 0, dstW, dstH),
+                0, 0, imgW, imgH,
+                Gdiplus::UnitPixel);
+
+    // 5. 把内存 DC 内容复制到打印机 DC（居中）
+    BitBlt(hdcPrint,
+           (printW - dstW) / 2,
+           (printH - dstH) / 2,
+           dstW, dstH,
+           hMemDC, 0, 0, SRCCOPY);
+
+    // 6. 清理
+    SelectObject(hMemDC, hOld);
+    DeleteObject(hMemBmp);
+    DeleteDC(hMemDC);
+}
+
 void Printer::run()
 {
     Gdiplus::GdiplusStartupInput gdiplusStartupInput;

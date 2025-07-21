@@ -75,20 +75,46 @@ int main() {
     bool running = true;
     printf("Please input image path to print. press Enter for end. input empty line for quit.\n");
     while (running) {
-        std::vector<string> inputs;
-        if(HttpClient::instance().fetchImageQueue()) {
-            // 增加逻辑
-            inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
-        }
-        for (auto input : inputs) {
-            input = ".\\download\\" + input;
-            std::cout << input << std::endl;
-            if (!fileExists(input)) {
-                printf("Cannot find this file.\n");
-            } else {
-                printerManager->addImage(input);
+        std::string input;
+        if(!std::getline(std::cin, input)) {
+            std::cout << "input stream closed" << std::endl;
+            if (std::cin.eof()) {
+                std::cout << "原因：EOF (End of File)\n";
             }
+            if (std::cin.fail()) {
+                std::cout << "原因：failbit set (读取失败)\n";
+            }
+            if (std::cin.bad()) {
+                std::cout << "原因：badbit set (致命错误)\n";
+            }
+            running = false;
+            continue;
+        };
+        
+        if (input.empty()) {
+            running =false;
+            continue;
         }
+        
+        if (!fileExists(input)) {
+            printf("Cannot find this file.\n");
+        } else {
+            printerManager->addImage(input);
+        }
+        // std::vector<string> inputs;
+        // if(HttpClient::instance().fetchImageQueue()) {
+        //     // 增加逻辑
+        //     inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
+        // }
+        // for (auto input : inputs) {
+        //     input = ".\\download\\" + input;
+        //     std::cout << input << std::endl;
+        //     if (!fileExists(input)) {
+        //         printf("Cannot find this file.\n");
+        //     } else {
+        //         printerManager->addImage(input);
+        //     }
+        // }
         Sleep(1000);
     }
     std::cout << "delete" << std::endl;
