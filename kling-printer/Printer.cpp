@@ -156,43 +156,28 @@ void Printer::monitorLoop() {
         }
     }
 }
-
-void PrintImage(HDC hdcPrint, const std::shared_ptr<Gdiplus::Image>& img)
+void Printer::PrintImage(HDC hdcPrint, const std::shared_ptr<Gdiplus::Image>& img)
 {
-    // 1. 获取打印机可打印区域（像素）
     int printW = GetDeviceCaps(hdcPrint, HORZRES);
     int printH = GetDeviceCaps(hdcPrint, VERTRES);
-
-    // 2. 计算等比缩放
-    int imgW  = img->GetWidth();
-    int imgH  = img->GetHeight();
-    double scale = std::min((double)printW / imgW, (double)printH / imgH);
+    double printWidthMm = GetDeviceCaps(hdcPrint, HORZSIZE);
+    double printHeightMm = GetDeviceCaps(hdcPrint, VERTSIZE);
+    double printWidthPixel = printWidthMm * m_dpi / 25.4;
+    double printHeightPixel = printHeightMm * m_dpi / 25.4;
+    int imgW = img->GetWidth();
+    int imgH = img->GetHeight();
+    double scale = std::min((double)printWidthPixel / imgW, (double)printHeightPixel / imgH);
     int dstW = static_cast<int>(imgW * scale);
     int dstH = static_cast<int>(imgH * scale);
 
-    // 3. 创建兼容内存 DC
-    HDC hMemDC = CreateCompatibleDC(hdcPrint);
-    HBITMAP hMemBmp = CreateCompatibleBitmap(hdcPrint, dstW, dstH);
-    HGDIOBJ hOld = SelectObject(hMemDC, hMemBmp);
+    Gdiplus::Graphics g(hdcPrint);
+    g.SetPageUnit(Gdiplus::UnitPixel);
+    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
 
-    // 4. 用 GDI+ 把图片缩放到内存 DC
-    Gdiplus::Graphics g(hMemDC);
-    g.DrawImage(img.get(),
-                Gdiplus::Rect(0, 0, dstW, dstH),
-                0, 0, imgW, imgH,
-                Gdiplus::UnitPixel);
+    int x = (printW - dstW) / 2;
+    int y = (printH - dstH) / 2;
 
-    // 5. 把内存 DC 内容复制到打印机 DC（居中）
-    BitBlt(hdcPrint,
-           (printW - dstW) / 2,
-           (printH - dstH) / 2,
-           dstW, dstH,
-           hMemDC, 0, 0, SRCCOPY);
-
-    // 6. 清理
-    SelectObject(hMemDC, hOld);
-    DeleteObject(hMemBmp);
-    DeleteDC(hMemDC);
+    g.DrawImage(img.get(), x, y, dstW, dstH);
 }
 
 void Printer::run()
@@ -240,22 +225,22 @@ void Printer::run()
                 AbortDoc(hPrintDC);
                 continue;
             }
-
-            double calcWidth = imageWidth, calcHeight = imageHeight;
-            std::cout << "image size(width x height):" << imageWidth << ", " << imageHeight << std::endl;
-            double scaling = std::min((m_pageWidthInMM / calcWidth), (m_pageHeightInMM / calcHeight));
-            calcWidth *= scaling;
-            calcHeight *= scaling;
+            PrintImage(hPrintDC, image);
+            // double calcWidth = imageWidth, calcHeight = imageHeight;
+            // std::cout << "image size(width x height):" << imageWidth << ", " << imageHeight << std::endl;
+            // double scaling = std::min((m_pageWidthInMM / calcWidth), (m_pageHeightInMM / calcHeight));
+            // calcWidth *= scaling;
+            // calcHeight *= scaling;
                 
-            if (!updatePrinterConfig(calcWidth, calcHeight))
-            {
-                printf("printer: update config fail\n");
-                continue;
-            }
+            // if (!updatePrinterConfig(calcWidth, calcHeight))
+            // {
+            //     printf("printer: update config fail\n");
+            //     continue;
+            // }
 
-            auto graphics = std::make_shared<Gdiplus::Graphics>(hPrintDC);
-            graphics->SetPageUnit(Gdiplus::Unit::UnitMillimeter);
-            graphics->DrawImage(image.get(), (m_pageWidthInMM - calcWidth) / 2, 0, calcWidth, calcHeight);
+            // auto graphics = std::make_shared<Gdiplus::Graphics>(hPrintDC);
+            // graphics->SetPageUnit(Gdiplus::Unit::UnitMillimeter);
+            // graphics->DrawImage(image.get(), (m_pageWidthInMM - calcWidth) / 2, 0, calcWidth, calcHeight);
 
             EndPage(hPrintDC);
             EndDoc(hPrintDC);

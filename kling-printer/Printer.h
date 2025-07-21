@@ -24,6 +24,7 @@ private:
     bool updatePrinterConfig(double imageWidth, double imageHeight);
     std::string getImageFile();
     void monitorLoop();
+    void PrintImage(HDC hdcPrint, const std::shared_ptr<Gdiplus::Image>& img);
 
 private:
     std::thread m_printThread;
