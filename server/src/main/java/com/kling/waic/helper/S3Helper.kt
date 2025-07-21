@@ -1,7 +1,6 @@
 package com.kling.waic.helper
 
 import com.kling.waic.utils.Slf4j.Companion.log
-import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.core.sync.RequestBody
@@ -51,7 +50,7 @@ class S3Helper(
         val putRequest = PutObjectRequest.builder()
             .bucket(bucket)
             .key(key)
-            .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
+            .contentType("image/jpeg")
             .contentDisposition("inline")
             .build()
 
