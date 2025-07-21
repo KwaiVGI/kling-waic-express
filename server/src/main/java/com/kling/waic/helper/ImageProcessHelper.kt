@@ -2,6 +2,7 @@ package com.kling.waic.helper
 
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifIFD0Directory
+import com.kling.waic.entity.Locale
 import com.kling.waic.entity.Task
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.Slf4j.Companion.log
@@ -71,6 +72,7 @@ class ImageProcessHelper(
         task: Task,
         imageUrls:
         List<String>,
+        locale: Locale
     ): String {
         val images = withContext(Dispatchers.IO) {
             imageUrls.mapIndexed { index, url ->
@@ -87,7 +89,7 @@ class ImageProcessHelper(
             )
         }
 
-        val sudokuImage = createKlingWAICSudokuImage(task, images)
+        val sudokuImage = createKlingWAICSudokuImage(task, images, locale)
 
         val outputFilename = aesCipherHelper.encrypt("sudoku-${task.name}") + ".jpg"
         val outputImageUrl = s3Helper.uploadBufferedImage(bucket,
@@ -119,6 +121,7 @@ class ImageProcessHelper(
     private fun createKlingWAICSudokuImage(
         task: Task,
         images: List<BufferedImage>,
+        locale: Locale
     ): BufferedImage {
         // Get actual image dimensions (assuming all images have the same size)
         val actualImageWidth = images[0].width
@@ -166,7 +169,7 @@ class ImageProcessHelper(
         // Logo position and size also scaled proportionally
         val logoTopLeftX = leftMargin
         val logoTopLeftY = topMargin + cellHeight * 3 + gap * 2 + (12 * scaleFactor).toInt()
-        val logoImage = FileUtils.convertFileAsImage("KlingAI-logo-CN.png")
+        val logoImage = FileUtils.convertFileAsImage("KlingAI-logo-$locale.png")
         val logoWidth = (59 * scaleFactor).toInt()
         val logoHeight = (18 * scaleFactor).toInt()
         val scaledLogoImage = logoImage.getScaledInstance(logoWidth, logoHeight, BufferedImage.SCALE_SMOOTH)

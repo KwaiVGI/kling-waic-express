@@ -1,5 +1,6 @@
 package com.kling.waic.test.service
 
+import com.kling.waic.entity.Locale
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
 import com.kling.waic.service.TaskService
@@ -30,7 +31,7 @@ class VideoTaskServiceTest : SpringBaseTest() {
 
             while (task.status !in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
                 delay(1000) // Use delay instead of sleep
-                task = videoTaskService.queryTask(type, task.name)
+                task = videoTaskService.queryTask(type, task.name, Locale.CN)
             }
             assert(task.status == TaskStatus.SUCCEED) { "Task failed with status: ${task.status}" }
             println(task)

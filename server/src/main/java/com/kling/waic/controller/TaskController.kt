@@ -2,6 +2,7 @@ package com.kling.waic.controller
 
 import com.kling.waic.auth.Authorization
 import com.kling.waic.auth.AuthorizationType
+import com.kling.waic.entity.Locale
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Result
 import com.kling.waic.entity.Task
@@ -42,12 +43,13 @@ class TaskController (
     @GetMapping("{type}/{name}/query")
     @Authorization(AuthorizationType.CREATE_TASK)
     fun queryTask(@PathVariable type: TaskType,
-                  @PathVariable name: String): Result<Task> {
+                  @PathVariable name: String,
+                  @RequestParam locale: Locale): Result<Task> {
         log.debug("Query task of type: {}, name: {}", type, name)
 
         val task = CoroutineUtils.runSuspend {
             taskServiceSelector.selectTaskService(type)
-                .queryTask(type, name)
+                .queryTask(type, name, locale)
         }
 
         log.debug("Query task with result, taskId: {}, taskStatus: {}", task.id, task.status)

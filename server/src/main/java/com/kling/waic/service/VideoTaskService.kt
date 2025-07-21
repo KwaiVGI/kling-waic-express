@@ -1,5 +1,6 @@
 package com.kling.waic.service
 
+import com.kling.waic.entity.Locale
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskInput
@@ -100,7 +101,8 @@ class VideoTaskService(
 
     override suspend fun queryTask(
         type: TaskType,
-        name: String
+        name: String,
+        locale: Locale
     ): Task {
         val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
         if (task == null || task.type != type) {
