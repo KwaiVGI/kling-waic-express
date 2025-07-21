@@ -147,29 +147,27 @@
       v-if="generatedResult"
       ref="step2Ref"
       :style="{ zoom: step2Zoom }"
-      class="result-section w-full box-border px-18px py-40px flex flex-col items-center relative z-10"
-      :class="{ 'animate-slideUp': isGuided }"
+      class="result-section w-full box-border px-18px py-40px flex flex-col items-center relative z-10 animate-slideUp"
     >
-      <div class="w-380px h-570px rounded-8px relative">
+      <div v-if="type === 'image'" class="w-380px h-570px rounded-8px relative">
         <img
-          v-if="type === 'image'"
           :src="generatedResult"
           alt="生成的图片"
           class="w-full h-full object-cover object-center rounded-8px shadow-sm"
         />
+      </div>
+      <div v-else class="w-340px h-604px rounded-8px relative">
         <VideoPlayer
-          v-else
           :src="generatedResult"
           :poster="uploadedImage"
           class="w-full h-full object-cover overflow-hidden object-center rounded-8px shadow-sm"
         ></VideoPlayer>
-        <div
-          id="guideNo"
-          class="w-100px h-26px absolute right-10px bottom-10px"
-        ></div>
       </div>
 
-      <div class="result-actions w-full h-48px flex gap-8px mt-24px">
+      <div
+        class="result-actions h-48px flex gap-8px mt-24px"
+        :class="type === 'image' ? 'w-full' : 'w-340px'"
+      >
         <van-button
           type="default"
           @click="backToEdit"
@@ -206,9 +204,24 @@
         内容由AI生成，禁止利用功能从事违法活动。
       </div>
     </div>
+    <van-popup
+      v-model:show="isGenerating"
+      style="--van-popup-background: transparent"
+    >
+      <div
+        class="flex flex-col justify-center items-center bg-#000000cc rounded-8px p-20px"
+      >
+        <van-loading type="circular" color="#74FF52ff" />
+        <div v-if="type === 'image'">生成中，请稍后...</div>
+        <div v-else class="mt-8px text-14px text-#B0B4B8ff">
+          生成中，预计等待<span class="font-bold text-white px-4px">3</span
+          >分钟...
+        </div>
+      </div>
+    </van-popup>
 
     <!-- 预览弹窗 -->
-    <van-image-preview
+    <!-- <van-image-preview
       v-if="type === 'image'"
       v-model:show="showPreview"
       :images="previewItems"
@@ -228,14 +241,14 @@
         autoplay
         class="w-full h-full"
       ></video>
-    </van-popup>
+    </van-popup> -->
 
-    <guide-overlay
+    <!-- <guide-overlay
       v-if="showGuide"
       v-model="showGuide"
       :guides="currentGuides"
       @finish="onFinishGuide"
-    />
+    /> -->
   </div>
 </template>
 
@@ -248,7 +261,7 @@ import {
   STORAGE_GUIDE_KEY,
 } from "@/stores/mutation-type";
 import { useZoom } from "@/composables/useZoom";
-import { useGuide } from "@/composables/useGuide";
+// import { useGuide } from "@/composables/useGuide";
 
 const route = useRoute();
 
@@ -284,8 +297,8 @@ const {
   printImage,
 } = useCreation(type.value as "image" | "video");
 
-const isGuided = ref(!!localStorage.getItem(STORAGE_GUIDE_KEY));
-const { currentGuides, showGuide, startGuide, finishGuide } = useGuide();
+// const isGuided = ref(!!localStorage.getItem(STORAGE_GUIDE_KEY));
+// const { currentGuides, showGuide, startGuide, finishGuide } = useGuide();
 
 const wait = async (delay: number) =>
   new Promise((resolve) => setTimeout(resolve, delay));
@@ -352,7 +365,10 @@ const handleGenerate = async () => {
     return;
   }
   if (!uploadedImage.value) {
-    showToast("请先上传图片");
+    showToast({
+      message: "请先上传图片",
+      position: "bottom",
+    });
     return;
   }
   try {
@@ -360,6 +376,8 @@ const handleGenerate = async () => {
   } catch (error) {
     if (error.message === "NO_HUMAN_DETECTED") {
       showToast("未检测到人像，换张照片试试吧~");
+    } else if (error.message === "LONG_QUEUES") {
+      showToast("当前使用人数较多，请稍等~");
     } else {
       showToast("哎呀失败了，换张照片试试吧~");
     }
@@ -374,31 +392,31 @@ const handleGenerate = async () => {
       STORAGE_USER_TOKEN_KEY
     )}&result=${encodeURIComponent(generatedResult.value)}`
   );
-  if (isGuided.value || type.value !== "image") {
-    return;
-  }
-  await wait(300);
-  // 启动引导
-  startGuide([
-    {
-      element: "#guideNo",
-      image:
-        "https://tx.a.yximgs.com/kos/nlav12119/wKJuuNBr_2025-07-16-20-04-31.png",
-      position: "top",
-    },
-    {
-      element: "#guideYes",
-      image:
-        "https://tx.a.yximgs.com/kos/nlav12119/XkqhokRT_2025-07-16-20-05-16.png",
-      position: "top",
-    },
-  ]);
+  // if (isGuided.value || type.value !== "image") {
+  //   return;
+  // }
+  // await wait(300);
+  // // 启动引导
+  // startGuide([
+  //   {
+  //     element: "#guideNo",
+  //     image:
+  //       "https://tx.a.yximgs.com/kos/nlav12119/wKJuuNBr_2025-07-16-20-04-31.png",
+  //     position: "top",
+  //   },
+  //   {
+  //     element: "#guideYes",
+  //     image:
+  //       "https://tx.a.yximgs.com/kos/nlav12119/XkqhokRT_2025-07-16-20-05-16.png",
+  //     position: "top",
+  //   },
+  // ]);
 };
-const onFinishGuide = () => {
-  isGuided.value = true;
-  localStorage.setItem(STORAGE_GUIDE_KEY, "1");
-  finishGuide();
-};
+// const onFinishGuide = () => {
+// isGuided.value = true;
+// localStorage.setItem(STORAGE_GUIDE_KEY, "1");
+// finishGuide();
+// };
 
 // 处理保存
 const handleSave = () => {

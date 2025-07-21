@@ -1,5 +1,5 @@
 <template>
-  <div class="video-player">
+  <div ref="playerRef" class="video-player">
     <video
       ref="videoRef"
       :src="src"
@@ -19,7 +19,7 @@
         <img
           v-if="isPlaying"
           class="w-24px h-24px"
-          src="https://ali.a.yximgs.com/kos/nlav12119/ZLdLThMO_2025-07-21-12-35-13.png"
+          src="https://ali.a.yximgs.com/kos/nlav12119/ULkRxVvc_2025-07-21-15-26-51.png"
           alt=""
         />
         <img
@@ -35,24 +35,23 @@
       <i class="fas fa-spinner fa-spin"></i>
     </div>
 
-    <div class="controls" v-show="controlsVisible">
-      <!-- <button class="control-btn" @click="togglePlay">
-        <img
-          v-if="isPlaying"
-          class="w-20px h-20px"
-          src="https://ali.a.yximgs.com/kos/nlav12119/ZLdLThMO_2025-07-21-12-35-13.png"
-          alt=""
-        />
-        <img
-          v-else
-          class="w-20px h-20px"
-          src="https://ali.a.yximgs.com/kos/nlav12119/ZLdLThMO_2025-07-21-12-35-13.png"
-          alt=""
-        />
-      </button> -->
-
-      <div class="time-display">
-        {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+    <div class="controls">
+      <div
+        class="controls-top px-12px box-border flex items-center justify-between"
+      >
+        <div class="time-display">
+          {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+        </div>
+        <div
+          class="flex items-center justify-center w-20px h-20px"
+          @click="toggleFullscreen"
+        >
+          <img
+            class="w-full h-full"
+            :src="isFullscreen ? exitFullIcon : fullIcon"
+            alt=""
+          />
+        </div>
       </div>
 
       <div class="progress-container" @click="setProgress">
@@ -67,7 +66,10 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-
+const fullIcon =
+  "https://ali.a.yximgs.com/kos/nlav12119/UEoNaVQo_2025-07-21-15-32-15.png";
+const exitFullIcon =
+  "https://ali.a.yximgs.com/kos/nlav12119/ubeqgmzS_2025-07-21-16-04-39.png";
 const props = defineProps({
   src: {
     type: String,
@@ -79,6 +81,7 @@ const props = defineProps({
   },
 });
 
+const playerRef = ref(null);
 const videoRef = ref(null);
 const isPlaying = ref(false);
 const currentTime = ref(0);
@@ -87,6 +90,7 @@ const isLoading = ref(true);
 const showOverlay = ref(true);
 const controlsVisible = ref(true);
 let controlsTimeout = null;
+const isFullscreen = ref(false);
 
 // 格式化时间显示
 const formatTime = (time) => {
@@ -130,6 +134,40 @@ const showControls = () => {
   }, 3000);
 };
 
+// 切换全屏
+const toggleFullscreen = () => {
+  if (!isFullscreen.value) {
+    const player = playerRef.value;
+    if (player.requestFullscreen) {
+      player.requestFullscreen();
+    } else if (player.webkitRequestFullscreen) {
+      player.webkitRequestFullscreen(); // Safari
+    } else if (player.msRequestFullscreen) {
+      player.msRequestFullscreen();
+    } else if (player.webkitEnterFullscreen) {
+      // iOS Safari的特殊处理
+      player.webkitEnterFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
+};
+
+// 处理全屏变化
+const handleFullscreenChange = () => {
+  isFullscreen.value = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.msFullscreenElement
+  );
+};
+
 // 初始化事件监听
 const initEvents = () => {
   videoRef.value.addEventListener("timeupdate", updateProgress);
@@ -166,6 +204,11 @@ const initEvents = () => {
   videoRef.value.addEventListener("touchstart", () => {
     showControls();
   });
+
+  // 全屏事件监听
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
+  document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+  document.addEventListener("msfullscreenchange", handleFullscreenChange);
 };
 
 onMounted(() => {
@@ -174,6 +217,15 @@ onMounted(() => {
   controlsTimeout = setTimeout(() => {
     controlsVisible.value = false;
   }, 3000);
+});
+onUnmounted(() => {
+  // 清理事件监听
+  document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  document.removeEventListener(
+    "webkitfullscreenchange",
+    handleFullscreenChange
+  );
+  document.removeEventListener("msfullscreenchange", handleFullscreenChange);
 });
 </script>
 
@@ -201,9 +253,9 @@ onMounted(() => {
   left: 0;
   right: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent);
-  padding: 12px 10px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
   transition: opacity 0.3s;
   z-index: 20;
 }
@@ -229,11 +281,9 @@ onMounted(() => {
 }
 
 .progress-container {
-  flex: 1;
   height: 4px;
   background: rgba(255, 255, 255, 0.25);
   border-radius: 2px;
-  margin: 0 12px;
   cursor: pointer;
   position: relative;
   flex-shrink: 1;
@@ -265,7 +315,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.1);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.3s;
@@ -277,9 +327,9 @@ onMounted(() => {
 }
 
 .play-icon {
-  width: 65px;
-  height: 65px;
-  background: rgba(0, 0, 0, 0.6);
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.4);
   border-radius: 50%;
   display: flex;
   align-items: center;

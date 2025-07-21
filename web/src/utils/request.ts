@@ -71,7 +71,15 @@ request.interceptors.request.use(requestHandler, errorHandler);
 // 响应拦截器
 function responseHandler(response: { data: any; status: string }) {
   if (response.data.status !== "SUCCEED") {
-    throw new Error(response.data.status);
+    if (
+      response.data.status === "KLING_OPEN_API_EXCEPTION" &&
+      response.data.klingOpenAPIResult?.code === 1303
+    ) {
+      // 排队人数较多
+      throw new Error("LONG_QUEUES");
+    } else {
+      throw new Error(response.data.status);
+    }
   }
   return response.data.data;
 }
