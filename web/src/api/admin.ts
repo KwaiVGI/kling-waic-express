@@ -20,6 +20,10 @@ export interface CastingImage {
   originScore: number;
 }
 
+export interface PrintingImage extends CastingImage {
+  aheadCount: number;
+}
+
 interface CastingListResult {
   total: number;
   score: number; // pcursor
@@ -85,7 +89,7 @@ export async function getScreenList({
 // 获取打印队列列表
 export async function getPrintList(params: {
   keyword?: string;
-}): Promise<CastingImage[]> {
+}): Promise<PrintingImage[]> {
   return request.get(`/api/printings/queryAll`, {
     params,
   });

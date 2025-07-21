@@ -14,6 +14,7 @@ export interface CastingImage {
   id: string;
   name: string;
   url: string;
+  no?: number;
   createdAt?: string;
 }
 
@@ -28,18 +29,6 @@ export interface PaginatedResult<T> {
 
 // 模拟API服务
 const DEFAULT_TYPE = "STYLED_IMAGE";
-
-// 模拟数据
-const mockImages: CastingImage[] = Array.from({ length: 50 }, (_, i) => ({
-  id: `img-${i + 1}`,
-  name: `图片 ${i + 1}`,
-  url: `https://picsum.photos/1920/1080?random=${i}`,
-  createdAt: new Date(
-    Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-  ).toISOString(),
-  isPinned: i === 2, // 默认第三张图片为固定状态
-  isActive: i === 0, // 默认第一张图片为活动状态
-}));
 
 let lastScore = null;
 
@@ -105,7 +94,7 @@ export const castingService = {
       total,
       page,
       limit,
-      totalPages: Math.ceil(mockImages.length / limit),
+      totalPages: Math.ceil(total / limit),
     };
   },
 
@@ -174,6 +163,7 @@ export const castingService = {
     const res = await getPrintList({ keyword });
     console.log(res);
     const items = res.map((item) => ({
+      no: item.aheadCount + 1,
       id: item.name,
       name: item.name.replace("printing:No.", ""),
       url: item.task.outputs.url,

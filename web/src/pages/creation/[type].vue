@@ -27,7 +27,7 @@
         <img
           v-else
           class="w-329px h-126px"
-          src="https://tx.a.yximgs.com/kos/nlav12119/HosJbOVv_2025-07-15-20-12-01.png"
+          src="https://tx.a.yximgs.com/kos/nlav12119/xbwHVLkr_2025-07-21-12-02-53.png"
           alt=""
         />
       </div>
@@ -157,17 +157,12 @@
           alt="生成的图片"
           class="w-full h-full object-cover object-center rounded-8px shadow-sm"
         />
-        <video
+        <VideoPlayer
           v-else
           :src="generatedResult"
           :poster="uploadedImage"
-          playsinline
-          webkit-playsinline
-          controls
-          autoplay
-          preload="auto"
-          class="w-full h-full object-cover object-center rounded-8px shadow-sm"
-        ></video>
+          class="w-full h-full object-cover overflow-hidden object-center rounded-8px shadow-sm"
+        ></VideoPlayer>
         <div
           id="guideNo"
           class="w-100px h-26px absolute right-10px bottom-10px"

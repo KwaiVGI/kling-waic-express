@@ -42,5 +42,6 @@ declare module 'vue' {
     VanTabbarItem: typeof import('vant/es')['TabbarItem']
     VanTextEllipsis: typeof import('vant/es')['TextEllipsis']
     VanUploader: typeof import('vant/es')['Uploader']
+    VideoPlayer: typeof import('./../components/VideoPlayer.vue')['default']
   }
 }

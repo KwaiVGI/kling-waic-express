@@ -71,22 +71,22 @@ export function useZoom(
     calculateScaleRatio();
 
     // 监听窗口和容器变化
-    // window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     // 使用 ResizeObserver 监听内容变化
-    // const resizeObserver = new ResizeObserver(handleResize);
-    // resizeObserver.observe(contentRef.value);
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(contentRef.value);
 
-    // // 如果使用容器，监听容器变化
-    // if (containerRef.value) {
-    //   resizeObserver.observe(containerRef.value);
-    // }
+    // 如果使用容器，监听容器变化
+    if (containerRef.value) {
+      resizeObserver.observe(containerRef.value);
+    }
 
-    // // 清理操作
-    // onBeforeUnmount(() => {
-    //   // window.removeEventListener('resize', handleResize);
-    //   resizeObserver.disconnect();
-    // });
+    // 清理操作
+    onBeforeUnmount(() => {
+      // window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
+    });
   });
 
   // 当内容引用变化时重新初始化

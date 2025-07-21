@@ -2,6 +2,7 @@ import { ref, computed } from "vue";
 import { showToast } from "vant";
 import { printImageTask } from "@/api/creation";
 import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
+import { saveAs } from "file-saver";
 
 export type CreationType = "image" | "video";
 
@@ -156,14 +157,8 @@ export default function useCreation(creationType: CreationType) {
           message: "请长按图片进行保存",
           duration: 3000,
         });
-      } else {
-        // TODO: 待调研
-        showToast({
-          message: "暂不支持保存视频",
-          duration: 3000,
-        });
+        return;
       }
-      return;
     }
     if (isIOS) {
       if (creationType === "image") {
@@ -171,28 +166,26 @@ export default function useCreation(creationType: CreationType) {
           message: "请长按图片进行保存",
           duration: 3000,
         });
-      } else {
-        // TODO: 待调研
-        showToast({
-          message: "暂不支持保存视频",
-          duration: 3000,
-        });
+        return;
       }
-      return;
     }
 
     isSaving.value = true;
 
     try {
-      const link = document.createElement("a");
-      link.href = generatedResult.value;
-      link.download = `${filename}_${new Date().getTime()}.${extension}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // const link = document.createElement("a");
+      // link.href = generatedResult.value;
+      // link.download = `${filename}_${new Date().getTime()}.${extension}`;
+      // document.body.appendChild(link);
+      // link.click();
+      // document.body.removeChild(link);
+      saveAs(
+        generatedResult.value,
+        `${filename}_${new Date().getTime()}.${extension}`
+      );
       showToast({
         // type: "success",
-        message: "保存成功！",
+        message: "文件准备完毕，开始下载",
         duration: 2500,
       });
     } catch (error) {

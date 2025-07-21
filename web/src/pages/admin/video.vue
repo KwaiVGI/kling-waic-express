@@ -94,6 +94,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 import { confirmDelete } from "@/utils/confirm";
+import { showToast } from "vant";
 
 const route = useRoute();
 // 数据状态
@@ -145,6 +146,7 @@ const loadImages = async () => {
     totalImages.value = result.total;
   } catch (error) {
     console.error("加载图片失败:", error);
+    showToast("加载图片失败，请重试" + error);
   } finally {
     loading.value = false;
   }

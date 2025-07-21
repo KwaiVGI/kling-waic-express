@@ -34,7 +34,7 @@
         >
           <div class="image-container">
             <img class="w-full h-full" :src="image.url" />
-            <span class="image-id">{{ image.name }}</span>
+            <span class="image-id">{{ image.no }}</span>
           </div>
         </div>
       </div>
@@ -46,6 +46,7 @@
 import { ref, onMounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+import { showToast } from "vant";
 
 const route = useRoute();
 // 数据状态
@@ -63,6 +64,7 @@ const loadImages = async () => {
     images.value = result;
   } catch (error) {
     console.error("加载图片失败:", error);
+    showToast("加载图片失败，请重试" + error);
   } finally {
     loading.value = false;
   }
@@ -257,7 +259,7 @@ watch(searchQuery, (newVal) => {
 
 .gallery-item {
   width: 100%;
-  aspect-ratio: 9/16;
+  aspect-ratio: 2/3;
   border-radius: 6px;
   overflow: hidden;
   position: relative;

@@ -189,6 +189,7 @@ const loadImages = async () => {
     await getPinedImage();
   } catch (error) {
     console.error("加载图片失败:", error);
+    showToast("加载图片失败，请重试" + error);
   } finally {
     loading.value = false;
   }
