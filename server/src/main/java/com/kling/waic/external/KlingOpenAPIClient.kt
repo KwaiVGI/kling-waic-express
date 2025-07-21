@@ -111,7 +111,13 @@ class KlingOpenAPIClient(
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
                 return@withContext responseBody
-                    ?.let { KlingOpenAPIResult.ok<CreateVideoTaskResponse>(it) }
+                    ?.let {
+                        log.info(
+                            "Create video task with image: ${createVideoTaskRequest.input.image}, " +
+                                    "effectScene: ${createVideoTaskRequest.effectScene}, responseBody: $it"
+                        )
+                        KlingOpenAPIResult.ok<CreateVideoTaskResponse>(it)
+                    }
                     ?: throw IOException("Response body is empty")
             }
         } catch (e: java.net.SocketTimeoutException) {
