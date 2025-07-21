@@ -277,7 +277,7 @@ const deleteImage = async (imageId: string) => {
 const printImage = async (imageId: string) => {
   try {
     await castingService.printImage(imageId);
-    showToast("打印任务已发送");
+    showToast("已发送打印任务，请排队领取");
   } catch (error) {
     showToast("打印失败，请重试");
     console.error("打印图片失败:", error);

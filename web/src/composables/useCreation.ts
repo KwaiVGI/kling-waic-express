@@ -226,7 +226,7 @@ export default function useCreation(creationType: CreationType) {
     try {
       await printImageTask({ type: "STYLED_IMAGE", name });
       showToast({
-        message: "打印任务已发送",
+        message: "已发送打印任务，请排队领取",
         duration: 3500,
       });
     } catch (error) {

@@ -2,7 +2,7 @@
   <div
     ref="containerRef"
     id="h5App"
-    class="creation-container !h-100vh relative overflow-hidden flex flex-col items-center"
+    class="creation-container !min-h-100vh relative flex flex-col items-center"
   >
     <div
       ref="step1Ref"
@@ -21,7 +21,7 @@
         <img
           v-if="type === 'image'"
           class="w-329px h-126px"
-          src="https://ali.a.yximgs.com/kos/nlav12119/sZscckOe_2025-07-15-20-11-41.png"
+          src="https://tx.a.yximgs.com/kos/nlav12119/EghFVodo_2025-07-21-20-42-24.png"
           alt=""
         />
         <img
@@ -64,7 +64,7 @@
         >
           <img
             class="w-full h-full"
-            src="https://tx.a.yximgs.com/kos/nlav12119/egmRUScU_2025-07-11-17-22-10.png"
+            src="https://tx.a.yximgs.com/kos/nlav12119/WmkviEwP_2025-07-21-20-40-09.png"
             alt=""
           />
         </div>
@@ -212,7 +212,9 @@
         class="flex flex-col justify-center items-center bg-#000000cc rounded-8px p-20px"
       >
         <van-loading type="circular" color="#74FF52ff" />
-        <div v-if="type === 'image'">生成中，请稍后...</div>
+        <div v-if="type === 'image'" class="mt-8px text-14px text-#B0B4B8ff">
+          生成中，请稍后...
+        </div>
         <div v-else class="mt-8px text-14px text-#B0B4B8ff">
           生成中，预计等待<span class="font-bold text-white px-4px">3</span
           >分钟...
@@ -283,9 +285,6 @@ const {
   isGenerating,
   isSaving,
   isPrinting,
-  showPreview,
-  previewItems,
-  previewIndex,
   handleUpload,
   onOversize,
   openPreview,
@@ -366,7 +365,8 @@ const handleGenerate = async () => {
   }
   if (!uploadedImage.value) {
     showToast({
-      message: "请先上传图片",
+      // icon: "https://tx.a.yximgs.com/kos/nlav12119/bIzvPqKP_2025-07-21-19-58-29.png",
+      message: "当前操作暂未生效，我们正在持续优化体验，欢迎稍后再试～",
       position: "bottom",
     });
     return;

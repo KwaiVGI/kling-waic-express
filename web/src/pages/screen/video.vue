@@ -43,7 +43,7 @@ interface VideoItem {
 }
 
 // 配置参数
-const gridSize = ref(4); // 默认10×10网格
+const gridSize = ref(3); // 默认10×10网格
 const pollIntervalSeconds = ref(10); // 默认10秒轮询间隔
 const pollInterval = ref<NodeJS.Timeout | null>(null);
 
@@ -269,7 +269,7 @@ watch(pollIntervalSeconds, (newVal) => {
 
 /* 翻转动画 */
 .video-cell.flipping {
-  animation: flip 1s ease-in-out;
+  /* animation: flip 1s ease-in-out; */
 }
 
 @keyframes flip {
