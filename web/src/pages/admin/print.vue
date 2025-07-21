@@ -59,7 +59,7 @@ const promotedImageId = ref<string | null>(null);
 const loadImages = async () => {
   loading.value = true;
   try {
-    const result = await castingService.getPrintList();
+    const result = await castingService.getPrintList(searchQuery.value);
     images.value = result;
   } catch (error) {
     console.error("加载图片失败:", error);

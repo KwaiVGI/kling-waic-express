@@ -170,8 +170,8 @@ export const castingService = {
     });
     return res;
   },
-  async getPrintList() {
-    const res = await getPrintList();
+  async getPrintList(keyword = "") {
+    const res = await getPrintList({ keyword });
     console.log(res);
     const items = res.map((item) => ({
       id: item.name,
