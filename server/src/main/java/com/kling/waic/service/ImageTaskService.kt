@@ -112,6 +112,11 @@ class ImageTaskService(
             results.filterNotNull().toMutableList()
         }
 
+        if (taskIds.size != TASK_N) {
+            throw IllegalStateException("Failed to create the expected number of tasks: $TASK_N, " +
+                    "only created ${taskIds.size} tasks.")
+        }
+
         val task = Task(
             id = IdUtils.generateId(),
             name = taskName,

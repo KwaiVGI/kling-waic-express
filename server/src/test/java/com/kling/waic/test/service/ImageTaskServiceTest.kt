@@ -20,7 +20,7 @@ class ImageTaskServiceTest : SpringBaseTest() {
     fun testImageTaskService() {
         val type = TaskType.STYLED_IMAGE
         val file = MockMultipartFile(
-            "test_girl.png",
+            "request-No.100228.jpg",
             FileUtils.readBytesFromResources("test_girl.png")
         )
 
