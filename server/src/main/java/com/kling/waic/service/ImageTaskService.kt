@@ -86,7 +86,7 @@ class ImageTaskService(
         ImageIO.write(requestImage, "jpg", requestFile)
         log.info("Saved input image to $requestPath, size: ${requestImage.width} x ${requestImage.height}")
 
-        val requestImageUrl = "$sudokuServerDomain/$servletPath$sudokuUrlPrefix/$requestFilename"
+        val requestImageUrl = "$sudokuServerDomain$servletPath$sudokuUrlPrefix/$requestFilename"
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
 
         // Use coroutineScope instead of runBlocking
@@ -224,7 +224,7 @@ class ImageTaskService(
             imageUrls,
             outputPath
         )
-        return "$sudokuServerDomain/$servletPath$sudokuUrlPrefix/$encodedImageName"
+        return "$sudokuServerDomain$servletPath$sudokuUrlPrefix/$encodedImageName"
     }
 
     private fun summaryResponse(taskResponseMap: Map<String, QueryImageTaskResponse>):
