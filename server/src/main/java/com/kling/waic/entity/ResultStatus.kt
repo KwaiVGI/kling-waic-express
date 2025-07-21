@@ -6,4 +6,5 @@ enum class ResultStatus {
     NO_HUMAN_DETECTED,
     JSON_EXCEPTION,
     DUPLICATE_PRINT,
+    KLING_OPEN_API_EXCEPTION,
 }

@@ -7,6 +7,7 @@ import com.kling.waic.entity.TaskOutput
 import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
+import com.kling.waic.exception.KlingOpenAPIException
 import com.kling.waic.external.KlingOpenAPIClient
 import com.kling.waic.external.model.CreateImageTaskRequest
 import com.kling.waic.external.model.KlingOpenAPITaskStatus
@@ -99,7 +100,10 @@ class ImageTaskService(
                     )
 
                     val result = klingOpenAPIClient.createImageTask(request)
-                    log.info(
+                    if (result.code != 0) {
+                        throw KlingOpenAPIException(result)
+                    }
+                    log.debug(
                         "Create image task with image: $requestImageUrl, " +
                                 "prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}"
                     )
@@ -113,8 +117,10 @@ class ImageTaskService(
         }
 
         if (taskIds.size != TASK_N) {
-            throw IllegalStateException("Failed to create the expected number of tasks: $TASK_N, " +
-                    "only created ${taskIds.size} tasks.")
+            throw IllegalStateException(
+                "Failed to create the expected number of tasks: $TASK_N, " +
+                        "only created ${taskIds.size} tasks."
+            )
         }
 
         val task = Task(

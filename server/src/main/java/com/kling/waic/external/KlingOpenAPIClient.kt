@@ -51,8 +51,10 @@ class KlingOpenAPIClient(
                 val responseBody = resp.body?.string()
                 return@withContext responseBody
                     ?.let {
-                        log.info("createImageTask response, image: {}, prompt: {}, responseBody: {}",
-                            createImageTaskRequest.image, createImageTaskRequest.prompt, it)
+                        log.info(
+                            "Create image task with image: ${createImageTaskRequest.image}, " +
+                                    "prompt: ${createImageTaskRequest.prompt}, responseBody: $it"
+                        )
                         KlingOpenAPIResult.ok<CreateImageTaskResponse>(it)
                     }
                     ?: throw IOException("Response body is empty")

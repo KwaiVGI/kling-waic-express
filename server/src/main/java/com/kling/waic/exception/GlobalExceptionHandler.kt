@@ -20,6 +20,14 @@ class GlobalExceptionHandler {
         
         log.error("handleRuntimeException", ex)
 
+        if (ex is KlingOpenAPIException) {
+            return Result(
+                status = ex.resultStatus(),
+                message = ex.message ?: "",
+                klingOpenAPIResult = ex.result
+            )
+        }
+
         if (ex is WAICException) {
             return Result(
                 status = ex.resultStatus(),
