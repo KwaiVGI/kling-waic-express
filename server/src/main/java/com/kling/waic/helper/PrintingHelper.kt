@@ -9,11 +9,11 @@ import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Component
-import redis.clients.jedis.Jedis
+import redis.clients.jedis.commands.JedisCommands
 
 @Component
 class PrintingHelper(
-    private val jedis: Jedis,
+    private val jedis: JedisCommands,
 ) {
     private val printingQueue = "printing_queue_${TaskType.STYLED_IMAGE}"
 

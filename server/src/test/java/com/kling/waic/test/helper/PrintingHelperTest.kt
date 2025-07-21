@@ -3,6 +3,7 @@ package com.kling.waic.test.helper
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.PrintingStatus
 import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskInput
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
 import com.kling.waic.helper.PrintingHelper
@@ -34,6 +35,10 @@ class PrintingHelperTest : SpringBaseTest() {
             val task = Task(
                 id = IdUtils.generateId(),
                 name = "Test_${taskName}",
+                input = TaskInput(
+                    type = type,
+                    image = "https://kling-waic.s3.cn-north-1.amazonaws.com.cn/sudoku-No.100014.jpg"
+                ),
                 taskIds = listOf(
                     (timestamp + Random.nextInt(100)).toString(),
                     (timestamp + Random.nextInt(100)).toString(),

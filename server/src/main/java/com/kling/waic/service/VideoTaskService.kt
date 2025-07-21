@@ -2,6 +2,7 @@ package com.kling.waic.service
 
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskInput
 import com.kling.waic.entity.TaskOutput
 import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
@@ -14,14 +15,15 @@ import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryVideoTaskRequest
 import com.kling.waic.helper.CastingHelper
 import com.kling.waic.helper.ImageProcessHelper
+import com.kling.waic.helper.S3Helper
 import com.kling.waic.repository.CodeGenerateRepository
-import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import redis.clients.jedis.Jedis
+import redis.clients.jedis.commands.JedisCommands
 import java.time.Instant
 
 @Service
@@ -30,8 +32,20 @@ class VideoTaskService(
     private val videoSpecialEffects: List<String>,
     private val klingOpenAPIClient: KlingOpenAPIClient,
     private val codeGenerateRepository: CodeGenerateRepository,
-    private val jedis: Jedis,
-    private val castingHelper: CastingHelper
+    @Value("\${waic.sudoku.images-dir}")
+    private val sudokuImagesDir: String,
+    @Value("\${waic.sudoku.url-prefix}")
+    private val sudokuUrlPrefix: String,
+    @Value("\${waic.sudoku.server-domain}")
+    private val sudokuServerDomain: String,
+    @Value("\${waic.crop-image-with-opencv}")
+    private val cropImageWithOpenCV: Boolean,
+    @Value("\${spring.mvc.servlet.path}")
+    private val servletPath: String,
+    private val jedis: JedisCommands,
+    private val castingHelper: CastingHelper,
+    private val s3Helper: S3Helper,
+    @param:Value("\${s3.bucket}") private val bucket: String,
 ) : TaskService {
 
     override suspend fun createTask(type: TaskType, file: MultipartFile): Task {
@@ -42,11 +56,19 @@ class VideoTaskService(
         log.info("Input image size: ${inputImage.width}x${inputImage.height}")
 
         val effectScene = videoSpecialEffects.random()
-        val imageBase64 = FileUtils.convertImageToBase64(inputImage)
+
+        val requestImage = inputImage
+        val requestFilename = "request-${taskName}.jpg"
+        val requestImageUrl = s3Helper.uploadBufferedImage(
+            bucket,
+            "request-images/$requestFilename",
+            requestImage, "jpg"
+        )
+
         val request = CreateVideoTaskRequest(
             effectScene = effectScene,
             input = CreateVideoTaskInput(
-                image = imageBase64
+                image = requestImageUrl
             )
         )
         val result = klingOpenAPIClient.createVideoTask(request)
@@ -58,6 +80,10 @@ class VideoTaskService(
         val task = Task(
             id = IdUtils.generateId(),
             name = taskName,
+            input = TaskInput(
+                type = type,
+                image = requestImageUrl,
+            ),
             taskIds = listOf(result.data!!.taskId),
             status = TaskStatus.SUBMITTED,
             type = type,
@@ -78,6 +104,7 @@ class VideoTaskService(
     ): Task {
         val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
         if (task == null || task.type != type) {
+            log.error("Task type $type not found or type mismatch for task: $name, task: $task")
             throw IllegalArgumentException("Task not found or type mismatch")
         }
 

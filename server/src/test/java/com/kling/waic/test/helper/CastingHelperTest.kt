@@ -2,6 +2,7 @@ package com.kling.waic.test.helper
 
 import com.kling.waic.entity.Casting
 import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskInput
 import com.kling.waic.entity.TaskOperateAction
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
@@ -37,6 +38,10 @@ class CastingHelperTest : SpringBaseTest() {
             val task = Task(
                 id = IdUtils.generateId(),
                 name = "Test_${taskName}",
+                input = TaskInput(
+                    type = type,
+                    image = "https://kling-waic.s3.cn-north-1.amazonaws.com.cn/sudoku-No.100014.jpg"
+                ),
                 taskIds = listOf(
                     (timestamp + Random.nextInt(100)).toString(),
                     (timestamp + Random.nextInt(100)).toString(),

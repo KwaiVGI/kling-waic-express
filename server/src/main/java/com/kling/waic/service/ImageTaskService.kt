@@ -3,6 +3,7 @@ package com.kling.waic.service
 import com.google.errorprone.annotations.concurrent.LazyInit
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Task
+import com.kling.waic.entity.TaskInput
 import com.kling.waic.entity.TaskOutput
 import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
@@ -17,8 +18,8 @@ import com.kling.waic.helper.CastingHelper
 import com.kling.waic.helper.FaceCropper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.helper.PrintingHelper
+import com.kling.waic.helper.S3Helper
 import com.kling.waic.repository.CodeGenerateRepository
-import com.kling.waic.helper.AESCipherHelper
 import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
@@ -31,17 +32,15 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import redis.clients.jedis.Jedis
-import java.io.File
+import redis.clients.jedis.commands.JedisCommands
 import java.time.Instant
-import javax.imageio.ImageIO
 
 @Service
 class ImageTaskService(
     private val klingOpenAPIClient: KlingOpenAPIClient,
     private val styleImagePrompts: List<String>,
     private val codeGenerateRepository: CodeGenerateRepository,
-    private val jedis: Jedis,
+    private val jedis: JedisCommands,
     private val imageProcessHelper: ImageProcessHelper,
     @Value("\${waic.sudoku.images-dir}")
     private val sudokuImagesDir: String,
@@ -53,9 +52,10 @@ class ImageTaskService(
     private val cropImageWithOpenCV: Boolean,
     @Value("\${spring.mvc.servlet.path}")
     private val servletPath: String,
+    @param:Value("\${s3.bucket}") private val bucket: String,
     private val printingHelper: PrintingHelper,
     private val castingHelper: CastingHelper,
-    private val aesCipherHelper: AESCipherHelper
+    private val s3Helper: S3Helper
 ) : TaskService {
 
     @Autowired(required = false)
@@ -82,12 +82,12 @@ class ImageTaskService(
         }
 
         val requestFilename = "request-${taskName}.jpg"
-        val requestPath = "$sudokuImagesDir/$requestFilename"
-        val requestFile = File(requestPath)
-        ImageIO.write(requestImage, "jpg", requestFile)
-        log.info("Saved input image to $requestPath, size: ${requestImage.width} x ${requestImage.height}")
+        val requestImageUrl = s3Helper.uploadBufferedImage(
+            bucket,
+            "request-images/$requestFilename",
+            requestImage, "jpg"
+            )
 
-        val requestImageUrl = "$sudokuServerDomain$servletPath$sudokuUrlPrefix/$requestFilename"
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
 
         // Use coroutineScope instead of runBlocking
@@ -126,6 +126,10 @@ class ImageTaskService(
         val task = Task(
             id = IdUtils.generateId(),
             name = taskName,
+            input = TaskInput(
+                type = type,
+                image = requestImageUrl,
+            ),
             taskIds = taskIds,
             status = TaskStatus.SUBMITTED,
             type = type,
@@ -231,14 +235,11 @@ class ImageTaskService(
             .flatMap { it.taskResult.images ?: emptyList() }
             .map { it.url }
 
-        val encodedImageName = aesCipherHelper.encrypt("sudoku-${task.name}") + ".jpg"
-        val outputPath = "$sudokuImagesDir/$encodedImageName"
-        imageProcessHelper.downloadAndCreateSudoku(
+        val outputImageUrl = imageProcessHelper.downloadAndCreateSudoku(
             task,
             imageUrls,
-            outputPath
         )
-        return "$sudokuServerDomain$servletPath$sudokuUrlPrefix/$encodedImageName"
+        return outputImageUrl
     }
 
     private fun summaryResponse(taskResponseMap: Map<String, QueryImageTaskResponse>):

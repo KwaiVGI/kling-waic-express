@@ -21,7 +21,7 @@ class ImageTaskServiceTest : SpringBaseTest() {
         val type = TaskType.STYLED_IMAGE
         val file = MockMultipartFile(
             "request-No.100228.jpg",
-            FileUtils.readBytesFromResources("test_girl.png")
+            FileUtils.readBytesFromResources("request-No.100228.jpg")
         )
 
         CoroutineUtils.runSuspend {

@@ -17,6 +17,12 @@ class FileUtils {
                 ?: throw IllegalArgumentException("File not found: $filePath")
         }
 
+        fun getFileFromResources(filePath: String): File {
+            val resource = this::class.java.classLoader.getResource(filePath)
+                ?: throw IllegalArgumentException("File not found: $filePath")
+            return File(resource.file)
+        }
+
         fun readBytesFromResources(filePath: String): ByteArray {
             return this::class.java.classLoader.getResource(filePath)?.readBytes()
                 ?: throw IllegalArgumentException("File not found: $filePath")
