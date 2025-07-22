@@ -1,4 +1,4 @@
-package com.kling.waic.exception
+package com.kling.waic.exception.base
 
 import com.kling.waic.entity.ResultStatus
 import java.lang.RuntimeException

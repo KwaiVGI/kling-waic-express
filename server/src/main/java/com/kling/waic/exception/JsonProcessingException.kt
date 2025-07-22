@@ -1,9 +1,10 @@
 package com.kling.waic.exception
 
 import com.kling.waic.entity.ResultStatus
-import java.lang.RuntimeException
+import com.kling.waic.exception.base.SystemException
+import com.kling.waic.exception.base.WAICException
 
-class JsonProcessingException : WAICException {
+class JsonProcessingException : WAICException, SystemException {
     constructor() : super()
     constructor(message: String?) : super(message)
     constructor(message: String?, cause: Throwable?) : super(message, cause)

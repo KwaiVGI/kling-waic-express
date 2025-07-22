@@ -120,20 +120,49 @@ open class ServiceConfig(
         havingValue = "true",
         matchIfMissing = false
     )
-    open fun loadCascadeClassifierFromResources(): CascadeClassifier {
+    open fun loadCascadeClassifiersFromResources(): List<CascadeClassifier> {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
-        val inputStream =
-            this::class.java.classLoader.getResourceAsStream("haarcascade_frontalface_alt.xml")
-                ?: throw IllegalArgumentException("Cannot find haarcascade XML in resources")
-
-        // copy to a temporary file
-        val tempFile = File.createTempFile("tmp_haarcascade_frontalface_alt", ".xml")
-        tempFile.deleteOnExit()
-        FileOutputStream(tempFile).use { output ->
-            inputStream.copyTo(output)
+        
+        // Try to load multiple classifiers in order of priority
+        val classifierFiles = listOf(
+            "haarcascade_frontalface_default.xml",
+            "haarcascade_profileface.xml",
+            "haarcascade_frontalface_alt.xml",
+            "haarcascade_frontalface_alt2.xml",
+        )
+        
+        val classifiers = mutableListOf<CascadeClassifier>()
+        
+        for (filename in classifierFiles) {
+            try {
+                val inputStream = this::class.java.classLoader.getResourceAsStream(filename)
+                if (inputStream != null) {
+                    val tempFile = File.createTempFile("tmp_${filename.replace(".xml", "")}", ".xml")
+                    tempFile.deleteOnExit()
+                    FileOutputStream(tempFile).use { output ->
+                        inputStream.copyTo(output)
+                    }
+                    val classifier = CascadeClassifier(tempFile.absolutePath)
+                    if (!classifier.empty()) {
+                        classifiers.add(classifier)
+                        log.info("Successfully loaded cascade classifier: $filename")
+                    } else {
+                        log.warn("Loaded cascade classifier is empty: $filename")
+                    }
+                } else {
+                    log.debug("Cascade classifier not found in resources: $filename")
+                }
+            } catch (e: Exception) {
+                log.warn("Failed to load cascade classifier: $filename", e)
+            }
         }
-
-        return CascadeClassifier(tempFile.absolutePath)
+        
+        if (classifiers.isEmpty()) {
+            throw IllegalStateException("No cascade classifiers could be loaded from resources")
+        }
+        
+        log.info("Loaded ${classifiers.size} cascade classifiers successfully")
+        return classifiers
     }
 
     @Bean

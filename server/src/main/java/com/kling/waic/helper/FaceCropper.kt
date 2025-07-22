@@ -1,6 +1,5 @@
 package com.kling.waic.helper
 
-import com.kling.waic.exception.NoHumanFaceDetectException
 import com.kling.waic.utils.Slf4j.Companion.log
 import nu.pattern.OpenCV
 import org.opencv.core.Mat
@@ -11,7 +10,6 @@ import org.opencv.core.Rect
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.opencv.objdetect.CascadeClassifier
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import java.awt.image.BufferedImage
@@ -26,9 +24,7 @@ import javax.imageio.ImageIO
     matchIfMissing = false
 )
 class FaceCropper(
-    @Value("\${waic.sudoku.images-dir}")
-    private val sudokuImagesDir: String,
-    private val cascadeClassifier: CascadeClassifier,
+    private val cascadeClassifiers: List<CascadeClassifier>,
 ) {
     init {
         // Load OpenCV native library
@@ -41,17 +37,97 @@ class FaceCropper(
 
         val gray = Mat()
         Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY)
+        
+        // Image preprocessing - histogram equalization to enhance contrast
+        val equalizedGray = Mat()
+        Imgproc.equalizeHist(gray, equalizedGray)
 
         val faces = MatOfRect()
-        cascadeClassifier.detectMultiScale(gray, faces)
-
-        if (faces.toArray().isEmpty()) {
-            throw NoHumanFaceDetectException("No human face detected in the image.")
+        
+        // Using multiple parameter combinations to improve detection success rate
+        val detectionParams = listOf(
+            // 参数组合1: 标准检测
+            Triple(1.1, 3, 0.3),
+            // 参数组合2: 更敏感的检测
+            Triple(1.05, 2, 0.25),
+            // 参数组合3: 更宽松的检测
+            Triple(1.2, 4, 0.2),
+            // 参数组合4: 最宽松的检测
+            Triple(1.3, 1, 0.15)
+        )
+        
+        var detectedFaces: Array<Rect> = emptyArray()
+        var successfulClassifierIndex = -1
+        
+        // Loop through all classifiers
+        for ((classifierIndex, cascadeClassifier) in cascadeClassifiers.withIndex()) {
+            log.debug("Trying classifier ${classifierIndex + 1}/${cascadeClassifiers.size} for task: $taskName")
+            
+            for ((paramIndex, paramTriple) in detectionParams.withIndex()) {
+                val (scaleFactor, minNeighbors, minSizeRatio) = paramTriple
+                val minSize = org.opencv.core.Size(
+                    (mat.width() * minSizeRatio).toInt().toDouble(),
+                    (mat.height() * minSizeRatio).toInt().toDouble()
+                )
+                
+                // First try detection on the equalized image
+                cascadeClassifier.detectMultiScale(
+                    equalizedGray, 
+                    faces, 
+                    scaleFactor, 
+                    minNeighbors, 
+                    0, 
+                    minSize
+                )
+                
+                detectedFaces = faces.toArray()
+                if (detectedFaces.isNotEmpty()) {
+                    successfulClassifierIndex = classifierIndex
+                    log.info("Face detected with classifier $classifierIndex (equalized image) " +
+                            "- param set $paramIndex: scaleFactor=$scaleFactor, minNeighbors=$minNeighbors, " +
+                            "minSizeRatio=$minSizeRatio, faces=${detectedFaces.size}")
+                    break
+                }
+                
+                // Second try detection on the original gray image
+                cascadeClassifier.detectMultiScale(
+                    gray, 
+                    faces, 
+                    scaleFactor, 
+                    minNeighbors, 
+                    0, 
+                    minSize
+                )
+                
+                detectedFaces = faces.toArray()
+                if (detectedFaces.isNotEmpty()) {
+                    successfulClassifierIndex = classifierIndex
+                    log.info("Face detected with classifier $classifierIndex (original gray) " +
+                            "- param set $paramIndex: scaleFactor=$scaleFactor, minNeighbors=$minNeighbors, " +
+                            "faces=${detectedFaces.size}")
+                    break
+                }
+            }
+            
+            // If any classifier detected faces, stop trying others
+            if (detectedFaces.isNotEmpty()) {
+                break
+            }
         }
 
-        // If multiple faces detected, select the largest one
-        val face = faces.toArray().maxByOrNull { it.width * it.height } ?: faces.toArray()[0]
-        val faceCenter = Point(face.x + face.width / 2.0, face.y + face.height / 2.0)
+        val faceCenter = if (detectedFaces.isNotEmpty()) {
+            val face = detectedFaces.maxByOrNull { it.width * it.height } ?: detectedFaces[0]
+            log.debug("Selected face for task $taskName (classifier $successfulClassifierIndex): " +
+                    "x=${face.x}, y=${face.y}, width=${face.width}, height=${face.height}")
+
+            Point(face.x + face.width / 2.0, face.y + face.height / 2.0)
+        } else {
+            log.warn("No face detected with any classifier and parameter combination for task: $taskName, " +
+                    "image size: ${mat.width()}x${mat.height()}, tried ${cascadeClassifiers.size} classifiers, " +
+                    "using center of original image as fallback")
+            // Return the center of original image if no face detected
+            Point(mat.width() / 2.0, mat.height() / 2.0)
+        }
 
         // Calculate the maximum possible crop area with 2:3 aspect ratio
         val imageWidth = mat.width().toInt()

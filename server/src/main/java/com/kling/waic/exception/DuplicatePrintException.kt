@@ -1,8 +1,10 @@
 package com.kling.waic.exception
 
 import com.kling.waic.entity.ResultStatus
+import com.kling.waic.exception.base.HumanOperationException
+import com.kling.waic.exception.base.WAICException
 
-class DuplicatePrintException : WAICException {
+class DuplicatePrintException : WAICException, HumanOperationException {
     constructor() : super()
     constructor(message: String?) : super(message)
     constructor(message: String?, cause: Throwable?) : super(message, cause)

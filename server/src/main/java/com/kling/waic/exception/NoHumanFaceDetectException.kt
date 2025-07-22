@@ -1,9 +1,11 @@
 package com.kling.waic.exception
 
 import com.kling.waic.entity.ResultStatus
+import com.kling.waic.exception.base.HumanOperationException
+import com.kling.waic.exception.base.WAICException
 import java.lang.RuntimeException
 
-class NoHumanFaceDetectException : WAICException {
+class NoHumanFaceDetectException : WAICException, HumanOperationException {
     constructor() : super()
     constructor(message: String?) : super(message)
     constructor(message: String?, cause: Throwable?) : super(message, cause)
