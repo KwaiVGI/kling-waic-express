@@ -178,23 +178,30 @@ int main() {
             std::string downloadUrl = stringPrefix(ret.at("data").at("task").at("outputs").at("url")
             , DOWNLOAD_PREFIX);
             long long id = ret.at("data").at("id");
-            std::string name = std::to_string(id);
+            std::string name = std::to_string(id) + ".jpg";
             std::cout << "[INFO] ready to download. name: " + name + " url:" + downloadUrl << std::endl;
-            if (!downloadClient->downloadImage(downloadUrl, DOWNLOAD_DIR, name + ".jpg")) {
+            if (!downloadClient->downloadImage(downloadUrl, DOWNLOAD_DIR, name)) {
                 std::cout << "[INFO] DownLoad image failed. url:" << downloadUrl << std::endl;
             }
-            std::cout << "[INFO] Download image success. json: " << ret << std::endl;  
-        }
-        inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
-        for (auto input : inputs) {
-            input = ".\\download\\" + input;
-            std::cout << input << std::endl;
+            std::cout << "[INFO] Download image success. json: " << ret << std::endl;
+            std::string input = ".\\download\\" + name;
             if (!fileExists(input)) {
-                printf("Cannot find this file.\n");
+                std::cout << "[ERROR] cannot find this file" << std::endl;
             } else {
                 printerManager->addImage(input);
+                std::cout << "[INFO] Add printer queue success" << std::endl;
             }
         }
+        // inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
+        // for (auto input : inputs) {
+        //     input = ".\\download\\" + input;
+        //     std::cout << input << std::endl;
+        //     if (!fileExists(input)) {
+        //         printf("Cannot find this file.\n");
+        //     } else {
+        //         printerManager->addImage(input);
+        //     }
+        // }
         Sleep(1000);
     }
     std::cout << "delete" << std::endl;
