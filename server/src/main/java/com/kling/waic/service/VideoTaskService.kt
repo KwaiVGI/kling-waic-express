@@ -1,70 +1,30 @@
 package com.kling.waic.service
 
 import com.kling.waic.entity.Locale
-import com.kling.waic.entity.Printing
-import com.kling.waic.entity.Task
-import com.kling.waic.entity.TaskInput
-import com.kling.waic.entity.TaskOutput
-import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
-import com.kling.waic.entity.TaskType
 import com.kling.waic.exception.KlingOpenAPIException
 import com.kling.waic.external.KlingOpenAPIClient
 import com.kling.waic.external.model.CreateVideoTaskInput
 import com.kling.waic.external.model.CreateVideoTaskRequest
 import com.kling.waic.external.model.KlingOpenAPITaskStatus
+import com.kling.waic.external.model.QueryTaskContext
 import com.kling.waic.external.model.QueryVideoTaskRequest
-import com.kling.waic.helper.ImageProcessHelper
-import com.kling.waic.helper.S3Helper
-import com.kling.waic.repository.CastingRepository
-import com.kling.waic.repository.CodeGenerateRepository
-import com.kling.waic.repository.TaskRepository
-import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.Slf4j.Companion.log
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.springframework.web.multipart.MultipartFile
-import java.time.Instant
+import java.awt.image.BufferedImage
 
 @Service
 class VideoTaskService(
-    private val imageProcessHelper: ImageProcessHelper,
     private val videoSpecialEffects: List<String>,
     private val klingOpenAPIClient: KlingOpenAPIClient,
-    private val codeGenerateRepository: CodeGenerateRepository,
-    @Value("\${waic.sudoku.images-dir}")
-    private val sudokuImagesDir: String,
-    @Value("\${waic.sudoku.url-prefix}")
-    private val sudokuUrlPrefix: String,
-    @Value("\${waic.sudoku.server-domain}")
-    private val sudokuServerDomain: String,
-    @Value("\${waic.crop-image-with-opencv}")
-    private val cropImageWithOpenCV: Boolean,
-    @Value("\${spring.mvc.servlet.path}")
-    private val servletPath: String,
-    private val taskRepository: TaskRepository,
-    private val castingRepository: CastingRepository,
-    private val s3Helper: S3Helper,
-    @param:Value("\${s3.bucket}") private val bucket: String,
-) : TaskService {
+) : TaskService() {
 
-    override suspend fun createTask(type: TaskType, file: MultipartFile): Task {
-        val taskName = codeGenerateRepository.nextCode(type)
-        log.info("Generated task name: $taskName for type: $type")
+    override fun generateRequestImage(inputImage: BufferedImage, taskName: String): BufferedImage {
+        return inputImage
+    }
 
-        val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
-        log.info("Input image size: ${inputImage.width}x${inputImage.height}")
-
+    override suspend fun doCreateTask(requestImageUrl: String): List<String> {
         val effectScene = videoSpecialEffects.random()
-
-        val requestImage = inputImage
-        val requestFilename = "request-${taskName}.jpg"
-        val requestImageUrl = s3Helper.uploadBufferedImage(
-            bucket,
-            "request-images/$requestFilename",
-            requestImage, "jpg"
-        )
-
         val request = CreateVideoTaskRequest(
             effectScene = effectScene,
             input = CreateVideoTaskInput(
@@ -75,44 +35,15 @@ class VideoTaskService(
         if (result.code != 0) {
             throw KlingOpenAPIException(result)
         }
-        log.info("Create video task with effectScene: $effectScene, taskId: ${result.data?.taskId ?: "null"}")
-
-        val task = Task(
-            id = IdUtils.generateId(),
-            name = taskName,
-            input = TaskInput(
-                type = type,
-                image = requestImageUrl,
-            ),
-            taskIds = listOf(result.data!!.taskId),
-            status = TaskStatus.SUBMITTED,
-            type = type,
-            filename = file.name,
-            createTime = Instant.now(),
-            updateTime = Instant.now(),
-        )
-
-        taskRepository.setTask(task)
-        return task
+        log.debug("Create video task with effectScene: $effectScene, taskId: ${result.data?.taskId ?: "null"}")
+        return listOf(result.data!!.taskId)
     }
 
-    override suspend fun queryTask(
-        type: TaskType,
-        name: String,
-        locale: Locale
-    ): Task {
-        val task = taskRepository.getTask(name)
-        if (task == null || task.type != type) {
-            log.error("Task type $type not found or type mismatch for task: $name, task: $task")
-            throw IllegalArgumentException("Task not found or type mismatch")
-        }
-
-        if (task.status in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
-            log.info("Task ${task.name} is already finished with status: ${task.status}")
-            return task // No need to query if the task is already completed
-        }
-
-        val taskId = task.taskIds.first()
+    override suspend fun doQueryTask(
+        taskIds: List<String>,
+        taskName: String
+    ): Pair<TaskStatus, QueryTaskContext> {
+        val taskId = taskIds.first()
         val request = QueryVideoTaskRequest(taskId)
         val result = klingOpenAPIClient.queryVideoTask(request)
         if (result.code != 0) {
@@ -126,38 +57,18 @@ class VideoTaskService(
 
         val taskStatus = result.data!!.taskStatus
         val convertedStatus = calculateStatus(taskStatus)
-        log.info("Task ${task.name} convertedStatus: $convertedStatus")
+        log.info("Task $taskName convertedStatus: $convertedStatus")
 
-        if (convertedStatus == task.status) {
-            log.debug("Task ${task.name} status has not changed, returning existing task")
-            return task // No status change, return existing task
-        }
+        val video = result.data.taskResult.videos!!.first()
+        return Pair(convertedStatus, QueryTaskContext(video = video))
+    }
 
-        val newTask = task.copy(
-            status = convertedStatus,
-            updateTime = Instant.now(),
-        )
-        taskRepository.setTask(newTask)
-
-        if (convertedStatus != TaskStatus.SUCCEED) {
-            return newTask
-        }
-
-        val url = result.data.taskResult.videos!!.first().url
-        val finalTask = newTask.copy(
-            outputs = TaskOutput(
-                type = TaskOutputType.VIDEO,
-                url = url
-            ),
-            updateTime = Instant.now()
-        )
-
-        taskRepository.setTask(finalTask)
-
-        val casting = castingRepository.addToCastingQueue(finalTask)
-        log.info("Added task ${finalTask.name} to casting queue, casting: $casting")
-
-        return finalTask
+    override suspend fun generateOutputUrl(
+        taskName: String,
+        queryTaskContext: QueryTaskContext,
+        locale: Locale
+    ): String {
+        return queryTaskContext.video!!.url
     }
 
     private fun calculateStatus(taskStatus: KlingOpenAPITaskStatus): TaskStatus {
@@ -167,13 +78,5 @@ class VideoTaskService(
             KlingOpenAPITaskStatus.succeed -> TaskStatus.SUCCEED
             KlingOpenAPITaskStatus.failed -> TaskStatus.FAILED
         }
-    }
-
-    override suspend fun printTask(
-        type: TaskType,
-        name: String,
-        fromConsole: Boolean
-    ): Printing {
-        throw UnsupportedOperationException("Print video is not implemented yet")
     }
 }

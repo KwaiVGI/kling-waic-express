@@ -26,8 +26,9 @@ class VideoTaskServiceTest : SpringBaseTest() {
             FileUtils.readBytesFromResources(filename)
         )
 
+        val url = "https://kling-waic.s3.cn-north-1.amazonaws.com.cn/input-images/request-No.100228.jpg"
         CoroutineUtils.runSuspend {
-            var task = videoTaskService.createTask(type, file)
+            var task = videoTaskService.createTask(type, url)
 
             while (task.status !in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
                 delay(1000) // Use delay instead of sleep
