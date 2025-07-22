@@ -79,6 +79,10 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  autoplay: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const playerRef = ref(null);

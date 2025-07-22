@@ -26,8 +26,8 @@
       </div>
       <!-- 上传区域 -->
       <div
-        v-show="!uploadedImage && !generatedResult"
-        class="w-360px h-360px box-border bg-white rounded-24px p-20px text-center relative"
+        v-show="(!uploadedImage && !generatedResult) || uploading"
+        class="w-360px h-360px box-border upload-bg-white rounded-24px p-20px text-center relative"
       >
         <van-uploader
           ref="uploaderRef"
@@ -47,13 +47,13 @@
               v-if="uploading"
             >
               <van-loading type="circular" color="#0B8A1B" />
-              <div v-if="type === 'image'" class="text-14px !text-#fff">
+              <div class="text-14px upload-text-white">
                 {{ $t("upload.uploading") }}
               </div>
             </div>
             <template v-else>
               <IconSvg name="add-image" :size="32" />
-              <p class="mt-10px text-14px !text-#fff">
+              <p class="mt-10px text-14px upload-text-white">
                 {{ $t("actions.uploadPhoto") }}
               </p>
             </template>
@@ -69,8 +69,8 @@
 
       <!-- 图片预览区域 -->
       <div
-        v-if="uploadedImage && !generatedResult"
-        class="w-360px h-360px box-border bg-white rounded-24px p-20px text-center relative"
+        v-if="uploadedImage && !generatedResult && !uploading"
+        class="w-360px h-360px box-border upload-bg-white rounded-24px p-20px text-center relative"
       >
         <div
           class="w-320px h-254px overflow-hidden rounded-12px flex items-center justify-center relative"
@@ -89,7 +89,7 @@
         <div class="w-full h-48px flex justify-between gap-8px mt-16px">
           <button
             :disabled="isGenerating"
-            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px leading-1 text-black bg-#09090A0A disabled:bg-#09090A0a disabled:text-#B0B4B8ff"
+            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px leading-1 text-black btn-bg disabled:text-#B0B4B8ff"
             @click="handleReplace()"
           >
             <IconSvg
@@ -100,7 +100,7 @@
           </button>
           <button
             :disabled="isGenerating"
-            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px leading-1 color-black bg-#09090A0A disabled:bg-#09090A0a disabled:text-#B0B4B8ff"
+            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px leading-1 color-black btn-bg disabled:text-#B0B4B8ff"
             @click="handleDelete"
           >
             <IconSvg
@@ -157,6 +157,7 @@
         <VideoPlayer
           :src="generatedResult"
           :poster="uploadedImage"
+          autoplay
           class="w-full h-full object-cover overflow-hidden object-center rounded-8px shadow-sm"
         ></VideoPlayer>
       </div>
@@ -210,10 +211,10 @@
         class="flex flex-col justify-center items-center bg-#F9FBFC rounded-16px p-24px gap-12px backdrop-blur-24px"
       >
         <van-loading type="circular" color="#0B8A1B" />
-        <div v-if="type === 'image'" class="text-14px text-#000">
+        <div v-if="type === 'image'" class="text-14px text-black">
           {{ $t("status.processing") }}
         </div>
-        <div v-else class="text-14px text-#000">
+        <div v-else class="text-14px text-black">
           <span v-html="$t('status.generating', { time: 3 })"></span>
         </div>
         <van-button
@@ -498,5 +499,18 @@ onMounted(() => {
 .preview-result {
   max-height: 50vh;
   object-fit: contain;
+}
+// fuck 荣耀手机
+.upload-bg-white {
+  background: white;
+}
+.upload-text-white {
+  color: white !important;
+}
+.btn-bg {
+  background: #09090a0a;
+  &:disabled {
+    background: 09090A0a;
+  }
 }
 </style>
