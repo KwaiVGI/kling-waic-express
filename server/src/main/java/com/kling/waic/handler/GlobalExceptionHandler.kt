@@ -23,10 +23,12 @@ class GlobalExceptionHandler {
         }
 
         if (ex is WAICException) {
-            if (ex is SystemException) {
-                log.error("handle SystemException: ${ex.message}", ex)
-            } else if (ex is HumanOperationException) {
-                log.info("handle HumanOperationException: ${ex.message}")
+            if (ex is HumanOperationException) {
+                log.info("handle HumanOperationException: ${ex::class.java.simpleName}, " +
+                        "message: ${ex.message}")
+            } else {
+                log.error("handle WAICException: ${ex::class.java.simpleName}, " +
+                        "message: ${ex.message}", ex)
             }
 
             if (ex is KlingOpenAPIException) {
@@ -42,6 +44,8 @@ class GlobalExceptionHandler {
             )
         }
 
+        log.error("handle Exception: ${ex::class.java.simpleName}, " +
+                "message: ${ex.message}", ex)
         return Result(
             status = ResultStatus.FAILED,
             message = ex.message ?: ""
