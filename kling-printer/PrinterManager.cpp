@@ -1,5 +1,5 @@
 #include "PrinterManager.h"
-#include <iostream>
+#include <glog/logging.h>
 
 PrinterManager::PrinterManager(std::vector<PrinterInfo>& printerInfos){
     for (PrinterInfo info : printerInfos) {
@@ -26,7 +26,7 @@ int PrinterManager::getMostIdlePrinter() {
     lastUseIdx++;
     if (lastUseIdx >= m_printerList.size()) {
         lastUseIdx = 0;
-    }
-    std::cout << "mostIdleID" << lastUseIdx << std::endl;
+    } 
+    LOG(INFO) << "mostIdleID" << lastUseIdx;
     return lastUseIdx.load(std::memory_order_relaxed);
 }

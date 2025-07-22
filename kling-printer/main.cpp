@@ -22,10 +22,11 @@ void initConsoleOutput() {
     if (!GetConsoleWindow()) {
         AllocConsole();
         freopen("CONOUT$", "w", stdout);
-        freopen("CONIN$", "r", stdin);
+        // freopen("CONIN$", "r", stdin);
         freopen("CONOUT$", "w", stderr);
     }
     printf("Console Panel init success!\n");
+    fflush(stdout);
 }
 
 
@@ -96,6 +97,7 @@ int main(int argc, char* argv[]) {
     std::queue<std::string> imageQueue;
     std::mutex queue_mutex;
     printf("Please input image path to print. press Enter for end. input empty line for quit.\n");
+    fflush(stdout);
     while (running) {
         // std::string input;
         // if(!std::getline(std::cin, input)) {
@@ -135,6 +137,7 @@ int main(int argc, char* argv[]) {
             LOG(INFO) << "[INFO] ready to download. name: " + name + " url:" + downloadUrl;
             if (!downloadClient->downloadImage(downloadUrl, DOWNLOAD_DIR, name)) {
                 LOG(INFO) << "[INFO] DownLoad image failed. url:" << downloadUrl;
+                continue;
             }
             LOG(INFO) << "[INFO] Download image success. json: " << ret;
             std::string input = ".\\download\\" + name;

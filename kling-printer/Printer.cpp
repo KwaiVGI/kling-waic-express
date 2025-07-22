@@ -48,6 +48,7 @@ Printer::Printer(const std::wstring& printerName, int printerPageWidth /* = 0*/,
         throw std::runtime_error("OpenPrinter failed. errorCode:" + std::to_string(error));
     }
     printf("OpenPrinter success!\n");
+    fflush(stdout);
     if (printerPageWidth > 0 && printerPageHeight > 0)
     {
         m_pageWidthInMM = printerPageWidth;
@@ -119,7 +120,7 @@ void Printer::monitorLoop() {
         }
         std::vector<BYTE> buffer(needed);
         if (!EnumJobs(m_hPrinter, 0, ULONG_MAX, 2, buffer.data(), needed, &needed, &numJobs)) {
-            std::cerr << "EnumJobs failed: " << GetLastError();
+            std::cerr << "EnumJobs failed: " << GetLastError() << std::endl;
             continue;
         }
 
@@ -187,7 +188,7 @@ void Printer::run()
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     if (!preparePrinterSetting())
     {
-        LOG(INFO) << "failed Prepare\n";
+        LOG(INFO) << "failed Prepare";
         return;
     }
     LOG(INFO) << "thread running while m_isRunning" ;
@@ -203,6 +204,7 @@ void Printer::run()
                 imageHeight <= 0)
             {
                 printf("printer: invalid image file: %s\n", filename.c_str());
+                fflush(stdout);
                 continue;
             }
             //开始打印
@@ -213,15 +215,19 @@ void Printer::run()
             if (doc_idd <= 0)
             {
                 printf("printer: StartDoc error! code: %d\n", GetLastError());
+                fflush(stdout);
                 continue;
             }
             printf("printer name: %s\n", wstring2string(m_printerName).c_str());
+            fflush(stdout);
             printf("printer doc id: %d\n", doc_idd);
+            fflush(stdout);
 
             //开始一个打印页面
             if (StartPage(hPrintDC) < 0)
             {
                 printf("printer: StartPage error\n");
+                fflush(stdout);
                 AbortDoc(hPrintDC);
                 continue;
             }
@@ -245,6 +251,7 @@ void Printer::run()
             EndPage(hPrintDC);
             EndDoc(hPrintDC);
             printf("printer: print success: %s\n", filename.c_str());
+            fflush(stdout);
             image.reset();
             if (!m_savePhotos)
             {
@@ -286,7 +293,8 @@ bool Printer::preparePrinterSetting()
 {
 // 检查打印机是否已通过 OpenPrinter 打开
     if (m_hPrinter == nullptr || m_hPrinter == INVALID_HANDLE_VALUE) {
-        printf("printer: 请先调用 OpenPrinter 打开打印机\n");
+        printf("printer: use OpenPrinter() to open printer\n");
+        fflush(stdout);
         return false;
     }
 
@@ -304,13 +312,15 @@ bool Printer::preparePrinterSetting()
     }
 
     if (needed == 0) {
-        printf("printer: 获取打印机信息失败\n");
+        printf("printer: get printer info failed\n");
+        fflush(stdout);
         return false;
     }
     
     PRINTER_INFO_2W* printerInfo = (PRINTER_INFO_2W*)malloc(needed);
     if (!GetPrinterW(m_hPrinter, 2, (LPBYTE)printerInfo, needed, &needed)) {
-        printf("printer: 获取打印机信息失败\n");
+        printf("printer: get printer info failed\n");
+        fflush(stdout);
         return false;
     }
     // 创建打印机 DC
@@ -322,7 +332,8 @@ bool Printer::preparePrinterSetting()
     );
     free((void*)printerInfo);
     if (!hPrintDC) {
-        printf("printer: 创建打印机 DC 失败\n");
+        printf("printer: create printer DC failed\n");
+        fflush(stdout);
         return false;
     }
 
@@ -354,6 +365,7 @@ bool Printer::updatePrinterConfig(double imageWidth, double imageHeight)
     if (devMode == 0)
     {
         printf("printer: error in devMode.\n");
+        fflush(stdout);
         return false;
     }
 
@@ -401,6 +413,7 @@ bool Printer::updatePrinterConfig(double imageWidth, double imageHeight)
     {
         int printQuality = devMode->dmPrintQuality; //获取打印机的打印质量
         printf("printer: default print quality is %d", printQuality);
+        fflush(stdout);
     }
 
     HDC hPrintDC = static_cast<HDC>(m_printInfo.hDC);
@@ -422,6 +435,7 @@ bool Printer::updatePrinterConfig(double imageWidth, double imageHeight)
         m_pageHeightInMM = GetDeviceCaps(hPrintDC, VERTSIZE);
     }
     printf("printer page size (width * height): %d * %dmm\n", m_pageWidthInMM, m_pageHeightInMM);
+    fflush(stdout);
     //m_pageWidthInPixel = m_pageWidthInMM / 25.4 * GetDeviceCaps(hPrintDC, LOGPIXELSX);
     //m_pageHeightInPixel = m_pageHeightInMM / 25.4 * GetDeviceCaps(hPrintDC, LOGPIXELSY);
     return true;
@@ -429,7 +443,7 @@ bool Printer::updatePrinterConfig(double imageWidth, double imageHeight)
 
 DWORD Printer::getJobsCount() {
     if (!m_hPrinter) {
-        std::cerr << "打印机句柄无效\n";
+        std::cerr << "打印机句柄无效\n" << std::endl;
         return 0;
     }
 

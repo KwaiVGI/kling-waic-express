@@ -9,7 +9,6 @@
 #include <QDir>
 using namespace httplib;
 
-const std::string HttpClient::DOWNLOAD_PATH = "/cppcode/kling-waic-express/kling-printer/download/";
 
 // std::string stringPrefix(const std::string& s) {
 //     static const std::regex prefix(R"(^https://waic-api.klingai.com::6443)");
@@ -78,10 +77,7 @@ json HttpClient::postJson(const std::string& path,
 
 QImage HttpClient::getImage(const std::string& path,
                     const std::vector<std::pair<std::string, std::string>>& headers) {
-    LOG(INFO) << "doGetImage" << std::endl;
-    for (auto header : headers) {
-        LOG(INFO) << header.first << " " << header.second << std::endl;
-    }
+    LOG(INFO) << "Getting Image" << path << std::endl;
     auto conn = pool_->acquire();
     httplib::Result ret = doRequest(conn->cli, token_, path, json(), headers, false);
     LOG(INFO) << "endRequest" << std::endl;

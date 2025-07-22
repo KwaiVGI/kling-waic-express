@@ -31,14 +31,15 @@ public:
 private:
     
     std::string host_;
+    
     int port_;
+
     std::string token_;
-    // const std::string host_ = "waic-api.klingai.com";
-    // const int port_ = 6443;
-    // std::string token_ = "wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9";
+
     long connTimeout_ = 5000, readTimeout_ = 5000;
+
     std::unique_ptr<ConnectPool> pool_;
-    static const std::string DOWNLOAD_PATH;
+
     json getJson(const std::string& path,
              const std::vector<std::pair<std::string, std::string>>& headers = {});
 

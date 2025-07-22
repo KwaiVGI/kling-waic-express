@@ -10,7 +10,8 @@ cmake .. ^
   -G "Visual Studio 17 2022" ^
   -A x64 ^
   -DVCPKG_TARGET_TRIPLET=x64-windows ^
-  -DCMAKE_TOOLCHAIN_FILE="D:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+  -DCMAKE_TOOLCHAIN_FILE="D:/vcpkg/scripts/buildsystems/vcpkg.cmake" ^
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 cmake --build .
 ..\windeployqt6.exe --debug Debug\kling-printer.exe
