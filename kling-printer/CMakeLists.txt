@@ -1,8 +1,9 @@
 # CMakeLists.txt
 cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_TOOLCHAIN_FILE "D:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
-    CACHE STRING "Vcpkg toolchain")
+# set(CMAKE_TOOLCHAIN_FILE "D:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+#     )
+# set(VCPKG_TARGET_TRIPLET "x64-windows")
 project(kling-printer)
 
 # 设置C++标准
@@ -16,17 +17,19 @@ set(VERSION_MINOR 0)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
-
+set(glog_DIR "D:\\vcpkg\\packages\\glog_x64-windows\\share\\glog")
+set(gflags_DIR "D:\\vcpkg\\installed\\x64-windows\\share\\gflags")
 # 手动指定Qt路径（关键！）
 set(CMAKE_PREFIX_PATH "C:\\Qt\\6.9.1\\msvc2022_64")
-set(OPENSSL_ROOT_DIR "D:\\vcpkg\\packages\\openssl_x64-windows")
-set(OPENSSL_INCLUDE_DIR "D:\\vcpkg\\packages\\openssl_x64-windows\\include")
+# set(OPENSSL_ROOT_DIR "D:\\vcpkg\\packages\\openssl_x64-windows")
+# set(OPENSSL_INCLUDE_DIR "D:\\vcpkg\\packages\\openssl_x64-windows\\include")
 
 find_package(Qt6 COMPONENTS 
     Core
     Gui
     REQUIRED
 )
+find_package(glog CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 add_executable(${PROJECT_NAME} WIN32
