@@ -3,3 +3,4 @@ build/
 /log.txt
 /*.jpg
 download/
+logs/

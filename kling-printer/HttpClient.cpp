@@ -1,4 +1,5 @@
 #include "HttpClient.h"
+#include <glog/logging.h>
 #include <fstream>
 #include <QFile>
 #include <QBuffer>
@@ -38,7 +39,7 @@ static Result doRequest(Conn& conn,
         res = conn->Get(path.c_str(), hdrs);
     }
     // if (!res) {
-    //     std::cout << "res error " << res.error() << std::endl;
+    //     LOG(INFO) << "res error " << res.error() << std::endl;
     //     return res;
     //     // throw std::runtime_error("transport error");
     // }
@@ -54,7 +55,7 @@ json HttpClient::getJson(const std::string& path,
     auto conn = pool_->acquire();
     httplib::Result ret = doRequest(conn->cli, token_, path, json(), headers, false);
     pool_->release(std::move(conn));
-    std::cout << "getJson:" << path << " result status:" << ret->status << std::endl;
+    LOG(INFO) << "getJson:" << path << " result status:" << ret->status << std::endl;
     if (!ret || ret->status != 200) {
         return json::object();
     }
@@ -67,9 +68,9 @@ json HttpClient::postJson(const std::string& path,
     auto conn = pool_->acquire();
     httplib::Result ret = doRequest(conn->cli, token_, path, body, headers, true);
     pool_->release(std::move(conn));
-    std::cout << "postJoson:" << path << " result status:" << ret->status << std::endl;
+    LOG(INFO) << "postJoson:" << path << " result status:" << ret->status << std::endl;
     if (!ret || ret->status != 200) {
-        std::cout << "postJson return empty json" << std::endl;
+        LOG(INFO) << "postJson return empty json" << std::endl;
         return json::object();
     }
     return json::parse(ret->body);
@@ -77,21 +78,21 @@ json HttpClient::postJson(const std::string& path,
 
 QImage HttpClient::getImage(const std::string& path,
                     const std::vector<std::pair<std::string, std::string>>& headers) {
-    std::cout << "doGetImage" << std::endl;
+    LOG(INFO) << "doGetImage" << std::endl;
     for (auto header : headers) {
-        std::cout << header.first << " " << header.second << std::endl;
+        LOG(INFO) << header.first << " " << header.second << std::endl;
     }
     auto conn = pool_->acquire();
     httplib::Result ret = doRequest(conn->cli, token_, path, json(), headers, false);
-    std::cout << "endRequest" << std::endl;
+    LOG(INFO) << "endRequest" << std::endl;
     pool_->release(std::move(conn));
   
     if (!ret || ret->status != 200) {
-        std::cout << "HTTP request failed" << std::endl;
+        LOG(INFO) << "HTTP request failed" << std::endl;
     }
     if (auto ct = ret->get_header_value("Content-Type");
         ct.find("image/jpeg") == std::string::npos) {
-        std::cout << "Content-Type not image/jpeg:" << ct.c_str() << std::endl;
+        LOG(INFO) << "Content-Type not image/jpeg:" << ct.c_str() << std::endl;
         return {};
     }
     QByteArray raw(ret->body.data(), static_cast<int>(ret->body.size()));
@@ -100,34 +101,34 @@ QImage HttpClient::getImage(const std::string& path,
     buf.open(QIODevice::ReadOnly);
     QImageReader r(&buf, "JPEG");
     if (!r.canRead())
-        std::cout << "ImageRader use failed" << std::endl;
-        std::cout << r.errorString().toStdString() << std::endl;
+        LOG(INFO) << "ImageRader use failed" << std::endl;
+        LOG(INFO) << r.errorString().toStdString() << std::endl;
     img = r.read();
     return img;
 }
 
 json HttpClient::fetchImageQueue() {
-    std::cout << "[INFO] begin fetch Image Queue" << std::endl;
+    LOG(INFO) << "[INFO] begin fetch Image Queue" << std::endl;
     json ret = postJson("/api/printings/fetch", {});
-    std::cout << "post success! json:" << ret << std::endl;
+    LOG(INFO) << "post success! json:" << ret << std::endl;
     // if (ret.empty()) {
     //     return ret;
     // }
     // if (ret["status"] == "FAILED") {
-    //     std::cout << "HTTP ERROR! CANNOT CONNECT" << std::endl;
+    //     LOG(INFO) << "HTTP ERROR! CANNOT CONNECT" << std::endl;
     //     return ret;
     // }
-    // std::cout << ret["data"] << std::endl;
+    // LOG(INFO) << ret["data"] << std::endl;
 
     // if (!ret.contains("data") || ret["data"].is_null() || ret["status"] != "SUCCEED") {
     //     // 队列为空
-    //     std::cout << "[INFO] No data." << std::endl;
+    //     LOG(INFO) << "[INFO] No data." << std::endl;
     //     return ret;
     // }
     // long long id = ret.at("data").at("id");
-    // std::cout << "id" << id << std::endl;
+    // LOG(INFO) << "id" << id << std::endl;
     // std::string name = std::to_string(id);
-    // std::cout << "name:" << name << std::endl;
+    // LOG(INFO) << "name:" << name << std::endl;
     // std::string download_url = ret.at("data").at("task").at("outputs").at("url");
     return ret;
 }
@@ -139,9 +140,9 @@ bool HttpClient::downloadImage(const std::string& imgUrl, const std::string& dir
     if (img.isNull()) {
         return false;
     }
-    std::cout << "[INFO] ready to save. imgUrl:" + imgUrl + "dir:" + dir + " fileName:" + name << std::endl;
+    LOG(INFO) << "[INFO] ready to save. imgUrl:" + imgUrl + "dir:" + dir + " fileName:" + name << std::endl;
     QFileInfo fi(QString::fromStdString(dir));
-    std::cout << fi.absoluteFilePath().toStdString() << std::endl;
+    LOG(INFO) << fi.absoluteFilePath().toStdString() << std::endl;
     QDir().mkpath(fi.absolutePath());
     return img.save(QString::fromStdString(dir + name), "JPG", 100);
 }

@@ -1,6 +1,7 @@
 ﻿#ifdef _MSC_VER
 
 #include "Printer.h"
+#include <glog/logging.h>
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -31,7 +32,7 @@ std::string wstring2string(const std::wstring& wstr) {
 
 Printer::Printer(const std::wstring& printerName, int printerPageWidth /* = 0*/, int printerPageHeight /* = 0*/, int dpi /* = 600*/, bool savePhotos /* = false */)
 {
-    std::cout << "constructor function" << std::endl;
+    LOG(INFO) << "constructor function" ;
     PRINTER_DEFAULTSW defaults = { nullptr, nullptr, GENERIC_READ };
 
     if (!OpenPrinter(const_cast<LPWSTR>(printerName.c_str()), &m_hPrinter, &defaults)) {
@@ -118,7 +119,7 @@ void Printer::monitorLoop() {
         }
         std::vector<BYTE> buffer(needed);
         if (!EnumJobs(m_hPrinter, 0, ULONG_MAX, 2, buffer.data(), needed, &needed, &numJobs)) {
-            std::cerr << "EnumJobs failed: " << GetLastError() << std::endl;
+            std::cerr << "EnumJobs failed: " << GetLastError();
             continue;
         }
 
@@ -135,7 +136,7 @@ void Printer::monitorLoop() {
                 }
                 // 已经更新过该状态
                 printMap[jobId] = true;
-                std::cout << "[job] ID:" << jobId << "printing" << std::endl;
+                LOG(INFO) << "[job] ID:" << jobId << "printing";
                 // if (onPrinting_) {
                 //     onPrinting_(jobId, documentName);
                 // }
@@ -145,7 +146,7 @@ void Printer::monitorLoop() {
                 }
                 // 已经更新过该状态
                 completeMap[jobId] = true;
-                std::cout << "[job] ID:" << jobId << "complete" << std::endl;
+                LOG(INFO) << "[job] ID:" << jobId << "complete";
                 
             //     if (onCompleted_) {
             //         onCompleted_(jobId, documentName);
@@ -186,10 +187,10 @@ void Printer::run()
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     if (!preparePrinterSetting())
     {
-        std::cout << "failed Prepare\n";
+        LOG(INFO) << "failed Prepare\n";
         return;
     }
-    std::cout << "thread running while m_isRunning" << std::endl;
+    LOG(INFO) << "thread running while m_isRunning" ;
     while (m_isRunning)
     {
         std::string filename = getImageFile();
@@ -226,7 +227,7 @@ void Printer::run()
             }
             PrintImage(hPrintDC, image);
             // double calcWidth = imageWidth, calcHeight = imageHeight;
-            // std::cout << "image size(width x height):" << imageWidth << ", " << imageHeight << std::endl;
+            // LOG(INFO) << "image size(width x height):" << imageWidth << ", " << imageHeight ;
             // double scaling = std::min((m_pageWidthInMM / calcWidth), (m_pageHeightInMM / calcHeight));
             // calcWidth *= scaling;
             // calcHeight *= scaling;
@@ -259,10 +260,10 @@ void Printer::run()
 
 void Printer::addPhotoFile(const std::string& filename)
 {
-    std::cout << "adding file" << std::endl;
+    LOG(INFO) << "adding file" ;
     std::lock_guard<std::mutex> guard(m_mutex);
     m_filenameQueue.push(filename);
-    std::cout << "[addPhotoFile] added: " << filename << std::endl;
+    LOG(INFO) << "[addPhotoFile] added: " << filename ;
 }
 
 std::string Printer::getImageFile()
@@ -274,8 +275,8 @@ std::string Printer::getImageFile()
     }
     auto filename = m_filenameQueue.front();
     m_filenameQueue.pop();
-    std::cout << "[getImageFile] fetched: " << filename 
-              << ", remaining size: " << m_filenameQueue.size() << std::endl;
+    LOG(INFO) << "[getImageFile] fetched: " << filename 
+              << ", remaining size: " << m_filenameQueue.size() ;
     return filename;
 }
 
@@ -297,7 +298,7 @@ bool Printer::preparePrinterSetting()
         // 可预见错误为122，因为第一次是nullptr
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         DWORD error = GetLastError();
-        std::cout << "获取打印机信息大小失败，错误码: " << error << "need size:" << needed << std::endl;
+        LOG(INFO) << "获取打印机信息大小失败，错误码: " << error << "need size:" << needed ;
         return false;
         }
     }
@@ -391,7 +392,7 @@ bool Printer::updatePrinterConfig(double imageWidth, double imageHeight)
         double scale = std::min((double)imageHeight / m_pageHeightInMM * pixelsInMM,
                    (double)imageWidth / m_pageWidthInMM * pixelsInMM);
         double old_scale = (imageWidth * imageHeight) / (m_pageWidthInMM * pixelsInMM * m_pageHeightInMM * pixelsInMM);
-        std::cout << "old_scale:" << old_scale << "new_scale:" << scale << std::endl;
+        LOG(INFO) << "old_scale:" << old_scale << "new_scale:" << scale ;
         devMode->dmFields |= DM_SCALE;
         // double scale = (imageWidth * imageHeight) / (m_pageWidthInMM * pixelsInMM * m_pageHeightInMM * pixelsInMM);
         devMode->dmScale = 50;
@@ -439,7 +440,7 @@ DWORD Printer::getJobsCount() {
     if (!EnumJobs(m_hPrinter, 0, 0xFFFFFFFF, 1, NULL, 0, &needed, &returned)) {
         DWORD err = GetLastError();
         if (err != ERROR_INSUFFICIENT_BUFFER) {
-            std::cerr << "EnumJobs 获取缓冲区大小失败，错误码：" << err << std::endl;
+            std::cerr << "EnumJobs 获取缓冲区大小失败，错误码：" << err ;
             return 0;
         }
     }

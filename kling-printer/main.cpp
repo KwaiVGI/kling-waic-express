@@ -1,3 +1,4 @@
+#include <glog/logging.h>
 #include <iostream>
 #include <string>
 #include <streambuf>
@@ -6,7 +7,6 @@
 #include <fstream>
 #include "HttpClient.h"
 #include "PrinterManager.h"
-
 
 using namespace std;
 
@@ -28,64 +28,6 @@ void initConsoleOutput() {
     printf("Console Panel init success!\n");
 }
 
-class OutputRedirector {
-public:
-    explicit OutputRedirector(const std::string& filename) {
-        file.open(filename, std::ios::app); // 追加模式
-        if (!file.is_open()) {
-            throw std::runtime_error("Failed to open log file: " + filename);
-        }
-
-        // 创建带时间戳的 buffer，接管 file.rdbuf()
-        old_buf = std::cout.rdbuf(new TimestampBuffer(file.rdbuf()));
-    }
-
-    ~OutputRedirector() {
-        delete std::cout.rdbuf(); // 删除我们注入的 buffer
-        std::cout.rdbuf(old_buf); // 恢复原 buffer
-        file.close();
-    }
-
-private:
-class TimestampBuffer : public std::streambuf {
-    std::streambuf* dest;
-    char time_buf[128];
-    bool need_time = true;
-
-    int overflow(int c) override {
-        if (c == EOF) return sync();
-
-        if (need_time) {
-            auto now = std::chrono::system_clock::now();
-            auto t = std::chrono::system_clock::to_time_t(now);
-            auto tm = *std::localtime(&t);
-            dest->sputn(time_buf,
-                        std::strftime(time_buf, sizeof(time_buf),
-                                      "[%Y-%m-%d %H:%M:%S] ", &tm));
-            need_time = false;
-        }
-
-        int result = dest->sputc(c);
-
-        if (c == '\n') {
-            need_time = true;
-            sync(); // 关键：刷新缓冲区
-        }
-
-        return result;
-    }
-
-    int sync() override {
-        return dest->pubsync(); // 强制刷新
-    }
-
-public:
-    explicit TimestampBuffer(std::streambuf* d) : dest(d) {}
-};
-
-    std::ofstream file;
-    std::streambuf* old_buf;
-};
 
 std::vector<std::string> collectJpgRelative(const std::string& dir)
 {
@@ -114,7 +56,7 @@ bool checkJson(json ret) {
     }
     if (!ret.contains("data") || ret["data"].is_null() || ret["status"] != "SUCCEED") {
         // 队列为空
-        std::cout << "[INFO] No data." << std::endl;
+        LOG(INFO) << "No data.";
         return false;
     }
     return true;
@@ -123,13 +65,24 @@ bool checkJson(json ret) {
 std::string DOWNLOAD_DIR = "/cppcode/kling-waic-express/kling-printer/download/";
 
 std::string DOWNLOAD_PREFIX = "https://kling-waic.s3.cn-north-1.amazonaws.com.cn";
+
 std::string FETCH_PREFEIX = "https://waic-api.klingai.com";
-int main() {
-    // cout 定向至指定txt
-    OutputRedirector redirect("log.txt");
+
+namespace fs = std::filesystem;
+
+std::string makeLogDir(const std::string& dir) {
+    fs::create_directories(dir);          // 确保目录存在
+    return dir + "/";                           // 返回目录即可
+}
+
+int main(int argc, char* argv[]) {
+    google::InitGoogleLogging(argv[0]);
+    // 让 INFO 级别写到我们指定的文件
+    std::string logDir = makeLogDir("logs");
+    google::SetLogDestination(google::GLOG_INFO, logDir.c_str());
     // 开启一个控制台窗口，printf重定向至此
     initConsoleOutput();
-    std::cout << "Program Begin" << std::endl;
+    LOG(INFO) << "Program Begin";
     std::vector<PrinterInfo> printerInfoList;
     printerInfoList.push_back({L"Canon SELPHY CP1500(1)", 100, 148 , 300, false});
     printerInfoList.push_back({L"Canon SELPHY CP1500(2)", 100, 148 , 300, false});
@@ -146,15 +99,15 @@ int main() {
     while (running) {
         // std::string input;
         // if(!std::getline(std::cin, input)) {
-        //     std::cout << "input stream closed" << std::endl;
+        //     LOG(INFO) << "input stream closed";
         //     if (std::cin.eof()) {
-        //         std::cout << "原因：EOF (End of File)\n";
+        //         LOG(INFO) << "原因：EOF (End of File)\n";
         //     }
         //     if (std::cin.fail()) {
-        //         std::cout << "原因：failbit set (读取失败)\n";
+        //         LOG(INFO) << "原因：failbit set (读取失败)\n";
         //     }
         //     if (std::cin.bad()) {
-        //         std::cout << "原因：badbit set (致命错误)\n";
+        //         LOG(INFO) << "原因：badbit set (致命错误)\n";
         //     }
         //     running = false;
         //     continue;
@@ -179,23 +132,23 @@ int main() {
             , DOWNLOAD_PREFIX);
             long long id = ret.at("data").at("id");
             std::string name = std::to_string(id) + ".jpg";
-            std::cout << "[INFO] ready to download. name: " + name + " url:" + downloadUrl << std::endl;
+            LOG(INFO) << "[INFO] ready to download. name: " + name + " url:" + downloadUrl;
             if (!downloadClient->downloadImage(downloadUrl, DOWNLOAD_DIR, name)) {
-                std::cout << "[INFO] DownLoad image failed. url:" << downloadUrl << std::endl;
+                LOG(INFO) << "[INFO] DownLoad image failed. url:" << downloadUrl;
             }
-            std::cout << "[INFO] Download image success. json: " << ret << std::endl;
+            LOG(INFO) << "[INFO] Download image success. json: " << ret;
             std::string input = ".\\download\\" + name;
             if (!fileExists(input)) {
-                std::cout << "[ERROR] cannot find this file" << std::endl;
+                LOG(INFO) << "[ERROR] cannot find this file";
             } else {
                 printerManager->addImage(input);
-                std::cout << "[INFO] Add printer queue success" << std::endl;
+                LOG(INFO) << "[INFO] Add printer queue success";
             }
         }
         // inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
         // for (auto input : inputs) {
         //     input = ".\\download\\" + input;
-        //     std::cout << input << std::endl;
+        //     LOG(INFO) << input;
         //     if (!fileExists(input)) {
         //         printf("Cannot find this file.\n");
         //     } else {
@@ -204,7 +157,7 @@ int main() {
         // }
         Sleep(1000);
     }
-    std::cout << "delete" << std::endl;
+    LOG(INFO) << "delete";
     delete printerManager;
     return 0;
 }
