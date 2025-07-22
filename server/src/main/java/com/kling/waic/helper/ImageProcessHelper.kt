@@ -46,7 +46,11 @@ class ImageProcessHelper(
         file.inputStream.use { exifInputStream ->
             val metadata = ImageMetadataReader.readMetadata(exifInputStream)
             val directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory::class.java)
-            val orientation = directory?.getInt(ExifIFD0Directory.TAG_ORIENTATION) ?: 1
+            val orientation = if (directory != null && directory.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
+                directory.getInt(ExifIFD0Directory.TAG_ORIENTATION)
+            } else {
+                1 // Default orientation if tag doesn't exist
+            }
 
             return rotateImageIfNeeded(originalImage, orientation)
         }
