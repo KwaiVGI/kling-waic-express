@@ -173,7 +173,7 @@ class ImageProcessHelper(
         val logoTopLeftX = leftMargin
         val logoTopLeftY = topMargin + cellHeight * 3 + gap * 2 + (12 * scaleFactor).toInt()
         val logoImage = FileUtils.convertFileAsImage("KlingAI-logo-$locale.png")
-        val logoWidth = (59 * scaleFactor).toInt()
+        val logoWidth = (67 * scaleFactor).toInt()
         val logoHeight = (18 * scaleFactor).toInt()
         val scaledLogoImage = logoImage.getScaledInstance(logoWidth, logoHeight, BufferedImage.SCALE_SMOOTH)
         g2d.drawImage(scaledLogoImage, logoTopLeftX, logoTopLeftY, null)
