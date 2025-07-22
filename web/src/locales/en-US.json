@@ -53,7 +53,7 @@
       "notEffective": "Failed to proceed. Please try again.",
       "invalidRequest": "Failed to process request. Please try again.",
       "rateLimit": "Too many requests. Please try again.",
-      "quotaExceeded": "Maximum usage reached. Please contact staff on site.",
+      "quotaExceeded": "Many users are currently using the service. Please try again later.",
       "networkIssue": "Network failure.",
       "systemError": "Something went wrong. Please try again.",
       "maintenance": "Maintenance ongoing. Please try again.",
