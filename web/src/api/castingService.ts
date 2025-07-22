@@ -14,6 +14,7 @@ export interface CastingImage {
   id: string;
   name: string;
   url: string;
+  poster?: string;
   no?: number;
   createdAt?: string;
 }
@@ -61,6 +62,7 @@ export const castingService = {
       id: item.name,
       name: item.name,
       url: item.task.outputs.url,
+      poster: item.task.input.image,
     }));
   },
 

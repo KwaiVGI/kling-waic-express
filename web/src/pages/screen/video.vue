@@ -11,6 +11,7 @@
         <video
           v-if="video.url"
           :src="video.url"
+          :poster="video.poster"
           autoplay
           loop
           muted
@@ -37,6 +38,7 @@ import { castingService } from "@/api/castingService";
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 
 interface VideoItem {
+  poster: string;
   url: string;
   id: string;
   flipping: boolean;
@@ -68,6 +70,7 @@ const initVideoSlots = () => {
   displayedVideos.value = Array(total)
     .fill(null)
     .map(() => ({
+      poster: "",
       url: "",
       id: "",
       flipping: false,
@@ -128,6 +131,7 @@ const replaceRandomVideos = (newVideos: VideoItem[]) => {
     // 短暂延迟后更新视频内容
     setTimeout(() => {
       displayedVideos.value[slotIndex] = {
+        poster: newVideo.poster,
         url: newVideo.url,
         id: newVideo.id,
         flipping: false,

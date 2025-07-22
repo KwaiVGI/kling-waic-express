@@ -14,6 +14,6 @@ export const bannerImageEn =
   "https://tx.a.yximgs.com/kos/nlav12119/oVkvjftI_2025-07-22-17-06-28.png";
 
 export const imageTipZh =
-  "https://ali.a.yximgs.com/kos/nlav12119/FsjxFlxz_2025-07-22-17-07-46.png";
+  "https://ali.a.yximgs.com/kos/nlav12119/ydqIBPXC_2025-07-22-21-31-18.png";
 export const imageTipEn =
-  "https://ali.a.yximgs.com/kos/nlav12119/WCNHLedU_2025-07-22-17-08-23.png";
+  "https://ali.a.yximgs.com/kos/nlav12119/VfxBdDPg_2025-07-22-21-33-19.png";

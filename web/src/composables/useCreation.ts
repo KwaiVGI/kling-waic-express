@@ -23,7 +23,6 @@ export default function useCreation(creationType: CreationType) {
   const showPreview = ref(false);
   const previewItems = ref<string[]>([]);
   const previewIndex = ref(0);
-  const showSaveGuide = ref(false);
   const isGenerating = ref(false);
   const isSaving = ref(false);
   const isPrinting = ref(false);
@@ -133,44 +132,28 @@ export default function useCreation(creationType: CreationType) {
     }
 
     // 检查是否在微信、鸿蒙系统中
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
     const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
     const isHarmonyOS = /Harmony|HwBrowser|HuaweiBrowser/i.test(
       navigator.userAgent
     );
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (isWeChat) {
-      if (creationType === "image") {
-        showToast({
-          message: t("results.saveInstructions"),
-          duration: 3000,
-        });
-      } else {
-        showToast({
-          message: t("results.browserSaveTip"),
-          duration: 3000,
-        });
-      }
+    if (isMobile && creationType === "image") {
+      showToast({
+        message: t("results.saveInstructions"),
+        duration: 3000,
+      });
       return;
     }
-
-    if (isHarmonyOS) {
-      showSaveGuide.value = true;
-      if (creationType === "image") {
-        showToast({
-          message: t("results.saveInstructions"),
-          duration: 3000,
-        });
-        return;
-      }
-    }
-    if (isIOS) {
-      if (creationType === "image") {
-        showToast({
-          message: t("results.saveInstructions"),
-          duration: 3000,
-        });
-        return;
-      }
+    if (isWeChat) {
+      showToast({
+        message: t("results.browserSaveTip"),
+        duration: 3000,
+      });
+      return;
     }
 
     isSaving.value = true;
@@ -255,7 +238,6 @@ export default function useCreation(creationType: CreationType) {
     showPreview,
     previewItems,
     previewIndex,
-    showSaveGuide,
     blurStyle,
 
     handleUpload,

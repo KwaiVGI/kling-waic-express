@@ -18,7 +18,9 @@
   },
   "descriptions": {
     "mainFunction": "Upload 1 photo to create your special effects video",
-    "aiDisclaimer": "It is prohibited to use AI generated content for illegal purposes."
+    "aiDisclaimer": "It is prohibited to use AI generated content for illegal purposes.",
+    "imageScreenTip": "Generated images will auto-display on the live screen.",
+    "videoScreenTip": "Generated videos will auto-display on the live screen."
   },
   "status": {
     "generating": "Generating... Estimated wait: {time} min",

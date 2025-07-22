@@ -18,7 +18,9 @@
   },
   "descriptions": {
     "mainFunction": "上传1张照片，生成你的创意特效视频",
-    "aiDisclaimer": "内容由AI生成，禁止利用功能从事违法活动"
+    "aiDisclaimer": "内容由AI生成，禁止利用功能从事违法活动",
+    "imageScreenTip": "生成的图片将自动展示在现场大屏幕上",
+    "videoScreenTip": "生成的视频将自动展示在现场大屏幕上"
   },
   "status": {
     "generating": "生成中，预计等待 {time} 分钟",

@@ -8,6 +8,10 @@ interface Task {
   status: TaskStatus;
   type: TaskType;
   filename: string;
+  input: {
+    type: TaskType;
+    image: string;
+  };
   outputs: TaskOutput;
   createTime: Date; // or string if you prefer to keep it as ISO string
 }

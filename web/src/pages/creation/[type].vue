@@ -128,10 +128,10 @@
           {{ $t("actions.generateNow") }}
         </van-button>
         <div
-          class="warning-tip mt-20px text-12px text-black flex items-center justify-center gap-4px"
+          class="warning-tip mt-30px text-12px text-#5E6266ff flex flex-col items-center justify-center gap-8px"
         >
-          <IconSvg name="inform" :size="14" color="#000" />
-          <span class="leading-1">{{ $t("descriptions.aiDisclaimer") }}</span>
+          <span>{{ $t("descriptions.aiDisclaimer") }}</span>
+          <span>{{ screenTip }}</span>
         </div>
       </div>
     </div>
@@ -169,37 +169,35 @@
         <van-button
           type="default"
           @click="backToEdit"
-          class="action-btn w-33% h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
+          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
         >
           {{ $t("actions.back") }}
         </van-button>
-        <div id="guideYes" class="flex h-full gap-8px w-66%">
-          <van-button
-            v-if="type === 'image'"
-            icon="print"
-            type="default"
-            @click="printImage(currentImageNo)"
-            :loading="isPrinting"
-            class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
-          >
-            {{ $t("actions.print") }}
-          </van-button>
+        <van-button
+          v-if="type === 'image'"
+          icon="print"
+          type="default"
+          @click="printImage(currentImageNo)"
+          :loading="isPrinting"
+          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
+        >
+          {{ $t("actions.print") }}
+        </van-button>
 
-          <van-button
-            type="primary"
-            @click="handleSave"
-            :loading="isSaving"
-            class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px !bg-#0B8A1B"
-          >
-            {{ $t("actions.save") }}
-          </van-button>
-        </div>
+        <van-button
+          type="default"
+          @click="handleSave"
+          :loading="isSaving"
+          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
+        >
+          {{ $t("actions.save") }}
+        </van-button>
       </div>
       <div
-        class="warning-tip mt-20px text-12px text-#5E6266ff flex items-center justify-center gap-4px"
+        class="warning-tip mt-30px text-12px text-#5E6266ff flex flex-col items-center justify-center gap-8px"
       >
-        <IconSvg name="inform" :size="14" color="#5E6266ff" />
-        <span class="leading-1">{{ $t("descriptions.aiDisclaimer") }}</span>
+        <span>{{ $t("descriptions.aiDisclaimer") }}</span>
+        <span>{{ screenTip }}</span>
       </div>
     </div>
     <van-popup
@@ -263,6 +261,12 @@ const assets = computed(() => {
     banner: type.value === "image" ? bannerImage : bannerVideo,
     imageTip: isZh ? imageTipZh : imageTipEn,
   };
+});
+
+const screenTip = computed(() => {
+  return type.value === "image"
+    ? t("descriptions.imageScreenTip")
+    : t("descriptions.videoScreenTip");
 });
 
 // 使用组合函数
