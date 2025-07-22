@@ -11,7 +11,7 @@
     >
       <div
         v-show="!generatedResult"
-        class="w-full mt-28px flex flex-col items-center mb-36px"
+        class="w-full mt-28px flex flex-col items-center mb-36px relative"
       >
         <img
           class="w-106px h-32px mb-22px ml-20px self-start"
@@ -30,6 +30,7 @@
           src="https://tx.a.yximgs.com/kos/nlav12119/xbwHVLkr_2025-07-21-12-02-53.png"
           alt=""
         />
+        <LangSwitcher class="absolute right-20px top-0" />
       </div>
       <!-- 上传区域 -->
       <div
@@ -52,7 +53,9 @@
             :class="type === 'image' ? 'h-254px' : 'h-320px'"
           >
             <IconSvg name="add-image" :size="32" />
-            <p class="mt-10px text-14px text-white">上传照片</p>
+            <p class="mt-10px text-14px text-white">
+              {{ $t("actions.uploadPhoto") }}
+            </p>
           </div>
         </van-uploader>
         <div
@@ -96,7 +99,7 @@
               name="replace"
               :color="isGenerating ? '#B0B4B8' : 'black'"
             />
-            <span> 替换 </span>
+            <span> {{ $t("actions.replace") }} </span>
           </button>
           <button
             :disabled="isGenerating"
@@ -107,7 +110,7 @@
               name="delete"
               :color="isGenerating ? '#B0B4B8' : 'black'"
             />
-            <span> 删除 </span>
+            <span> {{ $t("actions.delete") }} </span>
           </button>
         </div>
       </div>
@@ -125,13 +128,13 @@
           loading-text="生成中，请稍后..."
           class="generate-btn !w-320px !h-56px !text-20px font-bold !text-black"
         >
-          立即生成
+          {{ $t("actions.generateNow") }}
         </van-button>
         <div
           class="warning-tip mt-20px text-12px text-black flex items-center justify-center gap-4px"
         >
           <IconSvg name="inform" :size="14" color="#000" />
-          内容由AI生成，禁止利用功能从事违法活动。
+          {{ $t("descriptions.aiDisclaimer") }}
         </div>
       </div>
     </div>
@@ -170,7 +173,7 @@
           @click="backToEdit"
           class="action-btn w-33% h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
         >
-          返回
+          {{ $t("actions.back") }}
         </van-button>
         <div id="guideYes" class="flex h-full gap-8px w-66%">
           <van-button
@@ -181,7 +184,7 @@
             :loading="isPrinting"
             class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
           >
-            打印图片
+            {{ $t("actions.print") }}
           </van-button>
 
           <van-button
@@ -190,7 +193,7 @@
             :loading="isSaving"
             class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px !bg-#0B8A1B"
           >
-            保存{{ type === "image" ? "图片" : "视频" }}
+            {{ $t("actions.save") }}
           </van-button>
         </div>
       </div>
@@ -198,7 +201,7 @@
         class="warning-tip mt-20px text-12px text-#5E6266ff flex items-center justify-center gap-4px"
       >
         <IconSvg name="inform" :size="14" color="#5E6266ff" />
-        内容由AI生成，禁止利用功能从事违法活动。
+        {{ $t("descriptions.aiDisclaimer") }}
       </div>
     </div>
     <van-popup
@@ -210,44 +213,13 @@
       >
         <van-loading type="circular" color="#74FF52ff" />
         <div v-if="type === 'image'" class="mt-8px text-14px text-#B0B4B8ff">
-          生成中，请稍后...
+          {{ $t("status.processing") }}
         </div>
         <div v-else class="mt-8px text-14px text-#B0B4B8ff">
-          生成中，预计等待<span class="font-bold text-white px-4px">3</span
-          >分钟...
+          <span v-html="$t('status.generating', { time: 3 })"></span>
         </div>
       </div>
     </van-popup>
-
-    <!-- 预览弹窗 -->
-    <!-- <van-image-preview
-      v-if="type === 'image'"
-      v-model:show="showPreview"
-      :images="previewItems"
-      :start-position="previewIndex"
-    />
-
-    <van-popup
-      v-else
-      v-model:show="showPreview"
-      round
-      position="bottom"
-      :style="{ height: '80%' }"
-    >
-      <video
-        :src="previewItems[previewIndex]"
-        controls
-        autoplay
-        class="w-full h-full"
-      ></video>
-    </van-popup> -->
-
-    <!-- <guide-overlay
-      v-if="showGuide"
-      v-model="showGuide"
-      :guides="currentGuides"
-      @finish="onFinishGuide"
-    /> -->
   </div>
 </template>
 
@@ -255,14 +227,12 @@
 import { showToast } from "vant";
 import useCreation, { type CreationType } from "@/composables/useCreation";
 import { getTaskStatus, newTask } from "@/api/creation";
-import {
-  STORAGE_USER_TOKEN_KEY,
-  STORAGE_GUIDE_KEY,
-} from "@/stores/mutation-type";
+import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
 import { useZoom } from "@/composables/useZoom";
 // import { useGuide } from "@/composables/useGuide";
 
 const route = useRoute();
+const { t } = useI18n();
 
 // 从路由参数获取类型
 const type = ref<string>(route.params.type as CreationType);
@@ -275,7 +245,6 @@ if (type.value !== "image" && type.value !== "video") {
 const {
   uploaderRef,
   maxFileSize,
-  maxFileSizeMB,
   fileList,
   uploadedImage,
   generatedResult,
@@ -303,12 +272,6 @@ const currentImageNo = ref("");
 
 // 生成
 const doGenerate = async (file: File, type: CreationType): Promise<string> => {
-  // mock
-  // if (type === "image") {
-  //   return "https://s2-111386.kwimgs.com/bs2/mmu-kolors-public/frontgallery-20240514-33.png?x-oss-process=image/resize,m_mfit,w_1000";
-  // } else {
-  //   return "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-  // }
   try {
     // 1. 创建新任务
     const { name } = await newTask({
@@ -327,6 +290,7 @@ const doGenerate = async (file: File, type: CreationType): Promise<string> => {
       const result = await getTaskStatus({
         name,
         type: type === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
+        locale: locale.value === "en-US" ? "US" : "CN",
       });
 
       status = result.status;
@@ -337,18 +301,18 @@ const doGenerate = async (file: File, type: CreationType): Promise<string> => {
           currentImageNo.value = result.name;
           return url; // 成功返回URL
         }
-        throw new Error("任务完成但未返回有效URL");
+        throw new Error();
       }
 
       if (status === "FAILED") {
-        throw new Error("任务处理失败");
+        throw new Error();
       }
 
       // 如果未完成，等待一段时间再继续
       await wait(delay);
     }
 
-    throw new Error("任务处理超时");
+    throw new Error();
   } catch (error) {
     console.error("生成过程中出错:", error);
     throw error; // 重新抛出错误，让调用者处理
@@ -363,7 +327,7 @@ const handleGenerate = async () => {
   if (!uploadedImage.value) {
     showToast({
       // icon: "https://tx.a.yximgs.com/kos/nlav12119/bIzvPqKP_2025-07-21-19-58-29.png",
-      message: "请上传图片",
+      message: t("upload.placeholder"),
       position: "bottom",
     });
     return;
@@ -372,11 +336,11 @@ const handleGenerate = async () => {
     await generate(doGenerate);
   } catch (error) {
     if (error.message === "NO_HUMAN_DETECTED") {
-      showToast("未检测到人像，换张照片试试吧~");
+      showToast(t("upload.noFaceDetected"));
     } else if (error.message === "LONG_QUEUES") {
-      showToast("当前使用人数较多，请稍等~");
+      showToast(t("errors.api.quotaExceeded"));
     } else {
-      showToast("哎呀失败了，换张照片试试吧~");
+      showToast(t("upload.generationFailed"));
     }
     return;
   }
@@ -389,38 +353,13 @@ const handleGenerate = async () => {
       STORAGE_USER_TOKEN_KEY
     )}&result=${encodeURIComponent(generatedResult.value)}`
   );
-  // if (isGuided.value || type.value !== "image") {
-  //   return;
-  // }
-  // await wait(300);
-  // // 启动引导
-  // startGuide([
-  //   {
-  //     element: "#guideNo",
-  //     image:
-  //       "https://tx.a.yximgs.com/kos/nlav12119/wKJuuNBr_2025-07-16-20-04-31.png",
-  //     position: "top",
-  //   },
-  //   {
-  //     element: "#guideYes",
-  //     image:
-  //       "https://tx.a.yximgs.com/kos/nlav12119/XkqhokRT_2025-07-16-20-05-16.png",
-  //     position: "top",
-  //   },
-  // ]);
 };
-// const onFinishGuide = () => {
-// isGuided.value = true;
-// localStorage.setItem(STORAGE_GUIDE_KEY, "1");
-// finishGuide();
-// };
-
 // 处理保存
 const handleSave = () => {
   if (type.value === "image") {
-    save("创作图片", "jpg");
+    save("", "jpg");
   } else {
-    save("创作视频", "mp4");
+    save("", "mp4");
   }
 };
 

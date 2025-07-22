@@ -1,104 +1,61 @@
 {
-  "menus": {
-    "home": "Home",
-    "profile": "My Center",
-    "darkMode": "🌗 Dark Mode",
-    "mockGuide": "💿 Mock Guide",
-    "language": "📚 Language",
-    "404Demo": "🙅 Page 404 Demo",
-    "echartsDemo": "📊 Echarts Demo",
-    "persistPiniaState": "🍍 Persistent Pinia state",
-    "unocssExample": "🎨 Unocss example",
-    "keepAlive": "🧡 KeepAlive Demo",
-    "scrollCache": "📜 Scroll Cache Demo",
-    "login": "🔒 Login",
-    "register": "Register",
-    "settings": "Settings",
-    "basicSettings": "Basic Settings",
-    "exampleComponents": "Example components",
-    "forgot-password": "Forgot Password"
+  "language": {
+    "switch": "En"
   },
-  "mock": {
-    "fromAsyncData": "Data from asynchronous requests",
-    "noData": "No data",
-    "pull": "Pull",
-    "reset": "Reset"
+  "brand": {
+    "appName": "Keling AI",
+    "featureName": "Special Effects Surprise Box"
   },
-  "charts": {
-    "January": "Jan",
-    "February": "Feb",
-    "March": "Mar",
-    "April": "Apr",
-    "May": "May",
-    "June": "Jun"
+  "actions": {
+    "uploadPhoto": "Upload Photo",
+    "generateNow": "Generate Now",
+    "delete": "Delete",
+    "replace": "Replace",
+    "back": "Back",
+    "save": "Save",
+    "print": "Print"
   },
-  "layouts": {
-    "home": "HOME",
-    "profile": "PROFILE"
+  "descriptions": {
+    "mainFunction": "Upload 1 photo to create your special effects video",
+    "aiDisclaimer": "AI-generated content. Do not use for illegal activities."
   },
-  "profile": {
-    "login": "Login",
-    "settings": "Settings",
-    "docs": "Docs"
+  "status": {
+    "generating": "Generating, estimated wait time: {time} minutes",
+    "processing": "Processing, please wait...",
+    "preparingDownload": "File ready, starting download",
+    "success": "Creation successful!"
   },
-  "keepAlive": {
-    "label": "The current component will be cached"
+  "upload": {
+    "placeholder": "Please upload an image",
+    "invalidType": "Unsupported creation type",
+    "noFaceDetected": "No face detected. Try another photo",
+    "sizeLimit": "Image size cannot exceed {maxSize} MB",
+    "generationFailed": "Oops! Failed to generate. Try another photo"
   },
-  "scrollCache": {
-    "sectionTitle": "Section title",
-    "sectionText": "Section text text text text text text text text text text",
-    "finished": "Already at the bottom ~",
-    "loading": "Loading..."
+  "results": {
+    "saveInstructions": "Long press to save image",
+    "browserSaveTip": "Open this page in browser to save"
   },
-  "login": {
-    "login": "Sign In",
-    "logout": "Sign Out",
-    "email": "Email",
-    "password": "Password",
-    "pleaseEnterEmail": "Please enter email",
-    "pleaseEnterPassword": "Please enter password",
-    "sign-up": "Click to sign up",
-    "forgot-password": "Forgot password?"
+  "print": {
+    "noContent": "No printable content",
+    "taskSent": "Print task sent. Please queue to collect",
+    "duplicateWarning": "Please do not print repeatedly"
   },
-  "forgot-password": {
-    "email": "Email",
-    "code": "Code",
-    "password": "Password",
-    "comfirmPassword": "Password again",
-    "pleaseEnterEmail": "Please enter email",
-    "pleaseEnterCode": "Please enter code",
-    "pleaseEnterPassword": "Please enter password",
-    "pleaseEnterConfirmPassword": "Please enter password again",
-    "passwordsDoNotMatch": "Passwords do not match",
-    "confirm": "Confirm",
-    "backToLogin": "Back to login",
-    "getCode": "Get code",
-    "gettingCode": "Getting code",
-    "sendCodeSuccess": "Sent, the code is",
-    "passwordResetSuccess": "Password reset succeeded"
-  },
-  "register": {
-    "email": "Email",
-    "code": "Code",
-    "nickname": "Nickname",
-    "password": "Password",
-    "comfirmPassword": "Password again",
-    "pleaseEnterEmail": "Please enter email",
-    "pleaseEnterCode": "Please enter code",
-    "pleaseEnterNickname": "Please enter nickname",
-    "pleaseEnterPassword": "Please enter password",
-    "pleaseEnterConfirmPassword": "Please enter password again",
-    "passwordsDoNotMatch": "Passwords do not match",
-    "confirm": "Confirm",
-    "backToLogin": "Back to login",
-    "getCode": "Get code",
-    "gettingCode": "Getting code",
-    "sendCodeSuccess": "Sent, the code is",
-    "registerSuccess": "Register succeeded"
-  },
-  "settings": {
-    "logout": "Sign Out",
-    "currentVersion": "Current Version",
-    "comfirmTitle": "Confirm Exit?"
+  "errors": {
+    "generic": {
+      "operationFailed": "Operation failed, please retry",
+      "saveFailed": "Save failed, please retry"
+    },
+    "api": {
+      "serviceUnavailable": "Service unavailable, please try later",
+      "notEffective": "Operation not effective, try later",
+      "invalidRequest": "Request cannot be processed, please adjust",
+      "rateLimit": "Too frequent, please try later",
+      "quotaExceeded": "Usage limit reached, contact staff",
+      "networkIssue": "Network not supported",
+      "systemError": "System error, try later",
+      "maintenance": "Service under maintenance, try later",
+      "busy": "Service busy, please retry"
+    }
   }
 }

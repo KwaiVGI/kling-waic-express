@@ -5,10 +5,11 @@ import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
 import { saveAs } from "file-saver";
 
 export type CreationType = "image" | "video";
+const { t } = useI18n();
 
 export default function useCreation(creationType: CreationType) {
   // 图片上传大小限制（单位：字节）
-  const maxFileSize = ref<number>(30 * 1024 * 1024); // 默认10MB
+  const maxFileSize = ref<number>(3000 * 1024 * 1024); // 默认10MB
   const maxFileSizeMB = computed(() =>
     Math.floor(maxFileSize.value / (1024 * 1024))
   );
@@ -38,21 +39,21 @@ export default function useCreation(creationType: CreationType) {
 
   // 文件大小超出限制
   const onOversize = () => {
-    showToast({
-      // type: "fail",
-      message: `图片大小不能超过${maxFileSizeMB.value}MB`,
-      duration: 2000,
-    });
+    // showToast({
+    //   // type: "fail",
+    //   message: `图片大小不能超过${maxFileSizeMB.value}MB`,
+    //   duration: 2000,
+    // });
   };
 
   // 处理图片上传
   const handleUpload = (file: any) => {
     if (file.file) {
       // 检查文件大小
-      if (file.file.size > maxFileSize.value) {
-        onOversize();
-        return;
-      }
+      // if (file.file.size > maxFileSize.value) {
+      //   onOversize();
+      //   return;
+      // }
       uploadedFile.value = file.file;
 
       const reader = new FileReader();
@@ -62,11 +63,7 @@ export default function useCreation(creationType: CreationType) {
       };
       reader.readAsDataURL(file.file);
     } else {
-      showToast({
-        // type: "fail",
-        message: "上传失败，请重试",
-        duration: 2500,
-      });
+      showToast(t("errors.generic.operationFailed"));
     }
   };
 
@@ -96,7 +93,7 @@ export default function useCreation(creationType: CreationType) {
     generateFn: (file: File, type: CreationType) => Promise<string>
   ) => {
     if (!uploadedImage.value) {
-      showToast("请先上传图片");
+      showToast();
       return;
     }
 
@@ -106,13 +103,13 @@ export default function useCreation(creationType: CreationType) {
       const result = await generateFn(uploadedFile.value, creationType);
       generatedResult.value = result;
       showToast({
-        message: "创作成功！",
+        message: t("status.success"),
         duration: 2500,
       });
     } catch (error) {
       generatedResult.value = null;
       showToast({
-        message: "哎呀失败了，换张照片试试吧~",
+        message: t("upload.generationFailed"),
         duration: 3000,
       });
       console.error("生成失败:", error);
@@ -125,7 +122,6 @@ export default function useCreation(creationType: CreationType) {
   // 保存内容
   const save = (filename: string, extension: string) => {
     if (!generatedResult.value) {
-      showToast("没有可保存的内容");
       return;
     }
 
@@ -138,12 +134,12 @@ export default function useCreation(creationType: CreationType) {
     if (isWeChat) {
       if (creationType === "image") {
         showToast({
-          message: "请长按图片进行保存",
+          message: t("results.saveInstructions"),
           duration: 3000,
         });
       } else {
         showToast({
-          message: "请在浏览器中打开本页面进行保存",
+          message: t("results.browserSaveTip"),
           duration: 3000,
         });
       }
@@ -154,7 +150,7 @@ export default function useCreation(creationType: CreationType) {
       showSaveGuide.value = true;
       if (creationType === "image") {
         showToast({
-          message: "请长按图片进行保存",
+          message: t("results.saveInstructions"),
           duration: 3000,
         });
         return;
@@ -163,7 +159,7 @@ export default function useCreation(creationType: CreationType) {
     if (isIOS) {
       if (creationType === "image") {
         showToast({
-          message: "请长按图片进行保存",
+          message: t("results.saveInstructions"),
           duration: 3000,
         });
         return;
@@ -185,13 +181,13 @@ export default function useCreation(creationType: CreationType) {
       );
       showToast({
         // type: "success",
-        message: "文件准备完毕，开始下载",
+        message: t("status.preparingDownload"),
         duration: 2500,
       });
     } catch (error) {
       showToast({
         // type: "fail",
-        message: "保存失败，请重试",
+        message: t("errors.generic.saveFailed"),
         duration: 2500,
       });
       console.error("保存失败:", error);
@@ -210,15 +206,10 @@ export default function useCreation(creationType: CreationType) {
     );
   };
 
-  // 处理保存指导弹窗确认
-  const handleSaveGuideConfirm = () => {
-    showToast("请在浏览器中打开本页面进行保存");
-  };
-
   // 打印图片（仅图片类型）
   const printImage = async (name: string) => {
     if (!generatedResult.value || creationType !== "image") {
-      showToast("没有可打印的内容");
+      showToast(t("print.noContent"));
       return;
     }
 
@@ -226,14 +217,14 @@ export default function useCreation(creationType: CreationType) {
     try {
       await printImageTask({ type: "STYLED_IMAGE", name });
       showToast({
-        message: "已发送打印任务，请排队领取",
+        message: t("print.taskSent"),
         duration: 3500,
       });
     } catch (error) {
       if (error.message === "DUPLICATE_PRINT") {
-        showToast("请不要重复打印哈~");
+        showToast(t("print.duplicateWarning"));
       } else {
-        showToast("操作失败，请重试");
+        showToast(t("errors.generic.operationFailed"));
       }
     } finally {
       isPrinting.value = false;
@@ -266,7 +257,6 @@ export default function useCreation(creationType: CreationType) {
     generate,
     save,
     backToEdit,
-    handleSaveGuideConfirm,
     printImage,
   };
 }

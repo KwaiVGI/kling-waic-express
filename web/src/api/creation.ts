@@ -20,11 +20,13 @@ export interface TaskOutput {
 export async function getTaskStatus({
   name,
   type,
+  ...params
 }: {
   name: string;
   type: "STYLED_IMAGE" | "VIDEO_EFFECT";
+  locale: "CN" | "US";
 }): Promise<{ status: TaskStatus; outputs: TaskOutput; name: string }> {
-  return request.get(`/api/tasks/${type}/${name}/query`);
+  return request.get(`/api/tasks/${type}/${name}/query`, { params });
 }
 
 export async function printImageTask({

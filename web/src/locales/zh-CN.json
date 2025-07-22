@@ -1,104 +1,61 @@
 {
-  "menus": {
-    "home": "主页",
-    "profile": "个人中心",
-    "darkMode": "🌗 暗黑模式",
-    "mockGuide": "💿 Mock 指南",
-    "language": "📚 语言",
-    "echartsDemo": "📊 Echarts 演示",
-    "persistPiniaState": "🍍 持久化 Pinia 状态",
-    "404Demo": "🙅 404页 演示",
-    "unocssExample": "🎨 Unocss 示例",
-    "keepAlive": "🧡 KeepAlive 演示",
-    "scrollCache": "📜 滚动缓存 演示",
-    "login": "🔒 用户登录",
-    "register": "用户注册",
-    "settings": "设置",
-    "basicSettings": "基本设置",
-    "exampleComponents": "示例组件",
-    "forgot-password": "忘记密码"
+  "language": {
+    "switch": "中"
   },
-  "mock": {
-    "fromAsyncData": "来自异步请求的数据",
-    "pull": "请求",
-    "reset": "清空",
-    "noData": "暂无数据"
+  "brand": {
+    "appName": "可灵AI",
+    "featureName": "特效盲盒"
   },
-  "charts": {
-    "January": "1月",
-    "February": "2月",
-    "March": "3月",
-    "April": "4月",
-    "May": "5月",
-    "June": "6月"
+  "actions": {
+    "uploadPhoto": "上传照片",
+    "generateNow": "立即生成",
+    "delete": "删除",
+    "replace": "替换",
+    "back": "返回",
+    "save": "保存",
+    "print": "打印"
   },
-  "layouts": {
-    "home": "首页",
-    "profile": "我的"
+  "descriptions": {
+    "mainFunction": "上传1张照片，生成你的创意特效视频",
+    "aiDisclaimer": "内容由AI生成，禁止利用功能从事违法活动"
   },
-  "profile": {
-    "login": "登录",
-    "settings": "设置",
-    "docs": "文档"
+  "status": {
+    "generating": "生成中，预计等待 {time} 分钟",
+    "processing": "生成中，请稍后...",
+    "preparingDownload": "文件准备完毕，开始下载",
+    "success": "创作成功！"
   },
-  "keepAlive": {
-    "label": "当前组件将会被缓存"
+  "upload": {
+    "placeholder": "请上传图片",
+    "invalidType": "不支持的创作类型",
+    "noFaceDetected": "未检测到人像，换张照片试试吧~",
+    "sizeLimit": "图片大小不能超过 {maxSize} MB",
+    "generationFailed": "哎呀失败了，换张照片试试吧~"
   },
-  "scrollCache": {
-    "sectionTitle": "段落标题",
-    "sectionText": "段落内容段落内容段落内容段落内容段落内容段落内容",
-    "finished": "已经到底啦 ~",
-    "loading": "加载中..."
+  "results": {
+    "saveInstructions": "请长按图片进行保存",
+    "browserSaveTip": "请在浏览器中打开本页面进行保存"
   },
-  "login": {
-    "login": "登录",
-    "logout": "退出",
-    "email": "邮箱",
-    "password": "密码",
-    "pleaseEnterEmail": "请输入邮箱",
-    "pleaseEnterPassword": "请输入密码",
-    "sign-up": "还没有账号？点击注册",
-    "forgot-password": "忘记密码？"
+  "print": {
+    "noContent": "没有可打印的内容",
+    "taskSent": "已发送打印任务，请排队领取",
+    "duplicateWarning": "请不要重复打印哈"
   },
-  "forgot-password": {
-    "email": "邮箱",
-    "code": "验证码",
-    "password": "密码",
-    "comfirmPassword": "再次输入密码",
-    "pleaseEnterEmail": "请输入邮箱",
-    "pleaseEnterCode": "请输入验证码",
-    "pleaseEnterPassword": "请输入密码",
-    "pleaseEnterConfirmPassword": "请再次输入密码",
-    "passwordsDoNotMatch": "两次输入的密码不一致",
-    "confirm": "确认",
-    "backToLogin": "返回登录",
-    "getCode": "获取验证码",
-    "gettingCode": "获取中",
-    "sendCodeSuccess": "已发送，验证码为",
-    "passwordResetSuccess": "密码重置成功"
-  },
-  "register": {
-    "email": "邮箱",
-    "code": "验证码",
-    "nickname": "昵称",
-    "password": "密码",
-    "comfirmPassword": "再次输入密码",
-    "pleaseEnterEmail": "请输入邮箱",
-    "pleaseEnterCode": "请输入验证码",
-    "pleaseEnterNickname": "请输入昵称",
-    "pleaseEnterPassword": "请输入密码",
-    "pleaseEnterConfirmPassword": "请再次输入密码",
-    "passwordsDoNotMatch": "两次输入的密码不一致",
-    "confirm": "确认",
-    "backToLogin": "返回登录",
-    "getCode": "获取验证码",
-    "gettingCode": "获取中",
-    "sendCodeSuccess": "已发送，验证码为",
-    "registerSuccess": "注册成功"
-  },
-  "settings": {
-    "logout": "退出登录",
-    "currentVersion": "当前版本",
-    "comfirmTitle": "确认退出？"
+  "errors": {
+    "generic": {
+      "operationFailed": "操作失败，请重试",
+      "saveFailed": "保存失败，请重试"
+    },
+    "api": {
+      "serviceUnavailable": "当前服务不可用，请稍后再试～",
+      "notEffective": "操作未生效，稍后再试～",
+      "invalidRequest": "请求无法处理，请调整后再试～",
+      "rateLimit": "操作太频繁，请稍后再试～",
+      "quotaExceeded": "使用量已达上限，请联系现场人员～",
+      "networkIssue": "当前网络不支持访问～",
+      "systemError": "系统异常，稍后再试～",
+      "maintenance": "服务维护中，请稍后再试～",
+      "busy": "服务繁忙，请稍后重试～"
+    }
   }
 }
