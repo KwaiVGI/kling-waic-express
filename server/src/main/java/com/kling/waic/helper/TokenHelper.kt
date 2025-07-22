@@ -53,7 +53,6 @@ class TokenHelper(
     }
 
     companion object {
-        // todo: change to 10min before WAIC
-        const val EXPIRE_IN_SECONDS: Long = 60 * 60 * 5
+        const val EXPIRE_IN_SECONDS: Long = 60 * 20 //20 minutes
     }
 }

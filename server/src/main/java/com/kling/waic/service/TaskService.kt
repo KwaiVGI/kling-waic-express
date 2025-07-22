@@ -1,5 +1,6 @@
 package com.kling.waic.service
 
+import com.google.errorprone.annotations.concurrent.LazyInit
 import com.kling.waic.entity.Locale
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Task
@@ -9,6 +10,7 @@ import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
 import com.kling.waic.external.model.QueryTaskContext
+import com.kling.waic.helper.ImageCropHelper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.helper.S3Helper
 import com.kling.waic.repository.CastingRepository
@@ -20,7 +22,6 @@ import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.multipart.MultipartFile
-import java.awt.image.BufferedImage
 import java.time.Instant
 
 abstract class TaskService {
@@ -38,12 +39,25 @@ abstract class TaskService {
     private lateinit var printingRepository: PrintingRepository
     @Value("\${s3.bucket}")
     private lateinit var bucket: String
+    @Value("\${waic.crop-image-with-opencv}")
+    private lateinit var cropImageWithOpenCV: String
+
+    @Autowired(required = false)
+    @LazyInit
+    private var imageCropHelper: ImageCropHelper? = null
 
     fun uploadImage(type: TaskType, file: MultipartFile): String {
         val taskName = codeGenerateRepository.nextCode(type)
-
         val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
-        val requestImage = generateRequestImage(inputImage, taskName)
+
+        val requestImage = if (cropImageWithOpenCV.toBoolean() && imageCropHelper != null) {
+            log.info("OpenCV face cropping is enabled, processing image with face detection")
+            val cropRatio = getCropRatio(type)
+            imageCropHelper!!.cropFaceToAspectRatio(inputImage, taskName, cropRatio)
+        } else {
+            log.info("OpenCV face cropping is disabled or FaceCropper not available, using original image")
+            inputImage
+        }
 
         val requestFilename = "request-${taskName}.jpg"
         val requestImageUrl = s3Helper.uploadBufferedImage(
@@ -138,8 +152,6 @@ abstract class TaskService {
         }
     }
 
-    abstract fun generateRequestImage(inputImage: BufferedImage, taskName: String): BufferedImage
-
     abstract suspend fun doCreateTask(requestImageUrl: String): List<String>
 
     abstract suspend fun doQueryTask(taskIds: List<String>, taskName: String): Pair<TaskStatus, QueryTaskContext>
@@ -150,6 +162,13 @@ abstract class TaskService {
         return when (type) {
             TaskType.STYLED_IMAGE -> TaskOutputType.IMAGE
             TaskType.VIDEO_EFFECT -> TaskOutputType.VIDEO
+        }
+    }
+
+    private fun getCropRatio(type: TaskType): Double {
+        return when (type) {
+            TaskType.STYLED_IMAGE -> 2.0 / 3.0
+            TaskType.VIDEO_EFFECT -> 9.0 / 16.0
         }
     }
 }

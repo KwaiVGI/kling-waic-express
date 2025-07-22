@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class CreateImageTaskRequest(
     @JsonProperty("model_name")
-    val modelName: String = "kling-v2",
+    val modelName: String = "kling-v2-internal",
 
     @JsonProperty("prompt")
     val prompt: String,

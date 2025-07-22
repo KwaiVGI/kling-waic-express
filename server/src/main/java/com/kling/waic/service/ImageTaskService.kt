@@ -1,6 +1,5 @@
 package com.kling.waic.service
 
-import com.google.errorprone.annotations.concurrent.LazyInit
 import com.kling.waic.entity.Locale
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.exception.KlingOpenAPIException
@@ -10,7 +9,6 @@ import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
 import com.kling.waic.external.model.QueryTaskContext
-import com.kling.waic.helper.ImageCropHelper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
@@ -18,37 +16,17 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.awt.image.BufferedImage
 
 @Service
 class ImageTaskService(
     private val klingOpenAPIClient: KlingOpenAPIClient,
     private val styleImagePrompts: List<String>,
     private val imageProcessHelper: ImageProcessHelper,
-    @Value("\${waic.crop-image-with-opencv}")
-    private val cropImageWithOpenCV: Boolean,
 ) : TaskService() {
-
-    @Autowired(required = false)
-    @LazyInit
-    private var imageCropHelper: ImageCropHelper? = null
 
     companion object {
         const val TASK_N: Int = 9
-    }
-
-    override fun generateRequestImage(inputImage: BufferedImage, taskName: String): BufferedImage {
-        val requestImage = if (cropImageWithOpenCV && imageCropHelper != null) {
-            log.debug("OpenCV face cropping is enabled, processing image with face detection")
-            imageCropHelper!!.cropFaceToAspectRatio(inputImage, taskName)
-        } else {
-            log.info("OpenCV face cropping is disabled or FaceCropper not available, using original image")
-            inputImage
-        }
-        return requestImage
     }
 
     override suspend fun doCreateTask(requestImageUrl: String): List<String> {
