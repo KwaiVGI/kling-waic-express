@@ -133,7 +133,7 @@ export default function useCreation(creationType: CreationType) {
 
     // 检查是否在微信、鸿蒙系统中
     const isMobile =
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Mobile|Opera Mini/i.test(
         navigator.userAgent
       );
     const isWeChat = /MicroMessenger/i.test(navigator.userAgent);

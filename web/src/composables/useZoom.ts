@@ -1,23 +1,11 @@
 import { ref, onMounted, onBeforeUnmount, watch, type Ref } from "vue";
 
-interface UseZoomOptions {
-  topOffset?: number;
-  bottomOffset?: number;
-}
-
-export function useZoom(
-  contentRef: Ref<HTMLElement | null>,
-  containerRef: Ref<HTMLElement | null> = ref(null)
-) {
+export function useZoom(contentRef: Ref<HTMLElement | null>) {
   const originalHeight = ref(0);
   const scaleRatio = ref(1);
 
   // 获取可用高度（容器高度或视口高度）
   const getUsableHeight = () => {
-    // if (containerRef.value) {
-    //   return containerRef.value.clientHeight;
-    // }
-    console.log("usableHeight", window.innerHeight);
     return window.innerHeight;
   };
 
@@ -57,11 +45,6 @@ export function useZoom(
     // 使用 ResizeObserver 监听内容变化
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(contentRef.value);
-
-    // 如果使用容器，监听容器变化
-    if (containerRef.value) {
-      resizeObserver.observe(containerRef.value);
-    }
 
     // 清理操作
     onBeforeUnmount(() => {

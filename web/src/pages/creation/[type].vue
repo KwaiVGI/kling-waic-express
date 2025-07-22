@@ -421,8 +421,8 @@ const onLocaleChange = (l: Locale) => {
 const step1Ref = ref<HTMLElement | null>(null);
 const step2Ref = ref<HTMLElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
-const step1Zoom = useZoom(step1Ref, containerRef);
-const step2Zoom = useZoom(step2Ref, containerRef);
+const step1Zoom = useZoom(step1Ref);
+const step2Zoom = useZoom(step2Ref);
 
 onMounted(() => {
   if (route.query.token) {
