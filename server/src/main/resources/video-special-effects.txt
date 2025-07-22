@@ -5,3 +5,10 @@ dizzydizzy
 fuzzyfuzzy
 squish
 expansion
+jelly_press
+jelly_slice
+jelly_squish
+jelly_jiggle
+pixelpixel
+yearbook
+instant_film
