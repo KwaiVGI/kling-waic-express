@@ -1,4 +1,4 @@
-package com.kling.waic.helper
+package com.kling.waic.repository
 
 import com.kling.waic.entity.Casting
 import com.kling.waic.entity.CastingListResult
@@ -8,12 +8,12 @@ import com.kling.waic.entity.TaskType
 import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Repository
 import redis.clients.jedis.commands.JedisCommands
 import java.time.Instant
 
-@Component
-class CastingHelper(
+@Repository
+class CastingRepository(
     private val jedis: JedisCommands
 ) {
     private val castingQueuePrefix = "casting_queue_"

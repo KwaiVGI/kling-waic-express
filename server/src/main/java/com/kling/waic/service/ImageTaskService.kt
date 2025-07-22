@@ -15,14 +15,14 @@ import com.kling.waic.external.model.CreateImageTaskRequest
 import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
-import com.kling.waic.helper.CastingHelper
-import com.kling.waic.helper.FaceCropper
+import com.kling.waic.helper.ImageCropHelper
 import com.kling.waic.helper.ImageProcessHelper
-import com.kling.waic.helper.PrintingHelper
 import com.kling.waic.helper.S3Helper
+import com.kling.waic.repository.CastingRepository
 import com.kling.waic.repository.CodeGenerateRepository
+import com.kling.waic.repository.PrintingRepository
+import com.kling.waic.repository.TaskRepository
 import com.kling.waic.utils.IdUtils
-import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -33,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import redis.clients.jedis.commands.JedisCommands
 import java.time.Instant
 
 @Service
@@ -41,7 +40,7 @@ class ImageTaskService(
     private val klingOpenAPIClient: KlingOpenAPIClient,
     private val styleImagePrompts: List<String>,
     private val codeGenerateRepository: CodeGenerateRepository,
-    private val jedis: JedisCommands,
+    private val taskRepository: TaskRepository,
     private val imageProcessHelper: ImageProcessHelper,
     @Value("\${waic.sudoku.images-dir}")
     private val sudokuImagesDir: String,
@@ -54,14 +53,14 @@ class ImageTaskService(
     @Value("\${spring.mvc.servlet.path}")
     private val servletPath: String,
     @param:Value("\${s3.bucket}") private val bucket: String,
-    private val printingHelper: PrintingHelper,
-    private val castingHelper: CastingHelper,
+    private val printingRepository: PrintingRepository,
+    private val castingRepository: CastingRepository,
     private val s3Helper: S3Helper
 ) : TaskService {
 
     @Autowired(required = false)
     @LazyInit
-    private var faceCropper: FaceCropper? = null
+    private var imageCropHelper: ImageCropHelper? = null
 
     companion object {
         const val TASK_N: Int = 9
@@ -74,9 +73,9 @@ class ImageTaskService(
         val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
         log.info("Input image size: ${inputImage.width}x${inputImage.height}")
 
-        val requestImage = if (cropImageWithOpenCV && faceCropper != null) {
+        val requestImage = if (cropImageWithOpenCV && imageCropHelper != null) {
             log.debug("OpenCV face cropping is enabled, processing image with face detection")
-            faceCropper!!.cropFaceToAspectRatio(inputImage, taskName)
+            imageCropHelper!!.cropFaceToAspectRatio(inputImage, taskName)
         } else {
             log.info("OpenCV face cropping is disabled or FaceCropper not available, using original image")
             inputImage
@@ -139,14 +138,12 @@ class ImageTaskService(
             updateTime = Instant.now(),
         )
 
-        val newValue = ObjectMapperUtils.toJSON(task)
-        jedis.set(task.name, newValue)
-        log.info("Set task in Redis with name: ${task.name}, value: $newValue")
+        taskRepository.setTask(task)
         return task
     }
 
     override suspend fun queryTask(type: TaskType, name: String, locale: Locale): Task {
-        val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
+        val task = taskRepository.getTask(name)
         if (task == null || task.type != type) {
             throw IllegalArgumentException("Task not found or type mismatch")
         }
@@ -199,9 +196,7 @@ class ImageTaskService(
             status = overallStatus,
             updateTime = Instant.now(),
         )
-        val newValue = ObjectMapperUtils.toJSON(newTask)
-        jedis.set(task.name, newValue)
-        log.info("Set updated task in Redis with name: ${newTask.name}, value: $newValue")
+        taskRepository.setTask(newTask)
 
         if (overallStatus != TaskStatus.SUCCEED) {
             return newTask
@@ -218,11 +213,9 @@ class ImageTaskService(
             updateTime = Instant.now()
         )
 
-        val finalValue = ObjectMapperUtils.toJSON(finalTask)
-        jedis.set(task.name, finalValue)
-        log.debug("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
+        taskRepository.setTask(finalTask)
 
-        val casting = castingHelper.addToCastingQueue(finalTask)
+        val casting = castingRepository.addToCastingQueue(finalTask)
         log.info("Added task ${finalTask.name} to casting queue, casting: $casting")
 
         return finalTask
@@ -294,11 +287,11 @@ class ImageTaskService(
         name: String,
         fromConsole: Boolean
     ): Printing {
-        val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
+        val task = taskRepository.getTask(name)
         if (task == null || task.type != type) {
             throw IllegalArgumentException("Task not found or type mismatch")
         }
 
-        return printingHelper.addTaskToPrintingQueue(task, fromConsole)
+        return printingRepository.addTaskToPrintingQueue(task, fromConsole)
     }
 }

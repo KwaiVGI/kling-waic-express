@@ -9,7 +9,7 @@ import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
 import com.kling.waic.external.model.QueryVideoTaskRequest
 import com.kling.waic.external.model.QueryVideoTaskResponse
-import com.kling.waic.repository.JWTRepository
+import com.kling.waic.helper.JWTHelper
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +26,7 @@ import java.io.IOException
 @Component
 class KlingOpenAPIClient(
     @Value("\${kling.open-api.base-url}") private val baseUrl: String,
-    private val jwtRepository: JWTRepository,
+    private val jwtHelper: JWTHelper,
     private val okHttpClient: OkHttpClient,
 ) {
 
@@ -42,7 +42,7 @@ class KlingOpenAPIClient(
         val body = ObjectMapperUtils.toJSON(createImageTaskRequest)!!
         val request = Request.Builder()
             .url(url)
-            .addHeader("Authorization", "Bearer ${jwtRepository.getLatest()}")
+            .addHeader("Authorization", "Bearer ${jwtHelper.getLatest()}")
             .post(body.toRequestBody(CONTENT_TYPE))
             .build()
 
@@ -75,7 +75,7 @@ class KlingOpenAPIClient(
 
         val request = Request.Builder()
             .url(url)
-            .addHeader("Authorization", "Bearer ${jwtRepository.getLatest()}")
+            .addHeader("Authorization", "Bearer ${jwtHelper.getLatest()}")
             .get()
             .build()
 
@@ -103,7 +103,7 @@ class KlingOpenAPIClient(
         val body = ObjectMapperUtils.toJSON(createVideoTaskRequest)!!
         val request = Request.Builder()
             .url(url)
-            .addHeader("Authorization", "Bearer ${jwtRepository.getLatest()}")
+            .addHeader("Authorization", "Bearer ${jwtHelper.getLatest()}")
             .post(body.toRequestBody(CONTENT_TYPE))
             .build()
 
@@ -136,7 +136,7 @@ class KlingOpenAPIClient(
 
         val request = Request.Builder()
             .url(url)
-            .addHeader("Authorization", "Bearer ${jwtRepository.getLatest()}")
+            .addHeader("Authorization", "Bearer ${jwtHelper.getLatest()}")
             .get()
             .build()
 

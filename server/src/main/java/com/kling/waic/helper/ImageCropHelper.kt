@@ -23,7 +23,7 @@ import javax.imageio.ImageIO
     havingValue = "true",
     matchIfMissing = false
 )
-class FaceCropper(
+class ImageCropHelper(
     private val cascadeClassifiers: List<CascadeClassifier>,
 ) {
     init {

@@ -7,7 +7,7 @@ import com.kling.waic.entity.CastingListResult
 import com.kling.waic.entity.Result
 import com.kling.waic.entity.TaskOperateInput
 import com.kling.waic.entity.TaskType
-import com.kling.waic.helper.CastingHelper
+import com.kling.waic.repository.CastingRepository
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/castings")
 class CastingController(
-    private val castingHelper: CastingHelper
+    private val castingRepository: CastingRepository
 ) {
 
     @GetMapping("{type}/pinned")
     @Authorization(AuthorizationType.MANAGEMENT)
     fun getPinned(@PathVariable type: TaskType): Result<Casting> {
-        val casting = castingHelper.getPinned(type)
+        val casting = castingRepository.getPinned(type)
         return Result(casting)
     }
 
@@ -33,7 +33,7 @@ class CastingController(
     @Authorization(AuthorizationType.MANAGEMENT)
     fun screen(@PathVariable type: TaskType,
                @RequestParam num: Long): Result<List<Casting>> {
-        val castings = castingHelper.screen(type, num)
+        val castings = castingRepository.screen(type, num)
         return Result(castings)
     }
 
@@ -44,7 +44,7 @@ class CastingController(
                 @RequestParam(required = false) score: Double? = null,
                 @RequestParam pageSize: Int = 10,
                 @RequestParam pageNum: Int = 1): Result<CastingListResult> {
-        val result = castingHelper.list(type, keyword, score, pageSize, pageNum)
+        val result = castingRepository.list(type, keyword, score, pageSize, pageNum)
         return Result(result)
     }
 
@@ -52,7 +52,7 @@ class CastingController(
     @Authorization(AuthorizationType.MANAGEMENT)
     fun operate(@PathVariable type: TaskType,
                 @RequestBody input: TaskOperateInput): Result<Boolean> {
-        val result = castingHelper.operate(type, input.name, input.action)
+        val result = castingRepository.operate(type, input.name, input.action)
         return Result(result)
     }
 }

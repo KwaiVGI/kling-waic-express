@@ -14,17 +14,16 @@ import com.kling.waic.external.model.CreateVideoTaskInput
 import com.kling.waic.external.model.CreateVideoTaskRequest
 import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryVideoTaskRequest
-import com.kling.waic.helper.CastingHelper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.helper.S3Helper
+import com.kling.waic.repository.CastingRepository
 import com.kling.waic.repository.CodeGenerateRepository
+import com.kling.waic.repository.TaskRepository
 import com.kling.waic.utils.IdUtils
-import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import redis.clients.jedis.commands.JedisCommands
 import java.time.Instant
 
 @Service
@@ -43,8 +42,8 @@ class VideoTaskService(
     private val cropImageWithOpenCV: Boolean,
     @Value("\${spring.mvc.servlet.path}")
     private val servletPath: String,
-    private val jedis: JedisCommands,
-    private val castingHelper: CastingHelper,
+    private val taskRepository: TaskRepository,
+    private val castingRepository: CastingRepository,
     private val s3Helper: S3Helper,
     @param:Value("\${s3.bucket}") private val bucket: String,
 ) : TaskService {
@@ -93,9 +92,7 @@ class VideoTaskService(
             updateTime = Instant.now(),
         )
 
-        val value = ObjectMapperUtils.toJSON(task)
-        jedis.set(task.name, value)
-        log.info("Set task in Redis with name: ${task.name}, value: $value")
+        taskRepository.setTask(task)
         return task
     }
 
@@ -104,7 +101,7 @@ class VideoTaskService(
         name: String,
         locale: Locale
     ): Task {
-        val task = ObjectMapperUtils.fromJSON(jedis.get(name), Task::class.java)
+        val task = taskRepository.getTask(name)
         if (task == null || task.type != type) {
             log.error("Task type $type not found or type mismatch for task: $name, task: $task")
             throw IllegalArgumentException("Task not found or type mismatch")
@@ -140,9 +137,7 @@ class VideoTaskService(
             status = convertedStatus,
             updateTime = Instant.now(),
         )
-        val newValue = ObjectMapperUtils.toJSON(newTask)
-        jedis.set(task.name, newValue)
-        log.info("Set updated task in Redis with name: ${newTask.name}, value: $newValue")
+        taskRepository.setTask(newTask)
 
         if (convertedStatus != TaskStatus.SUCCEED) {
             return newTask
@@ -157,11 +152,9 @@ class VideoTaskService(
             updateTime = Instant.now()
         )
 
-        val finalValue = ObjectMapperUtils.toJSON(finalTask)
-        jedis.set(task.name, finalValue)
-        log.debug("Set final task in Redis with name: ${finalTask.name}, value: $finalValue")
+        taskRepository.setTask(finalTask)
 
-        val casting = castingHelper.addToCastingQueue(finalTask)
+        val casting = castingRepository.addToCastingQueue(finalTask)
         log.info("Added task ${finalTask.name} to casting queue, casting: $casting")
 
         return finalTask

@@ -7,7 +7,7 @@ import com.kling.waic.entity.Printing
 import com.kling.waic.entity.Result
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskType
-import com.kling.waic.helper.TaskServiceSelector
+import com.kling.waic.selector.TaskServiceSelector
 import com.kling.waic.utils.CoroutineUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.web.bind.annotation.PostMapping

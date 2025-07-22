@@ -1,14 +1,14 @@
-package com.kling.waic.repository
+package com.kling.waic.helper
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Repository
+import org.springframework.stereotype.Component
 import java.time.Instant
-import java.util.*
+import java.util.Date
 
-@Repository
-class JWTRepository(
+@Component
+class JWTHelper(
     @Value("\${waic.open-api.access-key}")
     private val waicOpenApiAccessKey: String,
     @Value("\${waic.open-api.secret-key}")

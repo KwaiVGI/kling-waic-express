@@ -1,4 +1,4 @@
-package com.kling.waic.helper
+package com.kling.waic.selector
 
 import com.kling.waic.entity.TaskType
 import com.kling.waic.service.TaskService

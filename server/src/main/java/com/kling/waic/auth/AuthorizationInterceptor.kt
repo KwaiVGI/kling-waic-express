@@ -1,6 +1,6 @@
 package com.kling.waic.auth
 
-import com.kling.waic.repository.TokenRepository
+import com.kling.waic.helper.TokenHelper
 import com.kling.waic.utils.Slf4j.Companion.log
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -11,7 +11,7 @@ import org.springframework.web.servlet.HandlerInterceptor
 
 @Component
 open class AuthorizationInterceptor (
-    private val tokenRepository: TokenRepository,
+    private val tokenHelper: TokenHelper,
     @Value("\${waic.management.token}")
     private val waicManagementToken: String
 ) : HandlerInterceptor {
@@ -61,7 +61,7 @@ open class AuthorizationInterceptor (
 
     private fun validateToken(token: String, type: AuthorizationType): Boolean {
         return if (type == AuthorizationType.CREATE_TASK) {
-            tokenRepository.validate(token)
+            tokenHelper.validate(token)
         } else if (type == AuthorizationType.MANAGEMENT) {
             token == waicManagementToken
         } else {
