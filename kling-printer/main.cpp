@@ -78,9 +78,12 @@ std::string makeLogDir(const std::string& dir) {
 
 int main(int argc, char* argv[]) {
     google::InitGoogleLogging(argv[0]);
+    FLAGS_logbuflevel = -1;          // 所有级别都缓冲
+    FLAGS_logbufsecs  = 1;           // 最多 1 秒刷一次盘
     // 让 INFO 级别写到我们指定的文件
     std::string logDir = makeLogDir("logs");
     google::SetLogDestination(google::GLOG_INFO, logDir.c_str());
+
     // 开启一个控制台窗口，printf重定向至此
     initConsoleOutput();
     LOG(INFO) << "Program Begin";
@@ -89,7 +92,7 @@ int main(int argc, char* argv[]) {
     printerInfoList.push_back({L"Canon SELPHY CP1500(2)", 100, 148 , 300, false});
     printerInfoList.push_back({L"Canon SELPHY CP1500(3)", 100, 148 , 300, false});
     printerInfoList.push_back({L"Canon SELPHY CP1500(4)", 100, 148 , 300, false});
-    printerInfoList.push_back({L"Canon SELPHY CP1500(5)", 100, 148 , 300, false});
+    // printerInfoList.push_back({L"Canon SELPHY CP1500(5)", 100, 148 , 300, false});
     PrinterManager* printerManager = new PrinterManager(printerInfoList);
     HttpClient* baseClient = new HttpClient("waic-api.klingai.com", 443, "wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9");
     HttpClient* downloadClient = new HttpClient("kling-waic.s3.cn-north-1.amazonaws.com.cn", 443, "");
