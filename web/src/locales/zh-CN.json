@@ -13,7 +13,8 @@
     "replace": "替换",
     "back": "返回",
     "save": "保存",
-    "print": "打印"
+    "print": "打印",
+    "cancel": "取消"
   },
   "descriptions": {
     "mainFunction": "上传1张照片，生成你的创意特效视频",

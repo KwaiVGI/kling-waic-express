@@ -1,8 +1,8 @@
 import { ref, computed } from "vue";
 import { showToast } from "vant";
 import { printImageTask } from "@/api/creation";
-import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
 import { saveAs } from "file-saver";
+import { updateQueryParams } from "@/utils/url";
 
 export type CreationType = "image" | "video";
 
@@ -90,7 +90,12 @@ export default function useCreation(creationType: CreationType) {
 
   // 生成内容
   const generate = async (
-    generateFn: (file: File, type: CreationType) => Promise<string>
+    generateFn: (
+      file: File | string,
+      type: CreationType,
+      signal?: AbortSignal
+    ) => Promise<string>,
+    signal?: AbortSignal
   ) => {
     if (!uploadedImage.value) {
       showToast();
@@ -100,18 +105,19 @@ export default function useCreation(creationType: CreationType) {
     isGenerating.value = true;
 
     try {
-      const result = await generateFn(uploadedFile.value, creationType);
+      const result = await generateFn(
+        uploadedFile.value || uploadedImage.value,
+        creationType,
+        signal
+      );
       generatedResult.value = result;
       showToast({
         message: t("status.success"),
         duration: 2500,
+        position: "top",
       });
     } catch (error) {
       generatedResult.value = null;
-      showToast({
-        message: t("upload.generationFailed"),
-        duration: 3000,
-      });
       console.error("生成失败:", error);
       throw error;
     } finally {
@@ -199,11 +205,10 @@ export default function useCreation(creationType: CreationType) {
   // 返回编辑
   const backToEdit = () => {
     generatedResult.value = null;
-    history.replaceState(
-      null,
-      "",
-      `?token=${localStorage.getItem(STORAGE_USER_TOKEN_KEY)}`
-    );
+    // 将图片URL放到查询参数上
+    updateQueryParams({
+      resultUrl: null,
+    });
   };
 
   // 打印图片（仅图片类型）

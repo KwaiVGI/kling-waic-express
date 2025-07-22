@@ -1,5 +1,10 @@
 {
     "i18n-ally.localesPaths": [
         "src/locales"
-    ]
+    ],
+    "i18n-ally.locales": [
+        "zh-CN",
+        "en-US"
+    ],
+    "i18n-ally.keystyle": "nested"
 }

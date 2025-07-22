@@ -206,18 +206,26 @@
     </div>
     <van-popup
       v-model:show="isGenerating"
+      :close-on-click-overlay="false"
       style="--van-popup-background: transparent"
     >
       <div
-        class="flex flex-col justify-center items-center bg-#000000cc rounded-8px p-20px"
+        class="flex flex-col justify-center items-center bg-#F9FBFC rounded-16px p-24px gap-12px backdrop-blur-24px"
       >
-        <van-loading type="circular" color="#74FF52ff" />
-        <div v-if="type === 'image'" class="mt-8px text-14px text-#B0B4B8ff">
+        <van-loading type="circular" color="#0B8A1B" />
+        <div v-if="type === 'image'" class="text-14px text-#000">
           {{ $t("status.processing") }}
         </div>
-        <div v-else class="mt-8px text-14px text-#B0B4B8ff">
+        <div v-else class="text-14px text-#000">
           <span v-html="$t('status.generating', { time: 3 })"></span>
         </div>
+        <van-button
+          type="default"
+          @click="handleCancel"
+          class="!mt-10px px-16px h-36px text-16px font-500 !rounded-8px !border-none !text-14px !bg-#09090A0A"
+        >
+          {{ $t("actions.cancel") }}
+        </van-button>
       </div>
     </van-popup>
   </div>
@@ -229,6 +237,8 @@ import useCreation, { type CreationType } from "@/composables/useCreation";
 import { getTaskStatus, newTask } from "@/api/creation";
 import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
 import { useZoom } from "@/composables/useZoom";
+import { updateQueryParams } from "@/utils/url";
+import { waitWithAbort } from "@/utils/time";
 // import { useGuide } from "@/composables/useGuide";
 
 const route = useRoute();
@@ -262,60 +272,66 @@ const {
   printImage,
 } = useCreation(type.value as "image" | "video");
 
-// const isGuided = ref(!!localStorage.getItem(STORAGE_GUIDE_KEY));
-// const { currentGuides, showGuide, startGuide, finishGuide } = useGuide();
-
-const wait = async (delay: number) =>
-  new Promise((resolve) => setTimeout(resolve, delay));
-
 const currentImageNo = ref("");
+const sourceImageUrl = ref("");
 
 // 生成
-const doGenerate = async (file: File, type: CreationType): Promise<string> => {
-  try {
-    // 1. 创建新任务
-    const { name } = await newTask({
-      file,
+const doGenerate = async (
+  file: File,
+  type: CreationType,
+  signal?: AbortSignal
+): Promise<string> => {
+  // 1. 创建新任务
+  const { name } = await newTask({
+    file,
+    type: type === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
+  });
+
+  // 2. 轮询任务状态
+  let status = "";
+  const maxAttempts = 1800; // 最大尝试次数，防止无限循环
+  const delay = 2000; // 每次轮询间隔2秒
+
+  // await wait(10 * 1000);
+  await waitWithAbort(10 * 1000, signal);
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    // 获取任务状态
+    const result = await getTaskStatus({
+      name,
       type: type === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
+      locale: locale.value === "en-US" ? "US" : "CN",
     });
 
-    // 2. 轮询任务状态
-    let status = "";
-    const maxAttempts = 1800; // 最大尝试次数，防止无限循环
-    const delay = 2000; // 每次轮询间隔2秒
+    status = result.status;
 
-    await wait(10 * 1000);
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      // 获取任务状态
-      const result = await getTaskStatus({
-        name,
-        type: type === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
-        locale: locale.value === "en-US" ? "US" : "CN",
-      });
-
-      status = result.status;
+    if (status === "SUCCEED") {
       const { url } = result.outputs || {};
-
-      if (status === "SUCCEED") {
-        if (url) {
-          currentImageNo.value = result.name;
-          return url; // 成功返回URL
-        }
-        throw new Error();
+      const { image } = result.input || {};
+      if (url) {
+        currentImageNo.value = result.name;
+        sourceImageUrl.value = image;
+        return url; // 成功返回URL
       }
-
-      if (status === "FAILED") {
-        throw new Error();
-      }
-
-      // 如果未完成，等待一段时间再继续
-      await wait(delay);
+      throw new Error();
     }
 
-    throw new Error();
-  } catch (error) {
-    console.error("生成过程中出错:", error);
-    throw error; // 重新抛出错误，让调用者处理
+    if (status === "FAILED") {
+      throw new Error();
+    }
+
+    // 如果未完成，等待一段时间再继续
+    await waitWithAbort(delay, signal);
+  }
+
+  throw new Error();
+};
+
+let controller: AbortController | null = null;
+
+const handleCancel = () => {
+  if (controller) {
+    controller.abort();
   }
 };
 
@@ -333,12 +349,26 @@ const handleGenerate = async () => {
     return;
   }
   try {
-    await generate(doGenerate);
+    controller = new AbortController();
+    await generate(doGenerate, controller.signal);
   } catch (error) {
-    if (error.message === "NO_HUMAN_DETECTED") {
+    const errorMap = {
+      1203: t("errors.api.serviceUnavailable"),
+      1300: t("errors.api.notEffective"),
+      1301: t("errors.api.invalidRequest"),
+      1302: t("errors.api.rateLimit"),
+      1303: t("errors.api.quotaExceeded"),
+      1304: t("errors.api.networkIssue"),
+      5000: t("errors.api.systemError"),
+      5001: t("errors.api.maintenance"),
+      5002: t("errors.api.busy"),
+    };
+    if (error.name === "AbortError") {
+      return;
+    } else if (error.message === "NO_HUMAN_DETECTED") {
       showToast(t("upload.noFaceDetected"));
-    } else if (error.message === "LONG_QUEUES") {
-      showToast(t("errors.api.quotaExceeded"));
+    } else if (errorMap[error.message]) {
+      showToast(errorMap[error.message]);
     } else {
       showToast(t("upload.generationFailed"));
     }
@@ -346,14 +376,13 @@ const handleGenerate = async () => {
   }
 
   // 将图片URL放到查询参数上
-  history.pushState(
-    null,
-    "",
-    `?token=${localStorage.getItem(
-      STORAGE_USER_TOKEN_KEY
-    )}&result=${encodeURIComponent(generatedResult.value)}`
-  );
+  updateQueryParams({
+    sourceUrl: sourceImageUrl.value,
+    resultUrl: generatedResult.value,
+    lang: locale.value,
+  });
 };
+
 // 处理保存
 const handleSave = () => {
   if (type.value === "image") {
@@ -369,14 +398,17 @@ const containerRef = ref<HTMLElement | null>(null);
 const step1Zoom = useZoom(step1Ref, containerRef);
 const step2Zoom = useZoom(step2Ref, containerRef);
 
-// 设置文件大小限制
 onMounted(() => {
   if (route.query.token) {
     localStorage.setItem(STORAGE_USER_TOKEN_KEY, route.query.token as string);
   }
   console.log({ userAgent: navigator.userAgent });
-  if (route.query.result) {
-    generatedResult.value = decodeURIComponent(route.query.result as string);
+  if (route.query.resultUrl) {
+    generatedResult.value = decodeURIComponent(route.query.resultUrl as string);
+  }
+  if (route.query.sourceUrl) {
+    uploadedImage.value = decodeURIComponent(route.query.sourceUrl as string);
+    sourceImageUrl.value = decodeURIComponent(route.query.sourceUrl as string);
   }
 });
 </script>

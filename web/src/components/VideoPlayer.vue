@@ -134,11 +134,24 @@ const showControls = () => {
   }, 3000);
 };
 
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const enterIOSFullscreen = () => {
+  const video = videoRef.value;
+  if (video.webkitEnterFullscreen) {
+    video.webkitEnterFullscreen();
+  } else if (video.webkitRequestFullscreen) {
+    video.webkitRequestFullscreen();
+  }
+};
+
 // 切换全屏
 const toggleFullscreen = () => {
   if (!isFullscreen.value) {
     const player = playerRef.value;
-    if (player.requestFullscreen) {
+    if (isIOS) {
+      // iOS特殊处理
+      enterIOSFullscreen();
+    } else if (player.requestFullscreen) {
       player.requestFullscreen();
     } else if (player.webkitRequestFullscreen) {
       player.webkitRequestFullscreen(); // Safari

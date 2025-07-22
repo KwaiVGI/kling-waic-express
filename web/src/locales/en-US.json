@@ -13,7 +13,8 @@
     "replace": "Replace",
     "back": "Back",
     "save": "Save",
-    "print": "Print"
+    "print": "Print",
+    "cancel": "Cancel"
   },
   "descriptions": {
     "mainFunction": "Upload 1 photo to create your special effects video",

@@ -37,6 +37,7 @@ function setupI18n() {
   const i18n = createI18n({
     locale,
     legacy: false,
+    fallbackLocale: FALLBACK_LOCALE,
     messages: {
       "zh-CN": zh,
       "en-US": en,
