@@ -1,16 +1,26 @@
 import request from "@/utils/request";
 import type { TaskType, TaskStatus } from "./type";
 
-export async function newTask({
+export async function uploadFile({
   file,
   type,
 }: {
   file: File;
   type: TaskType;
-}): Promise<{ name: string }> {
+}): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-  return request.post(`/api/tasks/${type}/new`, formData);
+  return request.post(`/api/tasks/${type}/upload_image`, formData);
+}
+
+export async function newTask({
+  url,
+  type,
+}: {
+  url: string;
+  type: TaskType;
+}): Promise<{ name: string }> {
+  return request.post(`/api/tasks/${type}/new`, { url });
 }
 
 export interface TaskOutput {

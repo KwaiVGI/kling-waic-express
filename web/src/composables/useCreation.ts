@@ -1,6 +1,6 @@
 import { ref, computed } from "vue";
 import { showToast } from "vant";
-import { printImageTask } from "@/api/creation";
+import { printImageTask, uploadFile } from "@/api/creation";
 import { saveAs } from "file-saver";
 import { updateQueryParams } from "@/utils/url";
 
@@ -18,12 +18,12 @@ export default function useCreation(creationType: CreationType) {
   const fileList = ref<any[]>([]);
   const uploadedImage = ref<string | null>(null);
   const uploadedFile = ref<File | null>(null);
+  const uploading = ref(false);
   const generatedResult = ref<string | null>(null);
   const showPreview = ref(false);
   const previewItems = ref<string[]>([]);
   const previewIndex = ref(0);
   const showSaveGuide = ref(false);
-  const isLoading = ref(false);
   const isGenerating = ref(false);
   const isSaving = ref(false);
   const isPrinting = ref(false);
@@ -47,21 +47,22 @@ export default function useCreation(creationType: CreationType) {
   };
 
   // 处理图片上传
-  const handleUpload = (file: any) => {
+  const handleUpload = async (file: any) => {
     if (file.file) {
-      // 检查文件大小
-      // if (file.file.size > maxFileSize.value) {
-      //   onOversize();
-      //   return;
-      // }
-      uploadedFile.value = file.file;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        uploadedImage.value = e.target?.result as string;
+      uploading.value = true;
+      try {
+        const data = await uploadFile({
+          file: file.file,
+          type: creationType === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
+        });
+        uploadedFile.value = file.file;
         generatedResult.value = null;
-      };
-      reader.readAsDataURL(file.file);
+        uploadedImage.value = data;
+      } catch (error) {
+        showToast(t("errors.generic.operationFailed"));
+      } finally {
+        uploading.value = false;
+      }
     } else {
       showToast(t("errors.generic.operationFailed"));
     }
@@ -91,7 +92,7 @@ export default function useCreation(creationType: CreationType) {
   // 生成内容
   const generate = async (
     generateFn: (
-      file: File | string,
+      url: string,
       type: CreationType,
       signal?: AbortSignal
     ) => Promise<string>,
@@ -106,7 +107,7 @@ export default function useCreation(creationType: CreationType) {
 
     try {
       const result = await generateFn(
-        uploadedFile.value || uploadedImage.value,
+        uploadedImage.value,
         creationType,
         signal
       );
@@ -247,7 +248,7 @@ export default function useCreation(creationType: CreationType) {
     fileList,
     uploadedImage,
     generatedResult,
-    isLoading,
+    uploading,
     isGenerating,
     isSaving,
     isPrinting,

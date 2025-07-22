@@ -28,6 +28,7 @@
   },
   "upload": {
     "placeholder": "Please upload an image.",
+    "uploading": "Uploading...",
     "invalidType": "Generation type not supported.",
     "noFaceDetected": "No face detected. Please try again with another image.",
     "sizeLimit": "Maximum file size is {maxSize} MB",

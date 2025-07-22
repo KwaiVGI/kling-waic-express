@@ -28,6 +28,7 @@
   },
   "upload": {
     "placeholder": "请上传图片",
+    "uploading": "上传中...",
     "invalidType": "不支持的创作类型",
     "noFaceDetected": "未检测到人像，换张照片试试吧~",
     "sizeLimit": "图片大小不能超过 {maxSize} MB",

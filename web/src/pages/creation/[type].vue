@@ -37,17 +37,26 @@
           reupload
           :preview-image="false"
           accept="image/*"
-          :max-size="maxFileSize"
-          @oversize="onOversize"
         >
           <div
             class="upload-area rounded-12px w-320px flex flex-col items-center justify-center"
             :class="type === 'image' ? 'h-254px' : 'h-320px'"
           >
-            <IconSvg name="add-image" :size="32" />
-            <p class="mt-10px text-14px text-white">
-              {{ $t("actions.uploadPhoto") }}
-            </p>
+            <div
+              class="uploading w-full h-full flex flex-col items-center justify-center gap-12px"
+              v-if="uploading"
+            >
+              <van-loading type="circular" color="#0B8A1B" />
+              <div v-if="type === 'image'" class="text-14px !text-#fff">
+                {{ $t("upload.uploading") }}
+              </div>
+            </div>
+            <template v-else>
+              <IconSvg name="add-image" :size="32" />
+              <p class="mt-10px text-14px !text-#fff">
+                {{ $t("actions.uploadPhoto") }}
+              </p>
+            </template>
           </div>
         </van-uploader>
         <div
@@ -258,7 +267,6 @@ const assets = computed(() => {
 // 使用组合函数
 const {
   uploaderRef,
-  maxFileSize,
   fileList,
   uploadedImage,
   generatedResult,
@@ -266,7 +274,7 @@ const {
   isSaving,
   isPrinting,
   handleUpload,
-  onOversize,
+  uploading,
   openPreview,
   handleDelete,
   handleReplace,
@@ -281,13 +289,13 @@ const sourceImageUrl = ref("");
 
 // 生成
 const doGenerate = async (
-  file: File,
+  url: string,
   type: CreationType,
   signal?: AbortSignal
 ): Promise<string> => {
   // 1. 创建新任务
   const { name } = await newTask({
-    file,
+    url,
     type: type === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
   });
 
@@ -437,6 +445,9 @@ onMounted(() => {
   .blur-bg {
     filter: blur(20px);
     -webkit-filter: blur(20px);
+  }
+  .van-uploader__input-wrapper {
+    display: block !important;
   }
   .upload-area {
     background: linear-gradient(147.61deg, #313a47 0%, #171a1f 100%);

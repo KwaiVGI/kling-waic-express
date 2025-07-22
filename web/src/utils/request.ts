@@ -73,10 +73,10 @@ function responseHandler(response: { data: any; status: string }) {
   if (response.data.status !== "SUCCEED") {
     if (
       response.data.status === "KLING_OPEN_API_EXCEPTION" &&
-      response.data.klingOpenAPIResult?.code === 1303
+      response.data.klingOpenAPIResult?.code
     ) {
       // 排队人数较多
-      throw new Error("LONG_QUEUES");
+      throw new Error(response.data.klingOpenAPIResult.code);
     } else {
       throw new Error(response.data.status);
     }
