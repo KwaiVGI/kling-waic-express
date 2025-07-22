@@ -31,7 +31,9 @@ class ImageCropHelper(
         OpenCV.loadLocally()
     }
 
-    fun cropFaceToAspectRatio(inputImage: BufferedImage, taskName: String): BufferedImage {
+    fun cropFaceToAspectRatio(inputImage: BufferedImage,
+                              taskName: String,
+                              cropRatio: Double): BufferedImage {
         // Convert BufferedImage to Mat
         val mat = bufferedImageToMat(inputImage)
 
@@ -130,23 +132,22 @@ class ImageCropHelper(
         }
 
         // Calculate the maximum possible crop area with 2:3 aspect ratio
-        val imageWidth = mat.width().toInt()
-        val imageHeight = mat.height().toInt()
-        val targetRatio = 2.0 / 3.0 // width:height = 2:3
+        val imageWidth = mat.width()
+        val imageHeight = mat.height()
 
         val maxCropWidth: Int
         val maxCropHeight: Int
 
         val originalRatio = imageWidth.toDouble() / imageHeight.toDouble()
 
-        if (originalRatio > targetRatio) {
+        if (originalRatio > cropRatio) {
             // Original image is wider, constrain by height to get maximum height crop
             maxCropHeight = imageHeight
-            maxCropWidth = (maxCropHeight * targetRatio).toInt()
+            maxCropWidth = (maxCropHeight * cropRatio).toInt()
         } else {
             // Original image is taller, constrain by width to get maximum width crop
             maxCropWidth = imageWidth
-            maxCropHeight = (maxCropWidth / targetRatio).toInt()
+            maxCropHeight = (maxCropWidth / cropRatio).toInt()
         }
 
         // Use face center as reference, but prioritize maximum size

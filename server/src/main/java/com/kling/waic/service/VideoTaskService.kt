@@ -11,17 +11,12 @@ import com.kling.waic.external.model.QueryTaskContext
 import com.kling.waic.external.model.QueryVideoTaskRequest
 import com.kling.waic.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Service
-import java.awt.image.BufferedImage
 
 @Service
 class VideoTaskService(
     private val videoSpecialEffects: List<String>,
     private val klingOpenAPIClient: KlingOpenAPIClient,
 ) : TaskService() {
-
-    override fun generateRequestImage(inputImage: BufferedImage, taskName: String): BufferedImage {
-        return inputImage
-    }
 
     override suspend fun doCreateTask(requestImageUrl: String): List<String> {
         val effectScene = videoSpecialEffects.random()
@@ -59,7 +54,7 @@ class VideoTaskService(
         val convertedStatus = calculateStatus(taskStatus)
         log.info("Task $taskName convertedStatus: $convertedStatus")
 
-        val video = result.data.taskResult.videos!!.first()
+        val video = result.data.taskResult.videos?.firstOrNull()
         return Pair(convertedStatus, QueryTaskContext(video = video))
     }
 
