@@ -42,23 +42,7 @@ abstract class TaskService {
     fun uploadImage(type: TaskType, file: MultipartFile): String {
         val taskName = codeGenerateRepository.nextCode(type)
 
-        val inputFilename = "input-${taskName}-${file.name}"
-        val inputImageUrl = s3Helper.upload(
-            bucket,
-            "input-images/$inputFilename",
-            file
-        )
-        return inputImageUrl
-    }
-
-    suspend fun createTask(type: TaskType,
-                           url: String): Task {
-        val taskName = codeGenerateRepository.nextCode(type)
-        log.info("Generated task name: $taskName for type: $type")
-
-        val inputImage = imageProcessHelper.readImageWithProxy(url)
-        log.info("Input image size: ${inputImage.width}x${inputImage.height}")
-
+        val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
         val requestImage = generateRequestImage(inputImage, taskName)
 
         val requestFilename = "request-${taskName}.jpg"
@@ -67,9 +51,16 @@ abstract class TaskService {
             "request-images/$requestFilename",
             requestImage, "jpg"
         )
+        return requestImageUrl
+    }
+
+    suspend fun createTask(type: TaskType,
+                           requestImageUrl: String): Task {
+        val taskName = codeGenerateRepository.nextCode(type)
+        log.info("Generated task name: $taskName for type: $type")
 
         val taskIds = doCreateTask(requestImageUrl)
-        val filename = url.substringAfterLast("/")
+        val filename = requestImageUrl.substringAfterLast("/")
         val task = Task(
             id = IdUtils.generateId(),
             name = taskName,
