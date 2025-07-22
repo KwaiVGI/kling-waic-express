@@ -16,3 +16,7 @@ data class Task (
     val createTime: Instant,
     val updateTime: Instant,
 )
+
+data class TaskNewInput(
+    val url: String
+)

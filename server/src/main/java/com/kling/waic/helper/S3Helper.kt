@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import javax.imageio.ImageIO
 
 
@@ -20,11 +21,13 @@ class S3Helper(
 
     fun upload(bucket: String, key: String, file: File): String {
         return doUpload(bucket, key,
+            Files.probeContentType(file.toPath()),
             RequestBody.fromFile(file))
     }
 
     fun upload(bucket: String, key: String, file: MultipartFile): String {
         return doUpload(bucket, key,
+            file.contentType!!,
             RequestBody.fromBytes(file.bytes))
     }
 
@@ -38,6 +41,7 @@ class S3Helper(
         val responseBody = RequestBody.fromBytes(bytes)
         return doUpload(
             bucket, key,
+            "image/jpeg",
             responseBody
         )
     }
@@ -45,12 +49,13 @@ class S3Helper(
     private fun doUpload(
         bucket: String,
         key: String,
+        contentType: String,
         requestBody: RequestBody
     ): String {
         val putRequest = PutObjectRequest.builder()
             .bucket(bucket)
             .key(key)
-            .contentType("image/jpeg")
+            .contentType(contentType)
             .contentDisposition("inline")
             .build()
 

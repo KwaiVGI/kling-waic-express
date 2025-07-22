@@ -3,7 +3,6 @@ package com.kling.waic.helper
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifIFD0Directory
 import com.kling.waic.entity.Locale
-import com.kling.waic.entity.Task
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +68,7 @@ class ImageProcessHelper(
     }
 
     suspend fun downloadAndCreateSudoku(
-        task: Task,
+        taskName: String,
         imageUrls:
         List<String>,
         locale: Locale
@@ -80,7 +79,7 @@ class ImageProcessHelper(
                     log.info("Downloading image ${index + 1} from $url")
                     readImageWithProxy(url)
                 }
-            }.awaitAll().filterNotNull()
+            }.awaitAll()
         }
 
         if (images.size != imageUrls.size) {
@@ -89,16 +88,16 @@ class ImageProcessHelper(
             )
         }
 
-        val sudokuImage = createKlingWAICSudokuImage(task, images, locale)
+        val sudokuImage = createKlingWAICSudokuImage(taskName, images, locale)
 
-        val outputFilename = aesCipherHelper.encrypt("sudoku-${task.name}") + ".jpg"
+        val outputFilename = aesCipherHelper.encrypt("sudoku-${taskName}") + ".jpg"
         val outputImageUrl = s3Helper.uploadBufferedImage(bucket,
             "output-images/$outputFilename",
             sudokuImage, "jpg")
         return outputImageUrl
     }
 
-    fun readImageWithProxy(url: String): BufferedImage? {
+    fun readImageWithProxy(url: String): BufferedImage {
         val url = URL(url)
         val connection = if (useProxy) {
             log.info("Proxy connect to $url via $proxyHost:$proxyPort")
@@ -119,7 +118,7 @@ class ImageProcessHelper(
 
     // check the logic
     private fun createKlingWAICSudokuImage(
-        task: Task,
+        taskName: String,
         images: List<BufferedImage>,
         locale: Locale
     ): BufferedImage {
@@ -176,7 +175,6 @@ class ImageProcessHelper(
         g2d.drawImage(scaledLogoImage, logoTopLeftX, logoTopLeftY, null)
         
         // Text position and size also scaled proportionally
-        val taskName = task.name
         val taskNameTopLeftX = leftMargin + (276 * scaleFactor).toInt()
         val taskNameTopLeftY = topMargin + cellHeight * 3 + gap * 2 + (26 * scaleFactor).toInt()
         

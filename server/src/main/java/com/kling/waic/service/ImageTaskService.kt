@@ -2,27 +2,16 @@ package com.kling.waic.service
 
 import com.google.errorprone.annotations.concurrent.LazyInit
 import com.kling.waic.entity.Locale
-import com.kling.waic.entity.Printing
-import com.kling.waic.entity.Task
-import com.kling.waic.entity.TaskInput
-import com.kling.waic.entity.TaskOutput
-import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
-import com.kling.waic.entity.TaskType
 import com.kling.waic.exception.KlingOpenAPIException
 import com.kling.waic.external.KlingOpenAPIClient
 import com.kling.waic.external.model.CreateImageTaskRequest
 import com.kling.waic.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.external.model.QueryImageTaskRequest
 import com.kling.waic.external.model.QueryImageTaskResponse
+import com.kling.waic.external.model.QueryTaskContext
 import com.kling.waic.helper.ImageCropHelper
 import com.kling.waic.helper.ImageProcessHelper
-import com.kling.waic.helper.S3Helper
-import com.kling.waic.repository.CastingRepository
-import com.kling.waic.repository.CodeGenerateRepository
-import com.kling.waic.repository.PrintingRepository
-import com.kling.waic.repository.TaskRepository
-import com.kling.waic.utils.IdUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -32,31 +21,16 @@ import kotlinx.coroutines.coroutineScope
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.springframework.web.multipart.MultipartFile
-import java.time.Instant
+import java.awt.image.BufferedImage
 
 @Service
 class ImageTaskService(
     private val klingOpenAPIClient: KlingOpenAPIClient,
     private val styleImagePrompts: List<String>,
-    private val codeGenerateRepository: CodeGenerateRepository,
-    private val taskRepository: TaskRepository,
     private val imageProcessHelper: ImageProcessHelper,
-    @Value("\${waic.sudoku.images-dir}")
-    private val sudokuImagesDir: String,
-    @Value("\${waic.sudoku.url-prefix}")
-    private val sudokuUrlPrefix: String,
-    @Value("\${waic.sudoku.server-domain}")
-    private val sudokuServerDomain: String,
     @Value("\${waic.crop-image-with-opencv}")
     private val cropImageWithOpenCV: Boolean,
-    @Value("\${spring.mvc.servlet.path}")
-    private val servletPath: String,
-    @param:Value("\${s3.bucket}") private val bucket: String,
-    private val printingRepository: PrintingRepository,
-    private val castingRepository: CastingRepository,
-    private val s3Helper: S3Helper
-) : TaskService {
+) : TaskService() {
 
     @Autowired(required = false)
     @LazyInit
@@ -66,13 +40,7 @@ class ImageTaskService(
         const val TASK_N: Int = 9
     }
 
-    override suspend fun createTask(type: TaskType, file: MultipartFile): Task {
-        val taskName = codeGenerateRepository.nextCode(type)
-        log.info("Generated task name: $taskName for type: $type")
-
-        val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
-        log.info("Input image size: ${inputImage.width}x${inputImage.height}")
-
+    override fun generateRequestImage(inputImage: BufferedImage, taskName: String): BufferedImage {
         val requestImage = if (cropImageWithOpenCV && imageCropHelper != null) {
             log.debug("OpenCV face cropping is enabled, processing image with face detection")
             imageCropHelper!!.cropFaceToAspectRatio(inputImage, taskName)
@@ -80,14 +48,10 @@ class ImageTaskService(
             log.info("OpenCV face cropping is disabled or FaceCropper not available, using original image")
             inputImage
         }
+        return requestImage
+    }
 
-        val requestFilename = "request-${taskName}.jpg"
-        val requestImageUrl = s3Helper.uploadBufferedImage(
-            bucket,
-            "request-images/$requestFilename",
-            requestImage, "jpg"
-            )
-
+    override suspend fun doCreateTask(requestImageUrl: String): List<String> {
         val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
 
         // Use coroutineScope instead of runBlocking
@@ -122,39 +86,10 @@ class ImageTaskService(
                         "only created ${taskIds.size} tasks."
             )
         }
-
-        val task = Task(
-            id = IdUtils.generateId(),
-            name = taskName,
-            input = TaskInput(
-                type = type,
-                image = requestImageUrl,
-            ),
-            taskIds = taskIds,
-            status = TaskStatus.SUBMITTED,
-            type = type,
-            filename = file.name,
-            createTime = Instant.now(),
-            updateTime = Instant.now(),
-        )
-
-        taskRepository.setTask(task)
-        return task
+        return taskIds
     }
 
-    override suspend fun queryTask(type: TaskType, name: String, locale: Locale): Task {
-        val task = taskRepository.getTask(name)
-        if (task == null || task.type != type) {
-            throw IllegalArgumentException("Task not found or type mismatch")
-        }
-
-        if (task.status in setOf(TaskStatus.SUCCEED, TaskStatus.FAILED)) {
-            log.info("Task ${task.name} is already finished with status: ${task.status}")
-            return task // No need to query if the task is already completed
-        }
-
-        val taskIds = task.taskIds
-
+    override suspend fun doQueryTask(taskIds: List<String>, taskName: String): Pair<TaskStatus, QueryTaskContext> {
         // Use coroutineScope instead of runBlocking
         val taskResponseMap = coroutineScope {
             val queryTaskRequests = taskIds.map { taskId ->
@@ -184,54 +119,33 @@ class ImageTaskService(
 
         val summaryMap = summaryResponse(taskResponseMap)
         val overallStatus = calculateOverallStatus(summaryMap, taskIds.size)
-        log.info("Task ${task.name} overallStatus: $overallStatus, " +
+        log.info("Task $taskName overallStatus: $overallStatus, " +
                 "summaryInfo: ${summaryInfo(overallStatus, summaryMap, taskIds.size)}")
+        return Pair(overallStatus, QueryTaskContext(taskResponseMap = taskResponseMap))
+    }
 
-        if (overallStatus == task.status) {
-            log.debug("Task ${task.name} status has not changed, returning existing task")
-            return task // No status change, return existing task
-        }
-
-        val newTask = task.copy(
-            status = overallStatus,
-            updateTime = Instant.now(),
-        )
-        taskRepository.setTask(newTask)
-
-        if (overallStatus != TaskStatus.SUCCEED) {
-            return newTask
-        }
-
-        log.info("Generating Sudoku image URL for task: ${newTask.name}")
-        val url = generateSudokuImageUrl(newTask, taskResponseMap, locale)
-
-        val finalTask = newTask.copy(
-            outputs = TaskOutput(
-                type = TaskOutputType.IMAGE,
-                url = url
-            ),
-            updateTime = Instant.now()
-        )
-
-        taskRepository.setTask(finalTask)
-
-        val casting = castingRepository.addToCastingQueue(finalTask)
-        log.info("Added task ${finalTask.name} to casting queue, casting: $casting")
-
-        return finalTask
+    override suspend fun generateOutputUrl(
+        taskName: String,
+        queryTaskContext: QueryTaskContext,
+        locale: Locale
+    ): String {
+        log.info("Generating Sudoku image URL for task: $taskName")
+        return generateSudokuImageUrl(taskName, queryTaskContext.taskResponseMap, locale)
     }
 
     private suspend fun generateSudokuImageUrl(
-        task: Task,
+        taskName: String,
         taskResponseMap: Map<String, QueryImageTaskResponse>,
         locale: Locale
     ): String {
         val imageUrls: List<String> = taskResponseMap.values
             .flatMap { it.taskResult.images ?: emptyList() }
             .map { it.url }
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
 
         val outputImageUrl = imageProcessHelper.downloadAndCreateSudoku(
-            task,
+            taskName,
             imageUrls,
             locale
         )
@@ -272,7 +186,7 @@ class ImageTaskService(
             TaskStatus.SUBMITTED -> "All tasks are submitted: $totalCount."
             TaskStatus.SUCCEED -> "All tasks succeeded: $totalCount."
             TaskStatus.FAILED -> "Some tasks failed: " +
-                    "${summaryMap[KlingOpenAPITaskStatus.failed]?.size ?: 0} / $totalCount," +
+                    "${summaryMap[KlingOpenAPITaskStatus.failed]?.size ?: 0} / $totalCount, " +
                     "failed taskIds: ${summaryMap[KlingOpenAPITaskStatus.failed]?.joinToString(", ") ?: "none"}."
 
             TaskStatus.PROCESSING -> "Tasks are still processing, " +
@@ -280,18 +194,5 @@ class ImageTaskService(
                     "processing: ${summaryMap[KlingOpenAPITaskStatus.processing]?.size ?: 0} / $totalCount, " +
                     "succeed: ${summaryMap[KlingOpenAPITaskStatus.succeed]?.size ?: 0} / $totalCount."
         }
-    }
-
-    override suspend fun printTask(
-        type: TaskType,
-        name: String,
-        fromConsole: Boolean
-    ): Printing {
-        val task = taskRepository.getTask(name)
-        if (task == null || task.type != type) {
-            throw IllegalArgumentException("Task not found or type mismatch")
-        }
-
-        return printingRepository.addTaskToPrintingQueue(task, fromConsole)
     }
 }
