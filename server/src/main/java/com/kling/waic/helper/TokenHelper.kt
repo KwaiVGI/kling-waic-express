@@ -1,15 +1,15 @@
-package com.kling.waic.repository
+package com.kling.waic.helper
 
 import com.kling.waic.entity.Token
 import com.kling.waic.utils.ObjectMapperUtils
 import com.kling.waic.utils.Slf4j.Companion.log
-import org.springframework.stereotype.Repository
+import org.springframework.stereotype.Component
 import redis.clients.jedis.commands.JedisCommands
 import java.time.Instant
 import java.util.*
 
-@Repository
-class TokenRepository(
+@Component
+class TokenHelper(
     private val jedis: JedisCommands
 ) {
     @Volatile
@@ -35,7 +35,7 @@ class TokenRepository(
                     nowInLock.plusSeconds(EXPIRE_IN_SECONDS)
                 )
                 latestToken = newToken
-                jedis.setex(newToken.value, EXPIRE_IN_SECONDS, ObjectMapperUtils.toJSON(newToken))
+                jedis.setex(newToken.value, EXPIRE_IN_SECONDS, ObjectMapperUtils.Companion.toJSON(newToken))
                 log.info("Generated and saved new token: id={}, name={}", newToken.id, newToken.value)
             }
             return latestToken!!
@@ -44,7 +44,7 @@ class TokenRepository(
 
     fun getByName(name: String): Token? {
         val valueStr = jedis.get(name)
-        return ObjectMapperUtils.fromJSON(valueStr, Token::class.java)
+        return ObjectMapperUtils.Companion.fromJSON(valueStr, Token::class.java)
     }
 
     fun validate(token: String): Boolean {

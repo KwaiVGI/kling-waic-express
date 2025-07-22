@@ -1,4 +1,4 @@
-package com.kling.waic.test.helper
+package com.kling.waic.test.repository
 
 import com.kling.waic.entity.Casting
 import com.kling.waic.entity.Task
@@ -6,7 +6,7 @@ import com.kling.waic.entity.TaskInput
 import com.kling.waic.entity.TaskOperateAction
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
-import com.kling.waic.helper.CastingHelper
+import com.kling.waic.repository.CastingRepository
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.test.SpringBaseTest
 import com.kling.waic.utils.IdUtils
@@ -18,10 +18,10 @@ import java.time.Instant
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
-class CastingHelperTest : SpringBaseTest() {
+class CastingRepositoryTest : SpringBaseTest() {
 
     @Autowired
-    private lateinit var castingHelper: CastingHelper
+    private lateinit var castingRepository: CastingRepository
 
     @Autowired
     private lateinit var codeGenerateRepository: CodeGenerateRepository
@@ -60,7 +60,7 @@ class CastingHelperTest : SpringBaseTest() {
                 updateTime = Instant.now(),
             )
 
-            val casting = castingHelper.addToCastingQueue(task)
+            val casting = castingRepository.addToCastingQueue(task)
             castings.add(casting)
             sleep(500)
         }
@@ -69,7 +69,7 @@ class CastingHelperTest : SpringBaseTest() {
 
     @Test
     fun testGetPinned() {
-        val casting = castingHelper.getPinned(TaskType.STYLED_IMAGE)
+        val casting = castingRepository.getPinned(TaskType.STYLED_IMAGE)
         println(casting)
     }
 
@@ -77,7 +77,7 @@ class CastingHelperTest : SpringBaseTest() {
     fun testOperatePin() {
         val castingName = "casting:Test_No.100032"
         val result =
-            castingHelper.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.PIN)
+            castingRepository.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.PIN)
         assertTrue(result)
     }
 
@@ -85,7 +85,7 @@ class CastingHelperTest : SpringBaseTest() {
     fun testOperateUnPin() {
         val castingName = "casting:Test_No.100032"
         val result =
-            castingHelper.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.UNPIN)
+            castingRepository.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.UNPIN)
         assertTrue(result)
     }
 
@@ -93,7 +93,7 @@ class CastingHelperTest : SpringBaseTest() {
     fun testOperateDelete() {
         val castingName = "casting:Test_No.100032"
         val result =
-            castingHelper.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.DELETE)
+            castingRepository.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.DELETE)
         assertTrue(result)
     }
 
@@ -101,7 +101,7 @@ class CastingHelperTest : SpringBaseTest() {
     fun testOperatePromote() {
         val castingName = "casting:Test_No.100040"
         val result =
-            castingHelper.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.PROMOTE)
+            castingRepository.operate(TaskType.STYLED_IMAGE, castingName, TaskOperateAction.PROMOTE)
         assertTrue(result)
     }
 
@@ -111,13 +111,13 @@ class CastingHelperTest : SpringBaseTest() {
         var score: Double? = null
         val keyword = ""
         val result =
-            castingHelper.list(TaskType.STYLED_IMAGE, keyword, score, 2, ++pageNum)
+            castingRepository.list(TaskType.STYLED_IMAGE, keyword, score, 2, ++pageNum)
         assertEquals(result.castings.size, 2)
         var hasMore = result.hasMore
         score = result.score
         while (hasMore) {
             val result2 =
-                castingHelper.list(TaskType.STYLED_IMAGE, keyword, score, 2, ++pageNum)
+                castingRepository.list(TaskType.STYLED_IMAGE, keyword, score, 2, ++pageNum)
             hasMore = result2.hasMore
             score = result2.score
         }
@@ -129,13 +129,13 @@ class CastingHelperTest : SpringBaseTest() {
         var score: Double? = null
         val keyword = "10004"
         val result =
-            castingHelper.list(TaskType.STYLED_IMAGE, keyword, score, 2, ++pageNum)
+            castingRepository.list(TaskType.STYLED_IMAGE, keyword, score, 2, ++pageNum)
         assertEquals(result.castings.size, 2)
         var hasMore = result.hasMore
         score = result.score
         while (hasMore) {
             val result2 =
-                castingHelper.list(TaskType.STYLED_IMAGE, keyword, score, 2, ++pageNum)
+                castingRepository.list(TaskType.STYLED_IMAGE, keyword, score, 2, ++pageNum)
             hasMore = result2.hasMore
             score = result2.score
         }
@@ -143,7 +143,7 @@ class CastingHelperTest : SpringBaseTest() {
 
     @Test
     fun testScreen() {
-        val castings = castingHelper.screen(TaskType.STYLED_IMAGE, 1)
+        val castings = castingRepository.screen(TaskType.STYLED_IMAGE, 1)
         println(castings.size)
     }
 }

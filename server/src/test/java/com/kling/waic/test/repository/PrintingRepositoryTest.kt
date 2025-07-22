@@ -1,4 +1,4 @@
-package com.kling.waic.test.helper
+package com.kling.waic.test.repository
 
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.PrintingStatus
@@ -6,7 +6,7 @@ import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskInput
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
-import com.kling.waic.helper.PrintingHelper
+import com.kling.waic.repository.PrintingRepository
 import com.kling.waic.repository.CodeGenerateRepository
 import com.kling.waic.test.SpringBaseTest
 import com.kling.waic.utils.IdUtils
@@ -16,10 +16,10 @@ import java.time.Instant
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
-class PrintingHelperTest : SpringBaseTest() {
+class PrintingRepositoryTest : SpringBaseTest() {
 
     @Autowired
-    private lateinit var printingHelper: PrintingHelper
+    private lateinit var printingRepository: PrintingRepository
     @Autowired
     private lateinit var codeGenerateRepository: CodeGenerateRepository
 
@@ -57,7 +57,7 @@ class PrintingHelperTest : SpringBaseTest() {
                 updateTime = Instant.now(),
             )
 
-            val printing = printingHelper.addTaskToPrintingQueue(task)
+            val printing = printingRepository.addTaskToPrintingQueue(task)
             printings.add(printing)
         }
         assertEquals(printings.size, total)
@@ -65,31 +65,31 @@ class PrintingHelperTest : SpringBaseTest() {
 
     @Test
     fun testPollOneFromPrintingQueue() {
-        val printing = printingHelper.pollOneFromPrintingQueue()
+        val printing = printingRepository.pollOneFromPrintingQueue()
         println(printing)
     }
 
     @Test
     fun testGetPrinting() {
-        val printing = printingHelper.getPrinting("printing:Test_No.100029")
+        val printing = printingRepository.getPrinting("printing:Test_No.100029")
         println(printing)
     }
 
     @Test
     fun testUpdatePrintingStatus() {
-        printingHelper.updatePrintingStatus("printing:Test_No.100022", PrintingStatus.QUEUING)
-        printingHelper.updatePrintingStatus("printing:Test_No.100023", PrintingStatus.PRINTING)
-        printingHelper.updatePrintingStatus("printing:Test_No.100024", PrintingStatus.COMPLETED)
+        printingRepository.updatePrintingStatus("printing:Test_No.100022", PrintingStatus.QUEUING)
+        printingRepository.updatePrintingStatus("printing:Test_No.100023", PrintingStatus.PRINTING)
+        printingRepository.updatePrintingStatus("printing:Test_No.100024", PrintingStatus.COMPLETED)
     }
 
     @Test
     fun testQueryAll() {
-        val allPrintings = printingHelper.queryAll("")
+        val allPrintings = printingRepository.queryAll("")
         println(allPrintings)
-        val allPrintings2 = printingHelper.queryAll("10002")
+        val allPrintings2 = printingRepository.queryAll("10002")
         println(allPrintings2)
 
-        val allPrintings3 = printingHelper.queryAll("xxxxxxx")
+        val allPrintings3 = printingRepository.queryAll("xxxxxxx")
         println(allPrintings3)
     }
 }

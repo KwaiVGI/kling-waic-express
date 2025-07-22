@@ -16,6 +16,7 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisClientConfig
 import redis.clients.jedis.JedisCluster
 import redis.clients.jedis.commands.JedisCommands
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
@@ -166,16 +167,19 @@ open class ServiceConfig(
     }
 
     @Bean
-    open fun s3Client(): S3Client {
+    open fun awsCredentialsProvider(): AwsCredentialsProvider {
         val credentialsProviderBuilder = DefaultCredentialsProvider.builder()
         if (s3ProfileName.isNotEmpty()) {
             credentialsProviderBuilder.profileName(s3ProfileName)
         }
+        return credentialsProviderBuilder.build()
+    }
 
-        val s3Client = S3Client.builder()
+    @Bean
+    open fun s3Client(awsCredentialsProvider: AwsCredentialsProvider): S3Client {
+        return S3Client.builder()
             .region(Region.CN_NORTH_1)
-            .credentialsProvider(credentialsProviderBuilder.build())
+            .credentialsProvider(awsCredentialsProvider)
             .build()
-        return s3Client
     }
 }
