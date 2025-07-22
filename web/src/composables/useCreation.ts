@@ -5,9 +5,9 @@ import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
 import { saveAs } from "file-saver";
 
 export type CreationType = "image" | "video";
-const { t } = useI18n();
 
 export default function useCreation(creationType: CreationType) {
+  const { t } = useI18n();
   // 图片上传大小限制（单位：字节）
   const maxFileSize = ref<number>(3000 * 1024 * 1024); // 默认10MB
   const maxFileSizeMB = computed(() =>

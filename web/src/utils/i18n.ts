@@ -38,7 +38,6 @@ function setupI18n() {
     locale,
     legacy: false,
     messages: {
-      zh,
       "zh-CN": zh,
       "en-US": en,
     },
@@ -59,10 +58,10 @@ async function setLang(lang: string, i18n: I18n) {
 }
 
 // 加载本地语言包
-// async function loadLocaleMsg(locale: string, i18n: I18n) {
-//   const messages = await import(`../locales/${locale}.json`);
-//   i18n.global.setLocaleMessage(locale, messages.default);
-// }
+async function loadLocaleMsg(locale: string, i18n: I18n) {
+  const messages = await import(`../locales/${locale}.json`);
+  i18n.global.setLocaleMessage(locale, messages.default);
+}
 
 // 获取当前语言对应的语言包名称
 function getI18nLocale() {
