@@ -2,7 +2,10 @@
  * 无刷新更新当前URL的查询参数（同名参数覆盖）
  * @param params 要添加/更新的参数对象
  */
-export function updateQueryParams(params: Record<string, string | null>): void {
+export function updateQueryParams(
+  params: Record<string, string | null>,
+  type: "push" | "replace" = "push"
+): void {
   // 创建当前URL对象
   const url = new URL(window.location.href);
 
@@ -24,5 +27,9 @@ export function updateQueryParams(params: Record<string, string | null>): void {
   url.search = searchParams.toString();
 
   // 无刷新更新浏览器地址栏
-  window.history.pushState(null, "", url);
+  if (type === "replace") {
+    window.history.replaceState(null, "", url);
+  } else {
+    window.history.pushState(null, "", url);
+  }
 }

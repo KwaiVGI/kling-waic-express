@@ -11,26 +11,18 @@
     >
       <div
         v-show="!generatedResult"
-        class="w-full mt-28px flex flex-col items-center mb-36px relative"
+        class="w-full mt-28px flex flex-col items-center mb-28px relative"
       >
         <img
-          class="w-106px h-32px mb-22px ml-20px self-start"
-          src="https://ali.a.yximgs.com/kos/nlav12119/QBZriaHi_2025-07-15-20-14-14.png"
+          class="w-120px h-32px mb-22px ml-20px self-start"
+          :src="assets.logo"
           alt=""
         />
-        <img
-          v-if="type === 'image'"
-          class="w-329px h-126px"
-          src="https://tx.a.yximgs.com/kos/nlav12119/EghFVodo_2025-07-21-20-42-24.png"
-          alt=""
+        <img class="w-414px h-130px" :src="assets.banner" alt="" />
+        <LangSwitcher
+          class="absolute right-20px top-0"
+          @change="onLocaleChange"
         />
-        <img
-          v-else
-          class="w-329px h-126px"
-          src="https://tx.a.yximgs.com/kos/nlav12119/xbwHVLkr_2025-07-21-12-02-53.png"
-          alt=""
-        />
-        <LangSwitcher class="absolute right-20px top-0" />
       </div>
       <!-- 上传区域 -->
       <div
@@ -62,11 +54,7 @@
           v-if="type === 'image'"
           class="absolute bottom-0 left-0 w-360px h-124px"
         >
-          <img
-            class="w-full h-full"
-            src="https://tx.a.yximgs.com/kos/nlav12119/WmkviEwP_2025-07-21-20-40-09.png"
-            alt=""
-          />
+          <img class="w-full h-full" :src="assets.imageTip" alt="" />
         </div>
       </div>
 
@@ -125,7 +113,7 @@
           type="primary"
           @click="handleGenerate"
           :loading="isGenerating"
-          loading-text="生成中，请稍后..."
+          :loading-text="$t('status.processing')"
           class="generate-btn !w-320px !h-56px !text-20px font-bold !text-black"
         >
           {{ $t("actions.generateNow") }}
@@ -134,7 +122,7 @@
           class="warning-tip mt-20px text-12px text-black flex items-center justify-center gap-4px"
         >
           <IconSvg name="inform" :size="14" color="#000" />
-          {{ $t("descriptions.aiDisclaimer") }}
+          <span class="leading-1">{{ $t("descriptions.aiDisclaimer") }}</span>
         </div>
       </div>
     </div>
@@ -201,7 +189,7 @@
         class="warning-tip mt-20px text-12px text-#5E6266ff flex items-center justify-center gap-4px"
       >
         <IconSvg name="inform" :size="14" color="#5E6266ff" />
-        {{ $t("descriptions.aiDisclaimer") }}
+        <span class="leading-1">{{ $t("descriptions.aiDisclaimer") }}</span>
       </div>
     </div>
     <van-popup
@@ -239,17 +227,33 @@ import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
 import { useZoom } from "@/composables/useZoom";
 import { updateQueryParams } from "@/utils/url";
 import { waitWithAbort } from "@/utils/time";
-// import { useGuide } from "@/composables/useGuide";
+import { locale, type Locale } from "@/utils/i18n";
+import {
+  bannerImageEn,
+  bannerImageZh,
+  bannerVideoEn,
+  bannerVideoZh,
+  logoEn,
+  logoZh,
+  imageTipEn,
+  imageTipZh,
+} from "./const";
 
 const route = useRoute();
 const { t } = useI18n();
-
 // 从路由参数获取类型
-const type = ref<string>(route.params.type as CreationType);
-if (type.value !== "image" && type.value !== "video") {
-  showToast("不支持的创作类型");
-  type.value = "image";
-}
+const type = ref<string>((route.params.type as CreationType) || "image");
+
+const assets = computed(() => {
+  const isZh = locale.value === "zh-CN";
+  const bannerImage = isZh ? bannerImageZh : bannerImageEn;
+  const bannerVideo = isZh ? bannerVideoZh : bannerVideoEn;
+  return {
+    logo: isZh ? logoZh : logoEn,
+    banner: type.value === "image" ? bannerImage : bannerVideo,
+    imageTip: isZh ? imageTipZh : imageTipEn,
+  };
+});
 
 // 使用组合函数
 const {
@@ -390,6 +394,15 @@ const handleSave = () => {
   } else {
     save("", "mp4");
   }
+};
+
+const onLocaleChange = (l: Locale) => {
+  updateQueryParams(
+    {
+      lang: l,
+    },
+    "replace"
+  );
 };
 
 const step1Ref = ref<HTMLElement | null>(null);

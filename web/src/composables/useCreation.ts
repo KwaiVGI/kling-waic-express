@@ -206,9 +206,12 @@ export default function useCreation(creationType: CreationType) {
   const backToEdit = () => {
     generatedResult.value = null;
     // 将图片URL放到查询参数上
-    updateQueryParams({
-      resultUrl: null,
-    });
+    updateQueryParams(
+      {
+        resultUrl: null,
+      },
+      "replace"
+    );
   };
 
   // 打印图片（仅图片类型）

@@ -12,9 +12,11 @@
 <script setup lang="ts">
 import { locale } from "@/utils/i18n";
 
+const emit = defineEmits(["change"]);
 const switchLanguage = () => {
   const newLocale = locale.value === "zh-CN" ? "en-US" : "zh-CN";
   locale.value = newLocale;
+  emit("change", newLocale);
 };
 </script>
 

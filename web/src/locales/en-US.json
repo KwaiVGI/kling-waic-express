@@ -3,12 +3,12 @@
     "switch": "En"
   },
   "brand": {
-    "appName": "Keling AI",
-    "featureName": "Special Effects Surprise Box"
+    "appName": "Kling AI",
+    "featureName": "Effect Blind Box"
   },
   "actions": {
-    "uploadPhoto": "Upload Photo",
-    "generateNow": "Generate Now",
+    "uploadPhoto": "Upload Image",
+    "generateNow": "Generate",
     "delete": "Delete",
     "replace": "Replace",
     "back": "Back",
@@ -18,45 +18,45 @@
   },
   "descriptions": {
     "mainFunction": "Upload 1 photo to create your special effects video",
-    "aiDisclaimer": "AI-generated content. Do not use for illegal activities."
+    "aiDisclaimer": "It is prohibited to use AI generated content for illegal purposes."
   },
   "status": {
-    "generating": "Generating, estimated wait time: {time} minutes",
-    "processing": "Processing, please wait...",
-    "preparingDownload": "File ready, starting download",
-    "success": "Creation successful!"
+    "generating": "Generating... Estimated wait: {time} min",
+    "processing": "Generating... Please wait",
+    "preparingDownload": "File prepped. Saving now.",
+    "success": "Created!"
   },
   "upload": {
-    "placeholder": "Please upload an image",
-    "invalidType": "Unsupported creation type",
-    "noFaceDetected": "No face detected. Try another photo",
-    "sizeLimit": "Image size cannot exceed {maxSize} MB",
-    "generationFailed": "Oops! Failed to generate. Try another photo"
+    "placeholder": "Please upload an image.",
+    "invalidType": "Generation type not supported.",
+    "noFaceDetected": "No face detected. Please try again with another image.",
+    "sizeLimit": "Maximum file size is {maxSize} MB",
+    "generationFailed": "Failed to process. Please try again with another image."
   },
   "results": {
-    "saveInstructions": "Long press to save image",
-    "browserSaveTip": "Open this page in browser to save"
+    "saveInstructions": "Long press to save.",
+    "browserSaveTip": "8. Please open this page in a browser to save."
   },
   "print": {
-    "noContent": "No printable content",
-    "taskSent": "Print task sent. Please queue to collect",
-    "duplicateWarning": "Please do not print repeatedly"
+    "noContent": "No content to print.",
+    "taskSent": "Print request sent. Please queue up to collect.",
+    "duplicateWarning": "Please print only once."
   },
   "errors": {
     "generic": {
-      "operationFailed": "Operation failed, please retry",
-      "saveFailed": "Save failed, please retry"
+      "operationFailed": "Failed to proceed. Please try again.",
+      "saveFailed": "Failed to save. Please try again."
     },
     "api": {
-      "serviceUnavailable": "Service unavailable, please try later",
-      "notEffective": "Operation not effective, try later",
-      "invalidRequest": "Request cannot be processed, please adjust",
-      "rateLimit": "Too frequent, please try later",
-      "quotaExceeded": "Usage limit reached, contact staff",
-      "networkIssue": "Network not supported",
-      "systemError": "System error, try later",
-      "maintenance": "Service under maintenance, try later",
-      "busy": "Service busy, please retry"
+      "serviceUnavailable": "Service error. Please try again.",
+      "notEffective": "Failed to proceed. Please try again.",
+      "invalidRequest": "Failed to process request. Please try again.",
+      "rateLimit": "Too many requests. Please try again.",
+      "quotaExceeded": "Maximum usage reached. Please contact staff on site.",
+      "networkIssue": "Network failure.",
+      "systemError": "Something went wrong. Please try again.",
+      "maintenance": "Maintenance ongoing. Please try again.",
+      "busy": "9. System busy. Please try again."
     }
   }
 }
