@@ -30,8 +30,8 @@ find_package(Qt6 COMPONENTS
 find_package(OpenSSL REQUIRED)
 
 add_executable(${PROJECT_NAME} WIN32
-    httpMain.cpp Printer.cpp Printer.h PrinterManager.h PrinterManager.cpp
-    ConnectPool.h ConnectPool.cpp HttpClient.h HttpClient.cpp global_time.h global_time.cpp
+    main.cpp Printer.cpp Printer.h PrinterManager.h PrinterManager.cpp
+    ConnectPool.h ConnectPool.cpp HttpClient.h HttpClient.cpp
     # 其他源文件...
 )
 

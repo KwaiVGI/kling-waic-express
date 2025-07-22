@@ -36,16 +36,7 @@ std::vector<std::string> collectJpgRelative(const std::string& dir)
 
 int main() {
     OutputRedirector redirect("log.txt");
-    int n = 100;
     std::vector<std::string> inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
-    HttpClient::instance().downloadImage("https://kling-waic.s3.cn-north-1.amazonaws.com.cn/output-images/atxbYr1Jq6oykEzmk4qrkKmnyVOR_h_Oxuqv4OrZAxk.jpg", "/cppcode/kling-waic-express/kling-printer/download/", "123.jpg");
-    // for (auto input : inputs) {
-    //     std::cout << input << std::endl;
-    // }
-    // while (n--) {
-    //     bool ret = HttpClient::instance().fetchImageQueue();
-    //     Sleep(1000);
-    // }
-
-
+    HttpClient* downloadClient = new HttpClient("kling-waic.s3.cn-north-1.amazonaws.com.cn", 443, "");
+    downloadClient->downloadImage("/output-images/atxbYr1Jq6oykEzmk4qrkKmnyVOR_h_Oxuqv4OrZAxk.jpg", "/cppcode/kling-waic-express/kling-printer/download/", "123.jpg");
 }

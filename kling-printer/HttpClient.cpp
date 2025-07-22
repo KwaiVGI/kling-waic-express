@@ -10,11 +10,13 @@ using namespace httplib;
 
 const std::string HttpClient::DOWNLOAD_PATH = "/cppcode/kling-waic-express/kling-printer/download/";
 
-std::string stringPrefix(const std::string& s) {
-    static const std::regex prefix(R"(^https://waic-api.klingai.com::6443)");
-    return std::regex_replace(s, prefix, "");
-}
-HttpClient::HttpClient() {
+// std::string stringPrefix(const std::string& s) {
+//     static const std::regex prefix(R"(^https://waic-api.klingai.com::6443)");
+//     return std::regex_replace(s, prefix, "");
+// }
+
+HttpClient::HttpClient(const std::string& host, int port, const std::string& token) 
+: host_(host), port_(port), token_(token)  {
     pool_ = std::make_unique<ConnectPool>(5, host_, port_, connTimeout_, readTimeout_);
 }
 
@@ -53,6 +55,9 @@ json HttpClient::getJson(const std::string& path,
     httplib::Result ret = doRequest(conn->cli, token_, path, json(), headers, false);
     pool_->release(std::move(conn));
     std::cout << "getJson:" << path << " result status:" << ret->status << std::endl;
+    if (!ret || ret->status != 200) {
+        return json::object();
+    }
     return json::parse(ret->body);
 }
 
@@ -77,7 +82,7 @@ QImage HttpClient::getImage(const std::string& path,
         std::cout << header.first << " " << header.second << std::endl;
     }
     auto conn = pool_->acquire();
-    httplib::Result ret = doRequest(conn->cli, "", path, json(), headers, false);
+    httplib::Result ret = doRequest(conn->cli, token_, path, json(), headers, false);
     std::cout << "endRequest" << std::endl;
     pool_->release(std::move(conn));
   
@@ -101,36 +106,30 @@ QImage HttpClient::getImage(const std::string& path,
     return img;
 }
 
-bool HttpClient::fetchImageQueue() {
+json HttpClient::fetchImageQueue() {
     std::cout << "[INFO] begin fetch Image Queue" << std::endl;
     json ret = postJson("/api/printings/fetch", {});
-    std::cout << "post success!" << std::endl;
-    if (ret.empty()) {
-        return false;
-    }
-    if (ret["status"] == "FAILED") {
-        std::cout << "HTTP ERROR! CANNOT CONNECT" << std::endl;
-        return false;
-    }
-    std::cout << ret["data"] << std::endl;
+    std::cout << "post success! json:" << ret << std::endl;
+    // if (ret.empty()) {
+    //     return ret;
+    // }
+    // if (ret["status"] == "FAILED") {
+    //     std::cout << "HTTP ERROR! CANNOT CONNECT" << std::endl;
+    //     return ret;
+    // }
+    // std::cout << ret["data"] << std::endl;
 
-    if (!ret.contains("data") || ret["data"].is_null() || ret["status"] != "SUCCEED") {
-        // 队列为空
-        std::cout << "[INFO] No data." << std::endl;
-        return false;
-    }
-    long long id = ret.at("data").at("id");
-    std::cout << "id" << id << std::endl;
-    std::string name = std::to_string(id);
-    std::cout << "name:" << name << std::endl;
-    std::string download_url = stringPrefix(ret.at("data").at("task").at("outputs").at("url"));
-    std::cout << "[INFO] ready to download. name: " + name + " url:" + download_url << std::endl;
-    if (!downloadImage(download_url, DOWNLOAD_PATH, name + ".jpg")) {
-        std::cout << "[INFO] DownLoad image failed. url:" << download_url << std::endl; 
-        return false;
-    }
-    std::cout << "[INFO] download Image Success. name:" << name << std::endl;
-    return true;
+    // if (!ret.contains("data") || ret["data"].is_null() || ret["status"] != "SUCCEED") {
+    //     // 队列为空
+    //     std::cout << "[INFO] No data." << std::endl;
+    //     return ret;
+    // }
+    // long long id = ret.at("data").at("id");
+    // std::cout << "id" << id << std::endl;
+    // std::string name = std::to_string(id);
+    // std::cout << "name:" << name << std::endl;
+    // std::string download_url = ret.at("data").at("task").at("outputs").at("url");
+    return ret;
 }
 
 bool HttpClient::downloadImage(const std::string& imgUrl, const std::string& dir, const std::string& name) {

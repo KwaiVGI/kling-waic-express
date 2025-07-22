@@ -101,6 +101,29 @@ std::vector<std::string> collectJpgRelative(const std::string& dir)
     return out;
 }
 
+std::string stringPrefix(const std::string& s, const std::string& prefix) {
+    return (s.size() >= prefix.size() &&
+            s.compare(0, prefix.size(), prefix) == 0)
+           ? s.substr(prefix.size())
+           : s;
+}
+
+bool checkJson(json ret) {
+    if (ret["status"] == "FAILED") {
+        return false;
+    }
+    if (!ret.contains("data") || ret["data"].is_null() || ret["status"] != "SUCCEED") {
+        // 队列为空
+        std::cout << "[INFO] No data." << std::endl;
+        return false;
+    }
+    return true;
+}
+
+std::string DOWNLOAD_DIR = "/cppcode/kling-waic-express/kling-printer/download/";
+
+std::string DOWNLOAD_PREFIX = "https://kling-waic.s3.cn-north-1.amazonaws.com.cn";
+std::string FETCH_PREFEIX = "https://waic-api.klingai.com";
 int main() {
     // cout 定向至指定txt
     OutputRedirector redirect("log.txt");
@@ -114,7 +137,11 @@ int main() {
     printerInfoList.push_back({L"Canon SELPHY CP1500(4)", 100, 148 , 300, false});
     printerInfoList.push_back({L"Canon SELPHY CP1500(5)", 100, 148 , 300, false});
     PrinterManager* printerManager = new PrinterManager(printerInfoList);
+    HttpClient* baseClient = new HttpClient("waic-api.klingai.com", 443, "wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9");
+    HttpClient* downloadClient = new HttpClient("kling-waic.s3.cn-north-1.amazonaws.com.cn", 443, "");
     bool running = true;
+    std::queue<std::string> imageQueue;
+    std::mutex queue_mutex;
     printf("Please input image path to print. press Enter for end. input empty line for quit.\n");
     while (running) {
         // std::string input;
@@ -144,10 +171,21 @@ int main() {
         //     printerManager->addImage(input);
         // }
         std::vector<string> inputs;
-        if(HttpClient::instance().fetchImageQueue()) {
             // 增加逻辑
-            inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
+        json ret = baseClient->fetchImageQueue();
+        // 檢測是否成功
+        if (checkJson(ret)) {
+            std::string downloadUrl = stringPrefix(ret.at("data").at("task").at("outputs").at("url")
+            , DOWNLOAD_PREFIX);
+            long long id = ret.at("data").at("id");
+            std::string name = std::to_string(id);
+            std::cout << "[INFO] ready to download. name: " + name + " url:" + downloadUrl << std::endl;
+            if (!downloadClient->downloadImage(downloadUrl, DOWNLOAD_DIR, name + ".jpg")) {
+                std::cout << "[INFO] DownLoad image failed. url:" << downloadUrl << std::endl;
+            }
+            std::cout << "[INFO] Download image success. json: " << ret << std::endl;  
         }
+        inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
         for (auto input : inputs) {
             input = ".\\download\\" + input;
             std::cout << input << std::endl;
