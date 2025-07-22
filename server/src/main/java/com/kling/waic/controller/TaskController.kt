@@ -44,7 +44,7 @@ class TaskController (
     @Authorization(AuthorizationType.CREATE_TASK)
     fun queryTask(@PathVariable type: TaskType,
                   @PathVariable name: String,
-                  @RequestParam locale: Locale): Result<Task> {
+                  @RequestParam(required = false, defaultValue = "CN") locale: Locale): Result<Task> {
         log.debug("Query task of type: {}, name: {}", type, name)
 
         val task = CoroutineUtils.runSuspend {
