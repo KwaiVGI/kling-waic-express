@@ -446,6 +446,8 @@ onMounted(() => {
   background-size: cover;
 
   font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  -webkit-text-size-adjust: 100%; /* Safari/iOS 兼容 */
+  text-size-adjust: none; /* 标准写法 */
   // TODO: 行内的class不生效，所以
   .blur-bg {
     filter: blur(20px);
