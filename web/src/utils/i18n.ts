@@ -5,6 +5,7 @@ import { Locale as LocaleVant } from "vant";
 import type { PickerColumn } from "vant";
 import en from "@/locales/en-US.json";
 import zh from "@/locales/zh-CN.json";
+import setPageTitle from "./set-page-title";
 
 const FALLBACK_LOCALE = "zh-CN";
 
@@ -56,6 +57,8 @@ async function setLang(lang: string, i18n: I18n) {
 
   // 设置 vant 组件语言包
   LocaleVant.use(lang, vantLocales[lang]);
+  const { t } = i18n.global;
+  setPageTitle(t("brand.appName"));
 }
 
 // 加载本地语言包

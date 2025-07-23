@@ -3,8 +3,13 @@
     <div ref="qrCodeElement" class="qr-code"></div>
     <span class="mt-16px">{{
       $route.params.type === "image"
-        ? "可灵 AI 图片-风格转绘"
-        : "可灵 AI 视频-特效盲盒"
+        ? "可灵 AI 图片 - 风格转绘"
+        : "可灵 AI 视频 - 特效盲盒"
+    }}</span>
+    <span class="mt-16px">{{
+      $route.params.type === "image"
+        ? "KlingAI Image - Restyle Collage"
+        : "KlingAI Video - Effect Blind Box"
     }}</span>
   </div>
 </template>

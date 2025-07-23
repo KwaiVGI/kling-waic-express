@@ -38,7 +38,7 @@
   },
   "results": {
     "saveInstructions": "Long press to save.",
-    "browserSaveTip": "8. Please open this page in a browser to save."
+    "browserSaveTip": "Please open this page in a browser to save."
   },
   "print": {
     "noContent": "No content to print.",
@@ -59,7 +59,7 @@
       "networkIssue": "Network failure.",
       "systemError": "Something went wrong. Please try again.",
       "maintenance": "Maintenance ongoing. Please try again.",
-      "busy": "9. System busy. Please try again."
+      "busy": "System busy. Please try again."
     }
   }
 }
