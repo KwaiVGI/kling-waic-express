@@ -67,7 +67,7 @@ json HttpClient::postJson(const std::string& path,
     auto conn = pool_->acquire();
     httplib::Result ret = doRequest(conn->cli, token_, path, body, headers, true);
     pool_->release(std::move(conn));
-    LOG(INFO) << "postJoson:" << path << " result status:" << ret->status << std::endl;
+    LOG(INFO) << "postJson:" << path << " result status:" << ret->status << std::endl;
     if (!ret || ret->status != 200) {
         LOG(INFO) << "postJson return empty json" << std::endl;
         return json::object();
@@ -80,7 +80,6 @@ QImage HttpClient::getImage(const std::string& path,
     LOG(INFO) << "Getting Image" << path << std::endl;
     auto conn = pool_->acquire();
     httplib::Result ret = doRequest(conn->cli, token_, path, json(), headers, false);
-    LOG(INFO) << "endRequest" << std::endl;
     pool_->release(std::move(conn));
   
     if (!ret || ret->status != 200) {
@@ -104,9 +103,7 @@ QImage HttpClient::getImage(const std::string& path,
 }
 
 json HttpClient::fetchImageQueue() {
-    LOG(INFO) << "[INFO] begin fetch Image Queue" << std::endl;
     json ret = postJson("/api/printings/fetch", {});
-    LOG(INFO) << "post success! json:" << ret << std::endl;
     // if (ret.empty()) {
     //     return ret;
     // }
@@ -136,9 +133,7 @@ bool HttpClient::downloadImage(const std::string& imgUrl, const std::string& dir
     if (img.isNull()) {
         return false;
     }
-    LOG(INFO) << "[INFO] ready to save. imgUrl:" + imgUrl + "dir:" + dir + " fileName:" + name << std::endl;
     QFileInfo fi(QString::fromStdString(dir));
-    LOG(INFO) << fi.absoluteFilePath().toStdString() << std::endl;
     QDir().mkpath(fi.absolutePath());
     return img.save(QString::fromStdString(dir + name), "JPG", 100);
 }

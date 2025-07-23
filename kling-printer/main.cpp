@@ -57,7 +57,6 @@ bool checkJson(json ret) {
     }
     if (!ret.contains("data") || ret["data"].is_null() || ret["status"] != "SUCCEED") {
         // 队列为空
-        LOG(INFO) << "No data.";
         return false;
     }
     return true;
