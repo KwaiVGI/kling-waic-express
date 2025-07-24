@@ -162,8 +162,12 @@ int main(int argc, char* argv[]) {
                     fflush(stdout);
                     continue;
                 }
-                int idx = stoi(param);
-                printerManager->removePrinter(idx);
+                try {
+                    int idx = stoi(param);
+                    printerManager->removePrinter(idx);
+                } catch (exception e) {
+                    printf("%s\n", e.what());
+                }
                 continue;
             } else if (line._Equal("exit")) {
                 g_stop.store(true);
@@ -249,6 +253,8 @@ int main(int argc, char* argv[]) {
     // }
     LOG(INFO) << "delete";
     httpWorker.join();
+    delete baseClient;
+    delete downloadClient;
     delete printerManager;
     return 0;
 }

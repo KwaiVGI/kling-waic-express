@@ -13,7 +13,7 @@
 class Printer
 {
 public:
-    Printer(const std::wstring& printerName, int printerPageWidth = 0, int printerPageHeight = 0, int dpi = 0, bool savePhotos = false);
+    Printer(const std::wstring& printerName, int printerPageWidth = 100, int printerPageHeight = 148, int dpi = 300, bool savePhotos = false);
     ~Printer();
     void addPhotoFile(const std::string& filename);
     DWORD getJobsCount();
