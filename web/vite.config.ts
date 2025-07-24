@@ -19,7 +19,7 @@ export default ({ mode }: ConfigEnv): UserConfig => {
       proxy: {
         "/api": {
           // target: "https://waic.staging.kuaishou.com",
-          target: "https://waic-api.klingai.com",
+          target: "https://waic-api.klingai.com:6443",
           changeOrigin: true,
         },
       },
