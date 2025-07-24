@@ -45,6 +45,7 @@
 
 <script setup lang="ts">
 import { castingService } from "@/api/castingService";
+import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 import { ref, onMounted, onUnmounted, shallowRef, nextTick } from "vue";
 
 interface VideoItem {
@@ -237,8 +238,12 @@ const handleVideoError = (index: number) => {
   reloadVideo(index);
 };
 
-// 启动
+const route = useRoute();
+// 初始化加载
 onMounted(() => {
+  if (route.query.token) {
+    localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+  }
   initVideoCells();
 });
 
