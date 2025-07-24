@@ -31,7 +31,7 @@ class TokenHelper(
                     (previous?.id ?: 0) + 1,
                     UUID.randomUUID().toString(),
                     nowInLock,
-                    nowInLock.plusSeconds(EXPIRE_IN_SECONDS - 5),
+                    nowInLock.plusSeconds(5),
                     nowInLock.plusSeconds(EXPIRE_IN_SECONDS)
                 )
                 latestToken = newToken
