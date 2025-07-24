@@ -15,6 +15,7 @@ const request = axios.create({
   // baseURL: "https://waic-api.klingai.com/",
   baseURL: import.meta.env.DEV ? "/" : "https://waic-api.klingai.com/",
   timeout: 600 * 1000, // 请求超时时间
+  withCredentials: true,
 });
 
 export type RequestError = AxiosError<{
