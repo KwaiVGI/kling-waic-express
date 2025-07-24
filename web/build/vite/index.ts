@@ -1,41 +1,41 @@
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import process from 'node:process'
-import { unheadVueComposablesImports } from '@unhead/vue'
-import legacy from '@vitejs/plugin-legacy'
-import vue from '@vitejs/plugin-vue'
-import UnoCSS from 'unocss/vite'
-import AutoImport from 'unplugin-auto-import/vite'
-import { VantResolver } from '@vant/auto-import-resolver'
-import Components from 'unplugin-vue-components/vite'
-import { VueRouterAutoImports } from 'unplugin-vue-router'
-import VueRouter from 'unplugin-vue-router/vite'
-import { mockDevServerPlugin } from 'vite-plugin-mock-dev-server'
-import { VitePWA } from 'vite-plugin-pwa'
-import Sitemap from 'vite-plugin-sitemap'
-import VueDevTools from 'vite-plugin-vue-devtools'
-import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
-import { loadEnv } from 'vite'
-import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
-import path from 'path'
-import { createViteVConsole } from './vconsole'
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import process from "node:process";
+import { unheadVueComposablesImports } from "@unhead/vue";
+import legacy from "@vitejs/plugin-legacy";
+import vue from "@vitejs/plugin-vue";
+import UnoCSS from "unocss/vite";
+import AutoImport from "unplugin-auto-import/vite";
+import { VantResolver } from "@vant/auto-import-resolver";
+import Components from "unplugin-vue-components/vite";
+import { VueRouterAutoImports } from "unplugin-vue-router";
+import VueRouter from "unplugin-vue-router/vite";
+import { mockDevServerPlugin } from "vite-plugin-mock-dev-server";
+import { VitePWA } from "vite-plugin-pwa";
+import Sitemap from "vite-plugin-sitemap";
+import VueDevTools from "vite-plugin-vue-devtools";
+import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite";
+import { loadEnv } from "vite";
+import { createSvgIconsPlugin } from "vite-plugin-svg-icons";
+import path from "path";
+import { createViteVConsole } from "./vconsole";
 
 export function createVitePlugins(mode: string) {
-  const env = loadEnv(mode, process.cwd())
+  const env = loadEnv(mode, process.cwd());
 
   return [
     // https://github.com/posva/unplugin-vue-router
     VueRouter({
-      extensions: ['.vue'],
-      routesFolder: 'src/pages',
-      dts: 'src/types/typed-router.d.ts',
+      extensions: [".vue"],
+      routesFolder: "src/pages",
+      dts: "src/types/typed-router.d.ts",
     }),
 
     vue(),
 
     // https://github.com/jbaubree/vite-plugin-sitemap
     Sitemap({
-      outDir: env.VITE_APP_OUT_DIR || 'dist',
+      outDir: env.VITE_APP_OUT_DIR || "dist",
     }),
 
     // https://github.com/pengzhanbo/vite-plugin-mock-dev-server
@@ -43,52 +43,49 @@ export function createVitePlugins(mode: string) {
 
     // https://github.com/antfu/unplugin-vue-components
     Components({
-      extensions: ['vue'],
+      extensions: ["vue"],
       resolvers: [VantResolver()],
       include: [/\.vue$/, /\.vue\?vue/],
-      dts: 'src/types/components.d.ts',
+      dts: "src/types/components.d.ts",
     }),
 
     // https://github.com/antfu/unplugin-auto-import
     AutoImport({
-      include: [
-        /\.[tj]sx?$/,
-        /\.vue$/,
-        /\.vue\?vue/,
-      ],
+      include: [/\.[tj]sx?$/, /\.vue$/, /\.vue\?vue/],
       imports: [
-        'vue',
-        '@vueuse/core',
+        "vue",
+        "@vueuse/core",
         VueRouterAutoImports,
         {
-          'vue-router/auto': ['useLink'],
-          '@/utils/i18n': ['i18n', 'locale'],
-          'vue-i18n': ['useI18n'],
+          "vue-router/auto": ["useLink"],
+          "@/utils/i18n": ["i18n", "locale"],
+          "vue-i18n": ["useI18n"],
         },
         unheadVueComposablesImports,
       ],
-      dts: 'src/types/auto-imports.d.ts',
-      dirs: [
-        'src/composables',
-      ],
+      dts: "src/types/auto-imports.d.ts",
+      dirs: ["src/composables"],
       resolvers: [VantResolver()],
     }),
 
     // https://github.com/intlify/bundle-tools/tree/main/packages/unplugin-vue-i18n
     VueI18nPlugin({
       // locale messages resource pre-compile option
-      include: resolve(dirname(fileURLToPath(import.meta.url)), '../../src/locales/**'),
+      include: resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../../src/locales/**"
+      ),
     }),
 
     legacy({
-      targets: ['defaults', 'not IE 11'],
+      targets: ["defaults", "not IE 11"],
     }),
     createSvgIconsPlugin({
-        // 指定需要缓存的图标文件夹
-        iconDirs: [path.resolve(process.cwd(), 'src/assets/svg')],
-        // 指定symbolId格式
-        symbolId: 'icon-[dir]-[name]'
-      }),
+      // 指定需要缓存的图标文件夹
+      iconDirs: [path.resolve(process.cwd(), "src/assets/svg")],
+      // 指定symbolId格式
+      symbolId: "icon-[dir]-[name]",
+    }),
 
     // https://github.com/antfu/unocss
     // see uno.config.ts for config
@@ -98,7 +95,7 @@ export function createVitePlugins(mode: string) {
     createViteVConsole(mode),
 
     // https://github.com/vuejs/devtools-next
-    VueDevTools(),
+    // VueDevTools(),
 
     // https://github.com/antfu/vite-plugin-pwa
     // VitePWA({
@@ -128,5 +125,5 @@ export function createVitePlugins(mode: string) {
     //     ],
     //   },
     // }),
-  ]
+  ];
 }

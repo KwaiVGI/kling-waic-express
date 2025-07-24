@@ -51,7 +51,7 @@
 
       <div v-else class="gallery-grid">
         <div
-          v-for="image in images"
+          v-for="(image, idx) in images"
           :key="image.id"
           class="gallery-item"
           :class="{
@@ -65,7 +65,7 @@
             <span class="image-id">{{ image.name }}</span>
             <div class="item-badges">
               <button
-                @click="printImage(image.name)"
+                @click.stop="printImage(image.name)"
                 class="action-button print"
               >
                 打印
@@ -73,20 +73,20 @@
             </div>
             <div class="item-actions">
               <button
-                @click="promoteImage(image.id)"
+                @click.stop="promoteImage(image.id)"
                 class="action-button promote"
               >
                 置顶
               </button>
               <button
-                @click="pinImage(image.id)"
+                @click.stop="pinImage(image.id)"
                 :disabled="image.id === pinnedImageId"
                 class="action-button pin"
               >
                 固定
               </button>
               <button
-                @click="deleteImage(image.id)"
+                @click.stop="deleteImage(image.id)"
                 :disabled="
                   image.id === pinnedImageId || image.id === promotedImageId
                 "
@@ -137,7 +137,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 import { confirmDelete } from "@/utils/confirm";
-import { showToast } from "vant";
+import { showImagePreview, showToast } from "vant";
 
 const route = useRoute();
 // 数据状态
@@ -469,8 +469,8 @@ watch(searchQuery, (newVal) => {
 
 .gallery-item {
   width: 100%;
-  aspect-ratio: 9/16;
-  border-radius: 6px;
+  aspect-ratio: 2/3;
+  border-radius: 16px;
   overflow: hidden;
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -543,9 +543,9 @@ watch(searchQuery, (newVal) => {
 .item-actions {
   position: absolute;
   bottom: 6px;
-  left: 0;
   right: 0;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   gap: 2px;
   padding: 2px;

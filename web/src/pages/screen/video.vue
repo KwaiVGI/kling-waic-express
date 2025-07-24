@@ -2,187 +2,265 @@
   <div class="video-wall-container">
     <div class="video-grid">
       <div
-        v-for="(video, index) in displayedVideos"
-        :key="index"
+        v-for="(cell, index) in videoCells"
+        :key="`cell-${index}-${cell.current?.id || 'empty'}`"
         class="video-cell"
-        :class="{ flipping: video.flipping }"
-        @animationend="handleFlipEnd(index)"
       >
+        <!-- 当前播放的视频 -->
         <video
-          v-if="video.url"
-          :src="video.url"
-          :poster="video.poster"
+          v-if="cell.current && cell.current.ready"
+          ref="currentVideos"
+          :data-index="index"
+          :src="cell.current.url"
+          :poster="cell.current.poster"
           autoplay
-          loop
           muted
           playsinline
-          class="video-element"
+          class="video-element active"
+          @ended="onVideoEnded(index)"
+          @error="handleVideoError(index)"
         ></video>
-        <div v-else class="video-placeholder">
-          <span class="placeholder-text">视频加载中...</span>
-        </div>
+
+        <!-- 预加载的下一个视频（已加载完成但隐藏） -->
+        <video
+          v-if="cell.next && cell.next.ready"
+          ref="nextVideos"
+          :data-index="index"
+          :src="cell.next.url"
+          muted
+          playsinline
+          class="video-element next"
+        ></video>
+
+        <!-- 过渡遮罩 -->
+        <div
+          v-if="cell.transitioning"
+          class="transition-overlay"
+          @animationend="cell.transitioning = false"
+        ></div>
       </div>
     </div>
-
-    <!-- <div class="status-bar">
-      <span>最后更新: {{ lastUpdateTime }}</span>
-      <span>网格尺寸: {{ gridSize }}×{{ gridSize }}</span>
-      <span>轮询间隔: {{ pollIntervalSeconds }}秒</span>
-      <span>新视频待替换: {{ newVideosPending }}</span>
-    </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { castingService } from "@/api/castingService";
-import { ref, onMounted, onUnmounted, computed, watch } from "vue";
+import { ref, onMounted, onUnmounted, shallowRef, nextTick } from "vue";
 
 interface VideoItem {
   poster: string;
   url: string;
   id: string;
-  flipping: boolean;
+  ready: boolean;
+  element?: HTMLVideoElement;
+}
+
+interface VideoCell {
+  current: VideoItem | null;
+  next: VideoItem | null;
+  transitioning: boolean;
 }
 
 // 配置参数
-const gridSize = ref(3); // 默认10×10网格
-const pollIntervalSeconds = ref(10); // 默认10秒轮询间隔
-const pollInterval = ref<NodeJS.Timeout | null>(null);
+const gridSize = ref(3); // 默认3x3网格
 
-// 视频数据
-const displayedVideos = ref<VideoItem[]>([]);
-const lastUpdateTime = ref("");
-const newVideosPending = ref(0);
-const totalVideos = computed(() => gridSize.value * gridSize.value);
+// 视频格子数据
+const videoCells = ref<VideoCell[]>([]);
+const currentVideos = shallowRef<HTMLVideoElement[]>([]);
+const nextVideos = shallowRef<HTMLVideoElement[]>([]);
+const preloadLock = ref(false); // 预加载锁防止重复请求
 
-// 获取当前显示的所有视频URL
-const getCurrentVideoUrls = () => {
-  const urls = new Set<string>();
-  displayedVideos.value.forEach((video) => {
-    if (video.url) urls.add(video.url.split("?")[0]); // 忽略查询参数
-  });
-  return urls;
-};
-
-// 初始化视频槽位
-const initVideoSlots = () => {
-  const total = totalVideos.value;
-  displayedVideos.value = Array(total)
+// 初始化视频格子
+const initVideoCells = async () => {
+  const total = gridSize.value * gridSize.value;
+  videoCells.value = Array(total)
     .fill(null)
     .map(() => ({
-      poster: "",
-      url: "",
-      id: "",
-      flipping: false,
+      current: null,
+      next: null,
+      transitioning: false,
     }));
+
+  // 批量加载初始视频
+  await preloadInitialVideos();
+
+  // 预加载下一批视频
+  schedulePreload();
 };
 
-// 获取视频数据
-const fetchVideos = async () => {
-  try {
-    const mockVideos = await castingService.getCurrentCasting(
-      "VIDEO_EFFECT",
-      gridSize.value * gridSize.value
-    );
+// 预加载初始视频
+const preloadInitialVideos = async () => {
+  const total = gridSize.value * gridSize.value;
+  const videos = await castingService.getCurrentCasting("VIDEO_EFFECT", total);
 
-    // 更新最后更新时间
-    lastUpdateTime.value = new Date().toLocaleTimeString();
-
-    // 获取当前已显示的视频URL（忽略查询参数）
-    const currentUrls = getCurrentVideoUrls();
-
-    // 过滤出真正新的视频（当前界面没有的）
-    const trulyNewVideos = mockVideos.filter((video) => {
-      const baseUrl = video.url.split("?")[0];
-      return !currentUrls.has(baseUrl);
-    });
-
-    newVideosPending.value = trulyNewVideos.length;
-
-    if (trulyNewVideos.length > 0) {
-      // 随机替换现有视频
-      replaceRandomVideos(trulyNewVideos);
-    }
-  } catch (error) {
-    console.error("获取视频失败:", error);
-  }
-};
-
-// 随机替换视频
-const replaceRandomVideos = (newVideos: VideoItem[]) => {
-  // 找出当前显示的视频槽位（排除正在翻转的）
-  const availableSlots = displayedVideos.value
-    .map((_, index) => index)
-    .filter((index) => !displayedVideos.value[index].flipping);
-
-  // 随机打乱可用槽位
-  const shuffledSlots = [...availableSlots].sort(() => Math.random() - 0.5);
-
-  // 最多替换新视频数量的槽位
-  const slotsToReplace = Math.min(newVideos.length, shuffledSlots.length);
-
-  for (let i = 0; i < slotsToReplace; i++) {
-    const slotIndex = shuffledSlots[i];
-    const newVideo = newVideos[i];
-
-    // 标记为正在翻转
-    displayedVideos.value[slotIndex].flipping = true;
-
-    // 短暂延迟后更新视频内容
-    setTimeout(() => {
-      displayedVideos.value[slotIndex] = {
-        poster: newVideo.poster,
-        url: newVideo.url,
-        id: newVideo.id,
-        flipping: false,
-      };
-      newVideosPending.value--;
-    }, 500); // 与CSS动画时间匹配
-  }
-};
-
-// 处理翻转动画结束
-const handleFlipEnd = (index: number) => {
-  displayedVideos.value[index].flipping = false;
-};
-
-// 开始轮询
-const startPolling = () => {
-  fetchVideos(); // 立即获取一次
-  pollInterval.value = setInterval(
-    fetchVideos,
-    pollIntervalSeconds.value * 1000
+  await Promise.all(
+    videos.map(async (video, index) => {
+      if (index < total) {
+        const videoItem = { ...video, ready: false };
+        videoCells.value[index].current = videoItem;
+        await preloadVideo(videoItem);
+      }
+    })
   );
 };
 
-// 初始化和启动
-onMounted(() => {
-  initVideoSlots();
-  startPolling();
-});
+// 预加载单个视频并确认完成
+const preloadVideo = (videoItem: VideoItem): Promise<void> => {
+  return new Promise((resolve) => {
+    const videoEl = document.createElement("video");
+    videoEl.src = videoItem.url;
+    videoEl.muted = true;
+    videoEl.preload = "auto";
 
-// 组件卸载时清理
-onUnmounted(() => {
-  if (pollInterval.value) {
-    clearInterval(pollInterval.value);
+    const onCanPlay = () => {
+      cleanup();
+      videoItem.ready = true;
+      videoItem.element = videoEl;
+      resolve();
+    };
+
+    const onError = () => {
+      console.error(`视频加载失败: ${videoItem.url}`);
+      cleanup();
+      resolve();
+    };
+
+    const cleanup = () => {
+      videoEl.removeEventListener("canplay", onCanPlay);
+      videoEl.removeEventListener("error", onError);
+      videoEl.remove();
+    };
+
+    videoEl.addEventListener("canplay", onCanPlay, { once: true });
+    videoEl.addEventListener("error", onError, { once: true });
+
+    videoEl.load();
+  });
+};
+
+// 预加载下一批视频（智能调度）
+const schedulePreload = () => {
+  if (preloadLock.value) return;
+
+  // 计算需要预加载的数量
+  const emptySlots = videoCells.value.filter((cell) => !cell.next).length;
+  if (emptySlots === 0) return;
+
+  preloadLock.value = true;
+  const preloadCount = Math.min(emptySlots, gridSize.value * gridSize.value);
+
+  castingService
+    .getCurrentCasting("VIDEO_EFFECT", preloadCount)
+    .then(async (videos) => {
+      const preloadTasks = [];
+
+      // 优先分配给没有预加载视频的格子
+      for (let i = 0; i < videos.length; i++) {
+        const cellIndex = videoCells.value.findIndex((cell) => !cell.next);
+        if (cellIndex === -1) break;
+
+        const videoItem = { ...videos[i], ready: false };
+        videoCells.value[cellIndex].next = videoItem;
+        preloadTasks.push(preloadVideo(videoItem));
+      }
+
+      await Promise.all(preloadTasks);
+      console.log(`预加载完成: ${preloadCount}个视频`);
+    })
+    .catch((error) => {
+      console.error("预加载请求失败:", error);
+    })
+    .finally(() => {
+      preloadLock.value = false;
+    });
+};
+
+// 处理视频播放结束
+const onVideoEnded = (index: number) => {
+  const cell = videoCells.value[index];
+
+  if (cell.next?.ready) {
+    // 触发切换动画
+    cell.transitioning = true;
+
+    setTimeout(() => {
+      // 切换到预加载的视频
+      cell.current = cell.next;
+      cell.next = null;
+
+      // 触发新的预加载
+      schedulePreload();
+
+      // 确保新视频播放
+      nextTick(() => {
+        const videoEl = currentVideos.value.find(
+          (el) => parseInt(el.dataset.index || "0") === index
+        );
+        if (videoEl) {
+          videoEl.play().catch((e) => console.error("视频播放失败:", e));
+        }
+      });
+    }, 300); // 匹配动画时间
+  } else {
+    // 没有准备好的下一个视频，重新播放当前视频
+    const videoEl = currentVideos.value.find(
+      (el) => parseInt(el.dataset.index || "0") === index
+    );
+    if (videoEl && cell.current?.ready) {
+      videoEl.currentTime = 0;
+      videoEl.play().catch((e) => console.error("视频重播失败:", e));
+    } else {
+      // 当前视频也不可用，触发紧急加载
+      reloadVideo(index);
+    }
+
+    // 触发预加载补充
+    schedulePreload();
   }
+};
+
+// 重新加载单个视频
+const reloadVideo = async (index: number) => {
+  try {
+    const [video] = await castingService.getCurrentCasting("VIDEO_EFFECT", 1);
+    const videoItem = { ...video, ready: false };
+    videoCells.value[index].current = videoItem;
+    await preloadVideo(videoItem);
+  } catch (e) {
+    console.error(`加载视频失败: ${index}`, e);
+  }
+};
+
+// 处理视频错误
+const handleVideoError = (index: number) => {
+  console.error(`视频播放错误: ${index}`);
+  reloadVideo(index);
+};
+
+// 启动
+onMounted(() => {
+  initVideoCells();
 });
 
-// 监听轮询间隔变化
-watch(pollIntervalSeconds, (newVal) => {
-  if (newVal < 1) pollIntervalSeconds.value = 1;
-  if (newVal > 60) pollIntervalSeconds.value = 60;
+// 清理
+onUnmounted(() => {
+  videoCells.value.forEach((cell) => {
+    if (cell.current?.element) {
+      cell.current.element.pause();
+      cell.current.element.removeAttribute("src");
+    }
+    if (cell.next?.element) {
+      cell.next.element.pause();
+      cell.next.element.removeAttribute("src");
+    }
+  });
 });
 </script>
 
 <style scoped>
 .video-wall-container {
   height: 100vh;
-  width: calc(100vh * 9 / 16);
-  /* height: calc(177.78vw);  */
-  /* 9:16 比例 */
-  /* max-height: calc(100vh); */
-  /* max-width: calc(56.25vh); 保持比例 */
+  width: calc(100vh * 9 / 16); /* 9:16 竖屏比例 */
   margin: 0 auto;
   overflow: hidden;
   background-color: #000;
@@ -191,114 +269,65 @@ watch(pollIntervalSeconds, (newVal) => {
   flex-direction: column;
 }
 
-.configuration-bar {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  padding: 10px;
-  background-color: rgba(0, 0, 0, 0.8);
-  z-index: 10;
-}
-
-.config-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: white;
-}
-
-.config-item label {
-  font-size: 14px;
-}
-
-.config-item input {
-  width: 60px;
-  padding: 5px 8px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  background-color: #333;
-  color: white;
-}
-
-.apply-btn {
-  padding: 5px 15px;
-  background-color: #4361ee;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.apply-btn:hover {
-  background-color: #3a56d4;
-}
-
 .video-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(v-bind(gridSize), 1fr);
-  grid-template-rows: repeat(v-bind(gridSize), 1fr);
+  grid-template-columns: repeat(v-bind("gridSize"), 1fr);
+  grid-template-rows: repeat(v-bind("gridSize"), 1fr);
   width: 100%;
   height: 100%;
   gap: 0;
+  box-sizing: border-box;
 }
 
 .video-cell {
   position: relative;
   background-color: #111;
   overflow: hidden;
-  transform-style: preserve-3d;
+  border-radius: 0;
 }
 
 .video-element {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: opacity 0.3s ease-in-out;
 }
 
-.video-placeholder {
+.video-element.next {
+  opacity: 0;
+  z-index: 1;
+}
+
+.video-element.active {
+  opacity: 1;
+  z-index: 2;
+}
+
+.transition-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #222;
+  background-color: white;
+  z-index: 10;
+  opacity: 0;
+  animation: fadeTransition 0.3s ease-in-out;
 }
 
-.placeholder-text {
-  color: #666;
-  font-size: 12px;
-}
-
-/* 翻转动画 */
-.video-cell.flipping {
-  /* animation: flip 1s ease-in-out; */
-}
-
-@keyframes flip {
+@keyframes fadeTransition {
   0% {
-    transform: rotateY(0deg);
+    opacity: 0;
   }
   50% {
-    transform: rotateY(90deg);
-    opacity: 0;
-  }
-  51% {
-    opacity: 0;
+    opacity: 0.8;
   }
   100% {
-    transform: rotateY(0deg);
-    opacity: 1;
+    opacity: 0;
   }
-}
-
-.status-bar {
-  display: flex;
-  justify-content: space-around;
-  padding: 8px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  font-size: 12px;
 }
 </style>

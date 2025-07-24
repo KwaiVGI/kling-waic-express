@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div
+    <!-- <div
       v-for="(item, index) in navItems"
       :key="index"
       class="card"
@@ -8,12 +8,11 @@
     >
       <div class="card-content">
         <div class="card-icon">
-          <!-- 这里可以放置图标 -->
           <div class="icon-placeholder"></div>
         </div>
         <h3 class="card-title">{{ item.title }}</h3>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 

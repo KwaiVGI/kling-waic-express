@@ -23,7 +23,12 @@ export default {
       viewportWidth: 414,
       maxDisplayWidth: 600,
       rootContainingBlockSelectorList,
-      selectorBlackList: [".pc-modal-mask"],
+      selectorBlackList: [
+        ".pc-modal-mask",
+        ".display-screen",
+        ".ds-image-container",
+        ".ds-casting-image",
+      ],
     },
   },
 };

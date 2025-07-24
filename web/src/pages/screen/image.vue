@@ -1,228 +1,317 @@
 <template>
   <div class="display-screen">
-    <div v-if="currentImage" class="image-container">
+    <!-- 双图片容器实现无缝切换 -->
+    <div class="ds-image-container">
+      <div class="absolute left-0 top-1vh w-full">
+        <img
+          class="w-full"
+          src="https://ali.a.yximgs.com/kos/nlav12119/hquZnuZl_2025-07-24-16-50-11.png"
+          alt=""
+        />
+      </div>
       <div
-        class="casting-image"
-        :style="{ backgroundImage: `url(${currentImage.url})` }"
+        class="ds-casting-image active"
+        :style="{
+          backgroundImage: currentImage ? `url(${currentImage.url})` : '',
+        }"
+      ></div>
+      <div
+        class="ds-casting-image next"
+        :style="{ backgroundImage: nextImage ? `url(${nextImage.url})` : '' }"
+        :class="{ ready: nextImageLoaded }"
       ></div>
     </div>
 
-    <div v-else class="no-image">
+    <!-- 加载状态提示 -->
+    <div v-if="!currentImage && !loadingError" class="no-image">
       <div class="no-image-content">
         <i class="fas fa-image"></i>
-        <h3>等待图片数据...</h3>
+        <h3>正在加载图片...</h3>
         <p>系统正在获取展示内容</p>
+      </div>
+    </div>
+
+    <!-- 错误提示 -->
+    <div v-if="loadingError" class="error-message">
+      <div class="error-content">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>图片加载失败</h3>
+        <p>正在尝试重新连接... {{ retryCountdown }}秒</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 
+// 图片队列管理
+const imageQueue = ref<CastingImage[]>([]);
 const currentImage = ref<CastingImage | null>(null);
-const lastUpdateTime = ref("");
-const isPolling = ref(true);
-const pollingInterval = ref<NodeJS.Timeout | null>(null);
-const pollingStatus = ref("正在获取图片...");
+const nextImage = ref<CastingImage | null>(null);
+const nextImageLoaded = ref(false);
+const transitionTimer = ref<NodeJS.Timeout | null>(null);
+const preloadCount = 3; // 预加载图片数量
+const loadingError = ref(false);
+const retryTimer = ref<NodeJS.Timeout | null>(null);
+const retryCountdown = ref(0);
+const isFetching = ref(false);
 
-// 获取当前展示图片
-const fetchCurrentCasting = async () => {
+// 计算预加载状态
+const preloadStatus = computed(() => {
+  if (loadingError.value) return "连接失败，重试中...";
+  if (imageQueue.value.length < 2) return "预加载图片...";
+  return "状态正常";
+});
+
+// 预加载图片资源
+const preloadImage = (url: string): Promise<void> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve(); // 即使出错也继续
+    img.src = url;
+  });
+};
+
+// 获取展示图片（带重试机制）
+const fetchCastingImages = async () => {
+  if (isFetching.value) return;
+  isFetching.value = true;
+  loadingError.value = false;
+
   try {
-    const result = await castingService.getCurrentCasting();
+    const result = await castingService.getCurrentCasting(
+      "STYLED_IMAGE",
+      preloadCount
+    );
     if (result.length > 0) {
-      currentImage.value = result[0];
-      lastUpdateTime.value = new Date().toLocaleString();
-      pollingStatus.value = `下次更新: `;
+      // 并行预加载所有图片
+      await Promise.all(result.map((img) => preloadImage(img.url)));
+
+      imageQueue.value = [...imageQueue.value, ...result];
+
+      // 初始化当前图片
+      if (!currentImage.value && imageQueue.value.length > 0) {
+        currentImage.value = imageQueue.value.shift() || null;
+      }
+
+      // 初始化下一张图片
+      if (!nextImage.value && imageQueue.value.length > 0) {
+        nextImage.value = imageQueue.value.shift() || null;
+        nextImageLoaded.value = true;
+      }
     }
   } catch (error) {
     console.error("获取展示图片失败:", error);
-    pollingStatus.value = "获取失败，5秒后重试...";
+    handleLoadingError();
+  } finally {
+    isFetching.value = false;
   }
 };
 
-// 开始轮询
-const startPolling = () => {
-  fetchCurrentCasting();
-  pollingInterval.value = setInterval(fetchCurrentCasting, 5000);
+// 处理加载错误
+const handleLoadingError = () => {
+  loadingError.value = true;
+  retryCountdown.value = 5;
+
+  if (retryTimer.value) clearInterval(retryTimer.value);
+  retryTimer.value = setInterval(() => {
+    retryCountdown.value--;
+    if (retryCountdown.value <= 0) {
+      clearInterval(retryTimer.value!);
+      fetchCastingImages();
+    }
+  }, 1000);
 };
 
-onMounted(() => {
-  startPolling();
+// 切换到下一张图片
+const transitionToNextImage = () => {
+  // 确保下一张图片已加载
+  if (!nextImage.value || !nextImageLoaded.value) {
+    console.warn("下一张图片尚未加载完成，跳过切换");
+    return;
+  }
+
+  // 更新图片引用
+  currentImage.value = nextImage.value;
+  nextImage.value = imageQueue.value.shift() || null;
+  nextImageLoaded.value = false;
+
+  // 预加载新图片
+  if (nextImage.value) {
+    preloadImage(nextImage.value.url).then(() => {
+      nextImageLoaded.value = true;
+    });
+  }
+
+  // 当队列不足时补充新图片
+  if (imageQueue.value.length < 2) {
+    fetchCastingImages();
+  }
+};
+
+// 安全启动轮播
+const safeStartCarousel = () => {
+  if (transitionTimer.value) clearInterval(transitionTimer.value);
+
+  transitionTimer.value = setInterval(() => {
+    // 只在下一张图片加载完成时切换
+    if (nextImageLoaded.value) {
+      transitionToNextImage();
+    } else {
+      console.log("等待下一张图片加载...");
+    }
+  }, 5000);
+};
+
+// 监听图片变化
+watch([currentImage, nextImage], ([cur, next]) => {
+  if (cur && next) {
+    safeStartCarousel();
+  }
 });
 
+// 初始化加载
+onMounted(() => {
+  fetchCastingImages();
+});
+
+// 清理资源
 onUnmounted(() => {
-  if (pollingInterval.value) {
-    clearInterval(pollingInterval.value);
-  }
+  if (transitionTimer.value) clearInterval(transitionTimer.value);
+  if (retryTimer.value) clearInterval(retryTimer.value);
 });
 </script>
 
 <style scoped>
+/* 基础全屏样式 */
 .display-screen {
+  width: 100vw;
   height: 100vh;
-  width: 100%;
-  position: relative;
   overflow: hidden;
   background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.status-bar {
+/* 9:16比例容器 */
+.ds-image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* width: 100vw; 使用视口最小单位 */
+  /* height: 100vh; 16/9 * 100vmin */
+  /* max-width: 100%; */
+  /* max-height: 100vh; */
+  /* aspect-ratio: 9/16; 现代浏览器支持 */
+  overflow: hidden;
+}
+
+/* 图片通用样式 */
+.ds-casting-image {
+  position: absolute;
+  bottom: 0;
+  /* 适配现场大屏 */
+  left: 0.5%;
+  width: 100vw;
+  height: calc(100vw * 3 / 2);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 1.5s ease-in-out;
+  will-change: opacity; /* 启用硬件加速 */
+  opacity: 0;
+}
+
+/* 当前图片 */
+.ds-casting-image.active {
+  opacity: 1;
+  z-index: 2;
+}
+
+/* 下一张图片 */
+.ds-casting-image.next {
+  opacity: 0;
+  z-index: 1;
+}
+
+/* 当下一张图片加载完成时 */
+.ds-casting-image.next.ready {
+  opacity: 0; /* 保持不可见直到切换 */
+}
+
+/* 切换动画 */
+.ds-casting-image.active {
+  animation: fadeIn 1.5s;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 无图状态和错误状态 */
+.no-image,
+.error-message {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 25px;
-  z-index: 100;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(5px);
-}
-
-.mode-indicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.mode-tag {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.mode-tag.carousel {
-  background: rgba(67, 97, 238, 0.8);
-}
-
-.mode-tag.fixed {
-  background: rgba(114, 9, 183, 0.8);
-}
-
-.image-title {
-  font-size: 16px;
-}
-
-.last-update {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-}
-
-.image-container {
-  height: 100%;
-  width: 100%;
-}
-
-.casting-image {
-  height: 100%;
-  width: 100%;
-  background-size: auto 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-
-.image-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 50%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-  z-index: 1;
-}
-
-.image-info {
-  position: relative;
-  z-index: 2;
-  padding: 40px;
-  max-width: 900px;
-  color: white;
-}
-
-.image-info h2 {
-  font-size: 3rem;
-  margin-bottom: 20px;
-}
-
-.image-info p {
-  font-size: 1.4rem;
-  opacity: 0.9;
-  line-height: 1.6;
-}
-
-.no-image {
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   text-align: center;
+  z-index: 10;
+  background-color: rgba(0, 0, 0, 0.7);
 }
 
-.no-image-content {
+.no-image-content,
+.error-content {
   max-width: 600px;
   padding: 40px;
+  color: #fff;
 }
 
-.no-image-content i {
+.error-content {
+  color: #ff6b6b;
+}
+
+.no-image-content i,
+.error-content i {
   font-size: 5rem;
   margin-bottom: 20px;
-  color: rgba(255, 255, 255, 0.2);
 }
 
-.no-image-content h3 {
+.no-image-content h3,
+.error-content h3 {
   font-size: 2rem;
   margin-bottom: 16px;
 }
 
-.no-image-content p {
+.no-image-content p,
+.error-content p {
   font-size: 1.2rem;
   opacity: 0.8;
 }
 
-.polling-indicator {
+/* 状态指示器 */
+.status-indicator {
   position: absolute;
   bottom: 20px;
   left: 20px;
-  z-index: 100;
-  padding: 8px 16px;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(5px);
-  border-radius: 30px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.control-link {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  z-index: 100;
-  padding: 10px 20px;
-  background: rgba(67, 97, 238, 0.8);
-  border-radius: 30px;
-  color: white;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.control-link:hover {
-  background: rgba(86, 113, 240, 0.9);
-  transform: translateY(-3px);
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  z-index: 20;
 }
 </style>
