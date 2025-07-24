@@ -151,6 +151,7 @@ void Printer::monitorLoop() {
         }
     }
 }
+
 void Printer::PrintImage(HDC hdcPrint, const std::shared_ptr<Gdiplus::Image>& img)
 {
     int printW = GetDeviceCaps(hdcPrint, HORZRES);
@@ -173,6 +174,10 @@ void Printer::PrintImage(HDC hdcPrint, const std::shared_ptr<Gdiplus::Image>& im
     int y = (printH - dstH) / 2;
 
     g.DrawImage(img.get(), x, y, dstW, dstH);
+}
+
+std::string Printer::getPrinterName() {
+    return wstring2string(m_printerName);
 }
 
 void Printer::run()

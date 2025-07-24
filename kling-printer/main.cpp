@@ -172,7 +172,15 @@ int main(int argc, char* argv[]) {
             } else if (line._Equal("exit")) {
                 g_stop.store(true);
                 break;
-            } else {
+            } else if (line._Equal("list")){
+                std::vector<std::string> v = printerManager->listPrinter();
+                int idx = 0;
+                for (auto element : v) {
+                    printf("%d:%s\n", idx++, element.c_str());
+                }
+                fflush(stdout);
+            }
+            else {
                 printf("parameter error! please check\n");
                 fflush(stdout);
             }

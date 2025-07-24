@@ -56,3 +56,16 @@ bool PrinterManager::removePrinter(const int idx) {
     m_printerList.erase(m_printerList.begin() + idx);
     return true;
 }
+
+std::vector<std::string> PrinterManager::listPrinter() {
+    
+    std::vector<std::string> ret{};
+    int idx = 0;
+    {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        for (auto printer_ptr : m_printerList) {
+            ret.push_back(printer_ptr->getPrinterName());
+        }
+    }
+    return ret;
+}

@@ -27,6 +27,7 @@ public:
 
     bool removePrinter(const int idx);
 
+    std::vector<std::string> listPrinter();
 private:
     std::vector<Printer*> m_printerList;
     void doPrint(const int idx, const std::string imgPath);
