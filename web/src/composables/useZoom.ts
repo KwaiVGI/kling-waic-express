@@ -10,9 +10,17 @@ export function useZoom(contentRef: Ref<HTMLElement | null>) {
     // 优先使用 visualViewport 获取准确高度
     return window.visualViewport?.height || window.innerHeight;
   };
+  function isIphone() {
+    const ua = navigator.userAgent;
+    return /iPhone/.test(ua) && !/iPad/.test(ua);
+  }
 
   // 计算缩放比例
   const updateScale = () => {
+    // 苹果手机有些bug 暂不缩放
+    if (isIphone()) {
+      return 1;
+    }
     if (!contentRef.value) return;
     const contentHeight = contentRef.value.scrollHeight;
     if (contentHeight === 0) return;
