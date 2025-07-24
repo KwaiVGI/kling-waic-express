@@ -12,7 +12,7 @@ open class WebConfig(
 
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(authorizationInterceptor)
-            .addPathPatterns("/api/**") // Intercept all requests
+            .addPathPatterns("/**") // Intercept all requests
             .excludePathPatterns(
                 "/**/*.html", // Exclude static HTML files
                 "/**/*.js", // Exclude static JS files
