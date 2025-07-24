@@ -2,7 +2,7 @@
   <div class="display-screen">
     <!-- 双图片容器实现无缝切换 -->
     <div class="ds-image-container">
-      <div class="absolute left-0 top-1vh w-full">
+      <div class="absolute left-0 top-0 w-full z-50">
         <img
           class="w-full"
           src="https://ali.a.yximgs.com/kos/nlav12119/hquZnuZl_2025-07-24-16-50-11.png"
@@ -213,7 +213,7 @@ onUnmounted(() => {
 /* 图片通用样式 */
 .ds-casting-image {
   position: absolute;
-  bottom: 0;
+  bottom: 2vh;
   /* 适配现场大屏 */
   left: 0.5%;
   width: 100vw;
