@@ -30,3 +30,29 @@ int PrinterManager::getMostIdlePrinter() {
     LOG(INFO) << "mostIdleID" << lastUseIdx;
     return lastUseIdx.load(std::memory_order_relaxed);
 }
+
+bool PrinterManager::addPrinter(const std::wstring& printerName) {
+    
+    Printer* printer = new Printer(printerName);
+    if (!printer) {
+        delete printer;
+        return false;
+    }
+    {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        m_printerList.push_back(printer);
+    }
+    return true;
+}
+
+bool PrinterManager::removePrinter(const int idx) {
+    std::lock_guard<std::mutex> guard(m_mutex);
+    if (idx < 0 || idx >= m_printerList.size()) {
+        LOG(INFO) << "remove printer out of size";
+        return false;
+    }
+    Printer* printer = m_printerList[idx];
+    if (printer) delete printer;
+    m_printerList.erase(m_printerList.begin() + idx);
+    return true;
+}

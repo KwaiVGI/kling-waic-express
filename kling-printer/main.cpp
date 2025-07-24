@@ -22,7 +22,7 @@ void initConsoleOutput() {
     if (!GetConsoleWindow()) {
         AllocConsole();
         freopen("CONOUT$", "w", stdout);
-        // freopen("CONIN$", "r", stdin);
+        freopen("CONIN$", "r", stdin);
         freopen("CONOUT$", "w", stderr);
     }
     printf("Console Panel init success!\n");
@@ -68,11 +68,51 @@ std::string DOWNLOAD_PREFIX = "https://kling-waic.s3.cn-north-1.amazonaws.com.cn
 
 std::string FETCH_PREFEIX = "https://waic-api.klingai.com";
 
+std::atomic<bool> g_stop{false};
+
 namespace fs = std::filesystem;
 
 std::string makeLogDir(const std::string& dir) {
     fs::create_directories(dir);          // 确保目录存在
     return dir + "/";                           // 返回目录即可
+}
+
+std::wstring string2wstring(const std::string& s)
+{
+    if (s.empty()) return {};
+    int len = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
+    std::wstring out(len, 0);
+    MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, &out[0], len);
+    return out;
+}
+
+void httpRun(HttpClient* baseClient, HttpClient* downloadClient, PrinterManager* printerManager) {
+    std::vector<string> inputs;
+
+    while (!g_stop.load()) {
+            // 增加逻辑
+        json ret = baseClient->fetchImageQueue();
+        // 檢測是否成功
+        if (checkJson(ret)) {
+            std::string downloadUrl = stringPrefix(ret.at("data").at("task").at("outputs").at("url")
+            , DOWNLOAD_PREFIX);
+            long long id = ret.at("data").at("id");
+            std::string name = std::to_string(id) + ".jpg";
+            LOG(INFO) << "[INFO] ready to download. name: " + name + " url:" + downloadUrl;
+            if (!downloadClient->downloadImage(downloadUrl, DOWNLOAD_DIR, name)) {
+                LOG(INFO) << "[INFO] DownLoad image failed. url:" << downloadUrl;
+                continue;
+            }
+            LOG(INFO) << "[INFO] Download image success. json: " << ret;
+            std::string input = ".\\download\\" + name;
+            if (!fileExists(input)) {
+                LOG(INFO) << "[ERROR] cannot find this file";
+            } else {
+                printerManager->addImage(input);
+                LOG(INFO) << "[INFO] Add printer queue success";
+            }
+        }
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -95,12 +135,57 @@ int main(int argc, char* argv[]) {
     PrinterManager* printerManager = new PrinterManager(printerInfoList);
     HttpClient* baseClient = new HttpClient("waic-api.klingai.com", 443, "wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9");
     HttpClient* downloadClient = new HttpClient("kling-waic.s3.cn-north-1.amazonaws.com.cn", 443, "");
-    bool running = true;
-    std::queue<std::string> imageQueue;
-    std::mutex queue_mutex;
     printf("Please input image path to print. press Enter for end. input empty line for quit.\n");
     fflush(stdout);
-    while (running) {
+    std::thread httpWorker(httpRun, baseClient, downloadClient, printerManager);
+    while (!g_stop.load()) {
+        std::string line;
+        std::getline(std::cin, line);
+        if (!line.empty()) {
+            LOG(INFO) << line;
+            if (line._Starts_with("add:")) {
+                std::string param = line.substr(4);
+                if (param.empty()) {
+                    printf("parameter error\n");
+                    fflush(stdout);
+                    continue;
+                }
+                if (!printerManager->addPrinter(string2wstring(param))) {
+                    printf("add printer failed\n");
+                    fflush(stdout);
+                }
+                continue;
+            } else if (line._Starts_with("remove:")) {
+                std::string param = line.substr(7);
+                if (param.empty()) {
+                    printf("parameter error\n");
+                    fflush(stdout);
+                    continue;
+                }
+                int idx = stoi(param);
+                printerManager->removePrinter(idx);
+                continue;
+            } else if (line._Equal("exit")) {
+                g_stop.store(true);
+                break;
+            } else {
+                printf("parameter error! please check\n");
+                fflush(stdout);
+            }
+            continue;
+        }
+        // if (_kbhit()) {
+            // int ch = _getch();
+            // if (ch == 'q' || ch == 'Q') {
+            //     g_stop.store(true);
+            //     break;
+            // }
+            // if (ch == '\r') {
+
+            // }
+        // }
+    }
+    // while (running) {
         // std::string input;
         // if(!std::getline(std::cin, input)) {
         //     LOG(INFO) << "input stream closed";
@@ -127,29 +212,29 @@ int main(int argc, char* argv[]) {
         // } else {
         //     printerManager->addImage(input);
         // }
-        std::vector<string> inputs;
-            // 增加逻辑
-        json ret = baseClient->fetchImageQueue();
-        // 檢測是否成功
-        if (checkJson(ret)) {
-            std::string downloadUrl = stringPrefix(ret.at("data").at("task").at("outputs").at("url")
-            , DOWNLOAD_PREFIX);
-            long long id = ret.at("data").at("id");
-            std::string name = std::to_string(id) + ".jpg";
-            LOG(INFO) << "[INFO] ready to download. name: " + name + " url:" + downloadUrl;
-            if (!downloadClient->downloadImage(downloadUrl, DOWNLOAD_DIR, name)) {
-                LOG(INFO) << "[INFO] DownLoad image failed. url:" << downloadUrl;
-                continue;
-            }
-            LOG(INFO) << "[INFO] Download image success. json: " << ret;
-            std::string input = ".\\download\\" + name;
-            if (!fileExists(input)) {
-                LOG(INFO) << "[ERROR] cannot find this file";
-            } else {
-                printerManager->addImage(input);
-                LOG(INFO) << "[INFO] Add printer queue success";
-            }
-        }
+        // std::vector<string> inputs;
+        //     // 增加逻辑
+        // json ret = baseClient->fetchImageQueue();
+        // // 檢測是否成功
+        // if (checkJson(ret)) {
+        //     std::string downloadUrl = stringPrefix(ret.at("data").at("task").at("outputs").at("url")
+        //     , DOWNLOAD_PREFIX);
+        //     long long id = ret.at("data").at("id");
+        //     std::string name = std::to_string(id) + ".jpg";
+        //     LOG(INFO) << "[INFO] ready to download. name: " + name + " url:" + downloadUrl;
+        //     if (!downloadClient->downloadImage(downloadUrl, DOWNLOAD_DIR, name)) {
+        //         LOG(INFO) << "[INFO] DownLoad image failed. url:" << downloadUrl;
+        //         continue;
+        //     }
+        //     LOG(INFO) << "[INFO] Download image success. json: " << ret;
+        //     std::string input = ".\\download\\" + name;
+        //     if (!fileExists(input)) {
+        //         LOG(INFO) << "[ERROR] cannot find this file";
+        //     } else {
+        //         printerManager->addImage(input);
+        //         LOG(INFO) << "[INFO] Add printer queue success";
+        //     }
+        // }
         // inputs = collectJpgRelative("/cppcode/kling-waic-express/kling-printer/download");
         // for (auto input : inputs) {
         //     input = ".\\download\\" + input;
@@ -160,9 +245,10 @@ int main(int argc, char* argv[]) {
         //         printerManager->addImage(input);
         //     }
         // }
-        Sleep(1000);
-    }
+    //     Sleep(1000);
+    // }
     LOG(INFO) << "delete";
+    httpWorker.join();
     delete printerManager;
     return 0;
 }

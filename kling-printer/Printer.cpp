@@ -28,11 +28,10 @@ const wchar_t *GetWC(const char *c)
 std::string wstring2string(const std::wstring& wstr) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
     return converter.to_bytes(wstr);
-} 
+}
 
 Printer::Printer(const std::wstring& printerName, int printerPageWidth /* = 0*/, int printerPageHeight /* = 0*/, int dpi /* = 600*/, bool savePhotos /* = false */)
 {
-    LOG(INFO) << "constructor function" ;
     PRINTER_DEFAULTSW defaults = { nullptr, nullptr, GENERIC_READ };
 
     if (!OpenPrinter(const_cast<LPWSTR>(printerName.c_str()), &m_hPrinter, &defaults)) {
@@ -93,6 +92,7 @@ Printer::Printer(const std::wstring& printerName, int printerPageWidth /* = 0*/,
 
 Printer::~Printer()
 {
+    LOG(INFO) << "Close Printer: " << wstring2string(m_printerName);
     if (m_hPrinter) {
         ClosePrinter(m_hPrinter);
     }
@@ -138,20 +138,14 @@ void Printer::monitorLoop() {
                 // 已经更新过该状态
                 printMap[jobId] = true;
                 LOG(INFO) << "[job] ID:" << jobId << "printing";
-                // if (onPrinting_) {
-                //     onPrinting_(jobId, documentName);
-                // }
+                // LOG(INFO) << "[Printer]:" << wstring2string(m_printerName) << " [job] ID:" << jobId << " printing";
             } else if (status & JOB_STATUS_COMPLETE) {
                 if (completeMap.find(jobId) != completeMap.end()) {
                     continue;
                 }
                 // 已经更新过该状态
                 completeMap[jobId] = true;
-                LOG(INFO) << "[job] ID:" << jobId << "complete";
-                
-            //     if (onCompleted_) {
-            //         onCompleted_(jobId, documentName);
-            //     }
+                LOG(INFO) << "[job] ID:" << jobId << " complete";
             }
             Sleep(1000);
         }

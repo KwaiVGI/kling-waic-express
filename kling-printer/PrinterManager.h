@@ -18,8 +18,14 @@ struct PrinterInfo{
 class PrinterManager {
 public:
     PrinterManager(std::vector<PrinterInfo>& printerInfos);
+
     ~PrinterManager();
+    
     void addImage(const std::string imgPath);
+
+    bool addPrinter(const std::wstring& name);
+
+    bool removePrinter(const int idx);
 
 private:
     std::vector<Printer*> m_printerList;
