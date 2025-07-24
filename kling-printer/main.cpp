@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
     printerInfoList.push_back({L"Canon SELPHY CP1500(2)", 100, 148 , 300, false});
     printerInfoList.push_back({L"Canon SELPHY CP1500(3)", 100, 148 , 300, false});
     printerInfoList.push_back({L"Canon SELPHY CP1500(4)", 100, 148 , 300, false});
-    // printerInfoList.push_back({L"Canon SELPHY CP1500(5)", 100, 148 , 300, false});
+    printerInfoList.push_back({L"Canon SELPHY CP1500(5)", 100, 148 , 300, false});
     PrinterManager* printerManager = new PrinterManager(printerInfoList);
     HttpClient* baseClient = new HttpClient("waic-api.klingai.com", 443, "wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9");
     HttpClient* downloadClient = new HttpClient("kling-waic.s3.cn-north-1.amazonaws.com.cn", 443, "");
