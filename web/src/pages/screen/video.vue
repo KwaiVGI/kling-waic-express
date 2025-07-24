@@ -33,11 +33,11 @@
         ></video>
 
         <!-- 过渡遮罩 -->
-        <div
+        <!-- <div
           v-if="cell.transitioning"
           class="transition-overlay"
           @animationend="cell.transitioning = false"
-        ></div>
+        ></div> -->
       </div>
     </div>
   </div>

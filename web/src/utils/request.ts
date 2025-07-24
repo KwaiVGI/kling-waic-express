@@ -12,8 +12,8 @@ console.log(import.meta.env);
 // 创建 axios 实例
 const request = axios.create({
   // API 请求的默认前缀
-  // baseURL: "https://waic-api.klingai.com:6443/",
-  baseURL: import.meta.env.DEV ? "/" : "https://waic-api.klingai.com:6443/",
+  // baseURL: "https://waic-api.klingai.com/",
+  baseURL: import.meta.env.DEV ? "/" : "https://waic-api.klingai.com/",
   timeout: 600 * 1000, // 请求超时时间
 });
 
