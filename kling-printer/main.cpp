@@ -87,8 +87,6 @@ std::wstring string2wstring(const std::string& s)
 }
 
 void httpRun(HttpClient* baseClient, HttpClient* downloadClient, PrinterManager* printerManager) {
-    std::vector<string> inputs;
-
     while (!g_stop.load()) {
             // 增加逻辑
         json ret = baseClient->fetchImageQueue();
@@ -104,6 +102,7 @@ void httpRun(HttpClient* baseClient, HttpClient* downloadClient, PrinterManager*
                 continue;
             }
             LOG(INFO) << "[INFO] Download image success. json: " << ret;
+            printf("Download image success.%s\n", ret.at("data").at("name"));
             std::string input = ".\\download\\" + name;
             if (!fileExists(input)) {
                 LOG(INFO) << "[ERROR] cannot find this file";
@@ -112,6 +111,8 @@ void httpRun(HttpClient* baseClient, HttpClient* downloadClient, PrinterManager*
                 LOG(INFO) << "[INFO] Add printer queue success";
             }
         }
+        // http轮询次数
+        // Sleep(1000);
     }
 }
 
@@ -135,7 +136,7 @@ int main(int argc, char* argv[]) {
     PrinterManager* printerManager = new PrinterManager(printerInfoList);
     HttpClient* baseClient = new HttpClient("waic-api.klingai.com", 443, "wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9");
     HttpClient* downloadClient = new HttpClient("kling-waic.s3.cn-north-1.amazonaws.com.cn", 443, "");
-    printf("Please input image path to print. press Enter for end. input empty line for quit.\n");
+    printf("Wait Printer Jobs. Enter list for find all printer. remove and add for operate printer connect.\n");
     fflush(stdout);
     std::thread httpWorker(httpRun, baseClient, downloadClient, printerManager);
     while (!g_stop.load()) {
@@ -186,6 +187,13 @@ int main(int argc, char* argv[]) {
             }
             continue;
         }
+    }
+    LOG(INFO) << "delete";
+    httpWorker.join();
+    delete baseClient;
+    delete downloadClient;
+    delete printerManager;
+    return 0;
         // if (_kbhit()) {
             // int ch = _getch();
             // if (ch == 'q' || ch == 'Q') {
@@ -196,7 +204,6 @@ int main(int argc, char* argv[]) {
 
             // }
         // }
-    }
     // while (running) {
         // std::string input;
         // if(!std::getline(std::cin, input)) {
@@ -259,10 +266,4 @@ int main(int argc, char* argv[]) {
         // }
     //     Sleep(1000);
     // }
-    LOG(INFO) << "delete";
-    httpWorker.join();
-    delete baseClient;
-    delete downloadClient;
-    delete printerManager;
-    return 0;
 }
