@@ -1,4 +1,5 @@
-﻿#ifdef _MSC_VER
+﻿#define _WINSOCKAPI_
+#ifdef _MSC_VER
 #ifndef _PRINTER_H_
 #define _PRINTER_H_
 

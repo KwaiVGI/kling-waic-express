@@ -5,6 +5,7 @@
 #include <fstream>
 #include <conio.h>
 #include <fstream>
+#include "crash_handler.h"
 #include "HttpClient.h"
 #include "PrinterManager.h"
 
@@ -32,6 +33,7 @@ void initConsoleOutput() {
 
 std::vector<std::string> collectJpgRelative(const std::string& dir)
 {
+    SetUnhandledExceptionFilter(TopLevelExceptionHandler);
     std::vector<std::string> out;
     std::filesystem::path root(dir);
     for (const auto& e : std::filesystem::directory_iterator(root))
@@ -102,7 +104,8 @@ void httpRun(HttpClient* baseClient, HttpClient* downloadClient, PrinterManager*
                 continue;
             }
             LOG(INFO) << "[INFO] Download image success. json: " << ret;
-            printf("Download image success.%s\n", ret.at("data").at("name"));
+            std::string printer_name = ret.at("data").at("name");
+            printf("Download image success.%s\n", printer_name.c_str());
             std::string input = ".\\download\\" + name;
             if (!fileExists(input)) {
                 LOG(INFO) << "[ERROR] cannot find this file";

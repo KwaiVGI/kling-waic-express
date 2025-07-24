@@ -34,7 +34,7 @@ find_package(OpenSSL REQUIRED)
 
 add_executable(${PROJECT_NAME} WIN32
     main.cpp Printer.cpp Printer.h PrinterManager.h PrinterManager.cpp
-    ConnectPool.h ConnectPool.cpp HttpClient.h HttpClient.cpp
+    ConnectPool.h ConnectPool.cpp HttpClient.h HttpClient.cpp crash_handler.h crash_handler.cpp
     # 其他源文件...
 )
 
