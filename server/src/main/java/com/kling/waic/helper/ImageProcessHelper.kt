@@ -37,26 +37,97 @@ class ImageProcessHelper(
     private val aesCipherHelper: AESCipherHelper,
 ) {
 
-    fun multipartFileToBufferedImage(file: MultipartFile): BufferedImage {
-        val inputStream = file.inputStream
-        val originalImage = ImageIO.read(inputStream)
-        inputStream.close()
-
-        // Open the file as an InputStream to read EXIF data
-        file.inputStream.use { exifInputStream ->
-            val metadata = ImageMetadataReader.readMetadata(exifInputStream)
-            val directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory::class.java)
-            val orientation = if (directory != null && directory.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
-                directory.getInt(ExifIFD0Directory.TAG_ORIENTATION)
-            } else {
-                1 // Default orientation if tag doesn't exist
+    private fun validateImageFile(file: MultipartFile) {
+        // Check if file is empty
+        if (file.isEmpty) {
+            throw IllegalArgumentException("Uploaded file is empty")
+        }
+        
+        // Check file size (optional - you can set a reasonable limit)
+        val maxSize = 50 * 1024 * 1024 // 50MB
+        if (file.size > maxSize) {
+            throw IllegalArgumentException("File size too large. Maximum allowed size is ${maxSize / (1024 * 1024)}MB")
+        }
+        
+        // Check content type
+        val contentType = file.contentType
+        val supportedTypes = setOf(
+            "image/jpeg", "image/jpg", "image/png", "image/gif", 
+            "image/bmp", "image/webp", "image/tiff", "image/tif"
+        )
+        
+        if (contentType != null && !supportedTypes.contains(contentType.lowercase())) {
+            throw IllegalArgumentException("Unsupported image format: $contentType. " +
+                    "Supported formats: ${supportedTypes.joinToString(", ")}")
+        }
+        
+        // Check file extension
+        val originalFilename = file.originalFilename
+        if (originalFilename != null) {
+            val extension = originalFilename.substringAfterLast('.', "").lowercase()
+            val supportedExtensions = setOf("jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif")
+            if (extension.isNotEmpty() && !supportedExtensions.contains(extension)) {
+                throw IllegalArgumentException("Unsupported file extension: .$extension. " +
+                        "Supported extensions: ${supportedExtensions.joinToString(", ") { ".$it" }}")
             }
-
-            return rotateImageIfNeeded(originalImage, orientation)
         }
     }
 
-    fun rotateImageIfNeeded(image: BufferedImage, orientation: Int): BufferedImage {
+    fun multipartFileToBufferedImage(file: MultipartFile): BufferedImage {
+        log.debug("Starting image processing for file: ${file.originalFilename}, size: ${file.size}, contentType: ${file.contentType}")
+        
+        // Validate file first
+        validateImageFile(file)
+        
+        val inputStream = file.inputStream
+        val originalImage = try {
+            log.debug("Attempting to read image with ImageIO")
+            val image = ImageIO.read(inputStream)
+            log.info("ImageIO.read result: ${if (image != null) "success (${image.width}x${image.height})" else "null"}")
+            image
+        } catch (e: Exception) {
+            log.error("Exception during ImageIO.read: ${e.message}", e)
+            inputStream.close()
+            throw IllegalArgumentException("Failed to read image data: ${e.message}")
+        } finally {
+            inputStream.close()
+        }
+
+        // Check if ImageIO could read the image
+        if (originalImage == null) {
+            log.error("ImageIO.read returned null for file: ${file.originalFilename}, contentType: ${file.contentType}, size: ${file.size}")
+            throw IllegalArgumentException("Unable to read image file. " +
+                    "The file may be corrupted or in an unsupported format. File name: ${file.originalFilename}, Content type: ${file.contentType}")
+        }
+
+        log.info("Successfully read image: ${originalImage.width}x${originalImage.height}, type: ${originalImage.type}")
+
+        // Open the file as an InputStream to read EXIF data
+        try {
+            file.inputStream.use { exifInputStream ->
+                val metadata = ImageMetadataReader.readMetadata(exifInputStream)
+                val directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory::class.java)
+                val orientation = if (directory != null && directory.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
+                    directory.getInt(ExifIFD0Directory.TAG_ORIENTATION)
+                } else {
+                    1 // Default orientation if tag doesn't exist
+                }
+
+                log.debug("EXIF orientation: $orientation")
+                return rotateImageIfNeeded(originalImage, orientation)
+            }
+        } catch (e: Exception) {
+            log.warn("Failed to read EXIF data, using original image without rotation: ${e.message}")
+            return originalImage
+        }
+    }
+
+    fun rotateImageIfNeeded(image: BufferedImage?, orientation: Int): BufferedImage {
+        // Safety check for null image
+        if (image == null) {
+            throw IllegalArgumentException("Cannot rotate null image")
+        }
+        
         val transform = AffineTransform()
         when (orientation) {
             6 -> transform.rotate(Math.toRadians(90.0), image.height / 2.0, image.height / 2.0)

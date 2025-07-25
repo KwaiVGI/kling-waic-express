@@ -48,21 +48,7 @@ abstract class TaskService {
 
     fun uploadImage(type: TaskType, file: MultipartFile): String {
         val taskName = codeGenerateRepository.nextCode(type)
-        
-        // Validate file before processing
-        if (file.isEmpty) {
-            throw IllegalArgumentException("Uploaded file is empty")
-        }
-        
-        log.debug("Processing uploaded file: ${file.originalFilename}, " +
-                "size: ${file.size} bytes, content type: ${file.contentType}")
-
-        val inputImage = try {
-            imageProcessHelper.multipartFileToBufferedImage(file)
-        } catch (e: Exception) {
-            log.error("Unexpected error processing uploaded image: ${e.message}", e)
-            throw e
-        }
+        val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
 
         val requestImage = if (cropImageWithOpenCV.toBoolean() && imageCropHelper != null) {
             log.info("OpenCV face cropping is enabled, processing image with face detection")
