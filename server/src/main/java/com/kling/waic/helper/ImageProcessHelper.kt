@@ -83,7 +83,7 @@ class ImageProcessHelper(
         val originalImage = try {
             log.debug("Attempting to read image with ImageIO")
             val image = ImageIO.read(inputStream)
-            log.info("ImageIO.read result: ${if (image != null) "success (${image.width}x${image.height})" else "null"}")
+            log.debug("ImageIO.read result: ${if (image != null) "success (${image.width}x${image.height})" else "null"}")
             image
         } catch (e: Exception) {
             log.error("Exception during ImageIO.read: ${e.message}", e)
