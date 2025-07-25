@@ -58,6 +58,11 @@ export default function useCreation(creationType: CreationType) {
         generatedResult.value = null;
         uploadedImage.value = data;
       } catch (error) {
+        console.log(error);
+        if (401 === error) {
+          showToast(t("errors.generic.authFailed"));
+          return;
+        }
         showToast(t("errors.generic.operationFailed"));
       } finally {
         uploading.value = false;

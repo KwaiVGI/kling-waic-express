@@ -382,6 +382,8 @@ const handleGenerate = async () => {
     };
     if (error.name === "AbortError") {
       return;
+    } else if (error === 401) {
+      showToast(t("errors.generic.authFailed"));
     } else if (error.message === "NO_HUMAN_DETECTED") {
       showToast(t("upload.noFaceDetected"));
     } else if (errorMap[error.message]) {

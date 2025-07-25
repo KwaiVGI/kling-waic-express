@@ -48,7 +48,8 @@
   "errors": {
     "generic": {
       "operationFailed": "操作失败，请重试",
-      "saveFailed": "保存失败，请重试"
+      "saveFailed": "保存失败，请重试",
+      "authFailed": "二维码已失效，请在现场重新扫码"
     },
     "api": {
       "serviceUnavailable": "当前服务不可用，请稍后再试～",

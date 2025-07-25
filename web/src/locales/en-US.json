@@ -48,7 +48,8 @@
   "errors": {
     "generic": {
       "operationFailed": "Failed to proceed. Please try again.",
-      "saveFailed": "Failed to save. Please try again."
+      "saveFailed": "Failed to save. Please try again.",
+      "authFailed": "The QR code has expired. Please scan it again on-site."
     },
     "api": {
       "serviceUnavailable": "Service error. Please try again.",
