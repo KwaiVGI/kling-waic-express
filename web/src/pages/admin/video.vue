@@ -437,10 +437,10 @@ watch(searchQuery, (newVal) => {
 
 .item-actions {
   position: absolute;
-  bottom: 6px;
-  left: 0;
+  top: 2px;
   right: 0;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   gap: 2px;
   padding: 2px;

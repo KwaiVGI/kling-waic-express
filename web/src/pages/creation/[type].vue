@@ -206,7 +206,7 @@
       style="--van-popup-background: transparent"
     >
       <div
-        class="flex flex-col justify-center items-center bg-#F9FBFC rounded-16px p-24px gap-12px backdrop-blur-24px"
+        class="flex flex-col justify-center items-center loading-bg-white rounded-16px p-24px gap-12px backdrop-blur-24px"
       >
         <van-loading type="circular" color="#0B8A1B" />
         <div v-if="type === 'image'" class="text-14px text-black">
@@ -518,5 +518,9 @@ onMounted(() => {
   &:disabled {
     background: 09090A0a;
   }
+}
+// fuck iPhone 13Pro max
+.loading-bg-white {
+  background: #f9fbfc;
 }
 </style>

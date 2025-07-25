@@ -72,24 +72,26 @@
               </button>
             </div>
             <div class="item-actions">
-              <button
+              <!-- <button
                 @click.stop="promoteImage(image.id)"
                 class="action-button promote"
               >
                 置顶
-              </button>
+              </button> -->
               <button
+                v-if="image.id !== pinnedImageId"
                 @click.stop="pinImage(image.id)"
                 :disabled="image.id === pinnedImageId"
                 class="action-button pin"
               >
                 固定
               </button>
+              <button v-else @click.stop="unpinImage" class="action-button pin">
+                取消固定
+              </button>
               <button
                 @click.stop="deleteImage(image.id)"
-                :disabled="
-                  image.id === pinnedImageId || image.id === promotedImageId
-                "
+                :disabled="image.id === pinnedImageId"
                 class="action-button delete"
               >
                 删除
@@ -213,7 +215,7 @@ const promoteImage = async (imageId: string) => {
   try {
     await castingService.promoteImage("STYLED_IMAGE", imageId);
     promotedImageId.value = imageId;
-    loadImages();
+    // loadImages();
     showToast("操作成功");
   } catch (error) {
     showToast("操作失败");
@@ -414,13 +416,13 @@ watch(searchQuery, (newVal) => {
 }
 
 .mode-button {
-  background-color: #f0f2f5;
+  background-color: #4361ee;
   border: 1px solid #ddd;
-  color: #666;
+  color: #fff;
 }
 
 .mode-button:not(:disabled):hover {
-  background-color: #e6e9ed;
+  background-color: rgb(17, 108, 226);
 }
 
 .mode-button:disabled {
@@ -542,12 +544,12 @@ watch(searchQuery, (newVal) => {
 
 .item-actions {
   position: absolute;
-  bottom: 6px;
+  bottom: 16px;
   right: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
+  gap: 20px;
   padding: 2px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
 }

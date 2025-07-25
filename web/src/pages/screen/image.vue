@@ -10,35 +10,43 @@
         />
       </div>
       <div
-        class="ds-casting-image active"
-        :style="{
-          backgroundImage: currentImage ? `url(${currentImage.url})` : '',
-        }"
+        v-if="pinedImage"
+        class="ds-casting-image pined"
+        :style="{ backgroundImage: `url(${pinedImage})` }"
       ></div>
-      <div
-        class="ds-casting-image next"
-        :style="{ backgroundImage: nextImage ? `url(${nextImage.url})` : '' }"
-        :class="{ ready: nextImageLoaded }"
-      ></div>
+      <template v-else>
+        <div
+          class="ds-casting-image active"
+          :style="{
+            backgroundImage: currentImage ? `url(${currentImage.url})` : '',
+          }"
+        ></div>
+        <div
+          class="ds-casting-image next"
+          :style="{ backgroundImage: nextImage ? `url(${nextImage.url})` : '' }"
+          :class="{ ready: nextImageLoaded }"
+        ></div>
+      </template>
     </div>
-
-    <!-- 加载状态提示 -->
-    <div v-if="!currentImage && !loadingError" class="no-image">
-      <div class="no-image-content">
-        <i class="fas fa-image"></i>
-        <h3>正在加载图片...</h3>
-        <p>系统正在获取展示内容</p>
+    <template v-if="!pinedImage">
+      <!-- 加载状态提示 -->
+      <div v-if="!currentImage && !loadingError" class="no-image">
+        <div class="no-image-content">
+          <i class="fas fa-image"></i>
+          <h3>正在加载图片...</h3>
+          <p>系统正在获取展示内容</p>
+        </div>
       </div>
-    </div>
 
-    <!-- 错误提示 -->
-    <div v-if="loadingError" class="error-message">
-      <div class="error-content">
-        <i class="fas fa-exclamation-triangle"></i>
-        <h3>图片加载失败</h3>
-        <p>正在尝试重新连接... {{ retryCountdown }}秒</p>
+      <!-- 错误提示 -->
+      <div v-if="loadingError" class="error-message">
+        <div class="error-content">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h3>图片加载失败</h3>
+          <p>正在尝试重新连接... {{ retryCountdown }}秒</p>
+        </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -58,13 +66,8 @@ const loadingError = ref(false);
 const retryTimer = ref<NodeJS.Timeout | null>(null);
 const retryCountdown = ref(0);
 const isFetching = ref(false);
-
-// 计算预加载状态
-const preloadStatus = computed(() => {
-  if (loadingError.value) return "连接失败，重试中...";
-  if (imageQueue.value.length < 2) return "预加载图片...";
-  return "状态正常";
-});
+const pinedImage = ref<string | null>(null);
+const pinedImageCheckTimer = ref<NodeJS.Timeout | null>(null);
 
 // 预加载图片资源
 const preloadImage = (url: string): Promise<void> => {
@@ -76,8 +79,29 @@ const preloadImage = (url: string): Promise<void> => {
   });
 };
 
+const fetchPinedImage = async () => {
+  try {
+    const res = await castingService.getPinedImage();
+    const url = res.task?.outputs?.url;
+    if (res && url) {
+      await preloadImage(url);
+      pinedImage.value = url;
+      // 暂停轮播
+    } else {
+      pinedImage.value = null;
+      // 恢复轮播
+    }
+  } catch (error) {
+    console.error("获取固定照片失败:", error);
+    pinedImage.value = null;
+  }
+};
+
 // 获取展示图片（带重试机制）
 const fetchCastingImages = async () => {
+  await fetchPinedImage();
+  if (pinedImage.value) return;
+
   if (isFetching.value) return;
   isFetching.value = true;
   loadingError.value = false;
@@ -129,6 +153,7 @@ const handleLoadingError = () => {
 
 // 切换到下一张图片
 const transitionToNextImage = () => {
+  if (pinedImage.value) return; // 有固定照片时不切换
   // 确保下一张图片已加载
   if (!nextImage.value || !nextImageLoaded.value) {
     console.warn("下一张图片尚未加载完成，跳过切换");
@@ -155,6 +180,7 @@ const transitionToNextImage = () => {
 
 // 安全启动轮播
 const safeStartCarousel = () => {
+  if (pinedImage.value) return; // 有固定照片时不启动
   if (transitionTimer.value) clearInterval(transitionTimer.value);
 
   transitionTimer.value = setInterval(() => {
@@ -180,12 +206,14 @@ onMounted(() => {
     localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
   }
   fetchCastingImages();
+  pinedImageCheckTimer.value = setInterval(fetchPinedImage, 1000);
 });
 
 // 清理资源
 onUnmounted(() => {
   if (transitionTimer.value) clearInterval(transitionTimer.value);
   if (retryTimer.value) clearInterval(retryTimer.value);
+  if (pinedImageCheckTimer.value) clearInterval(pinedImageCheckTimer.value);
 });
 </script>
 
@@ -228,6 +256,10 @@ onUnmounted(() => {
   transition: opacity 1.5s ease-in-out;
   will-change: opacity; /* 启用硬件加速 */
   opacity: 0;
+  &.pined {
+    opacity: 1;
+    z-index: 3;
+  }
 }
 
 /* 当前图片 */

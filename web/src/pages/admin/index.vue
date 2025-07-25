@@ -24,7 +24,7 @@ import PrintComponent from "./print.vue";
 const tabs = [
   { value: "image", label: "图片", component: ImageComponent },
   { value: "video", label: "视频", component: VideoComponent },
-  { value: "print", label: "打印", component: PrintComponent },
+  { value: "print", label: "打印队列", component: PrintComponent },
 ];
 </script>
 

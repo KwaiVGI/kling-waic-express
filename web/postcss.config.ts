@@ -28,6 +28,7 @@ export default {
         ".display-screen",
         ".ds-image-container",
         ".ds-casting-image",
+        ".ds-container",
       ],
     },
   },

@@ -39,20 +39,20 @@ export const castingService = {
     type: TaskType = "STYLED_IMAGE",
     num: number = 1
   ): Promise<CastingImage[]> {
-    if (type === "STYLED_IMAGE") {
-      const res = await castingService.getPinedImage();
+    // if (type === "STYLED_IMAGE") {
+    //   const res = await castingService.getPinedImage();
 
-      // 如果有固定图片，返回固定图片
-      if (res) {
-        return [
-          {
-            id: res.name,
-            name: res.name,
-            url: res.task.outputs.url,
-          },
-        ];
-      }
-    }
+    //   // 如果有固定图片，返回固定图片
+    //   if (res) {
+    //     return [
+    //       {
+    //         id: res.name,
+    //         name: res.name,
+    //         url: res.task.outputs.url,
+    //       },
+    //     ];
+    //   }
+    // }
     const list = await getScreenList({
       type,
       num,
