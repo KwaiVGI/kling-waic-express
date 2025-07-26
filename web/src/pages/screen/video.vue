@@ -242,7 +242,7 @@ const route = useRoute();
 // 初始化加载
 onMounted(() => {
   if (route.query.token) {
-    localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+    // localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
   }
   initVideoCells();
 });

@@ -78,7 +78,7 @@ const searchImages = () => {
 // 初始化加载图片
 onMounted(() => {
   if (route.query.token) {
-    localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+    // localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
   }
   loadImages();
 });

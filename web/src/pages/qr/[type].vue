@@ -98,7 +98,7 @@ const startTokenPolling = () => {
 // 初始化
 onMounted(async () => {
   if (route.query.token) {
-    localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+    // localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
   }
   token.value = await fetchToken();
   initQrCode();

@@ -29,6 +29,8 @@ export default {
         ".ds-image-container",
         ".ds-casting-image",
         ".ds-container",
+        ".ds-password-container",
+        ".ds-modal-mask",
       ],
     },
   },

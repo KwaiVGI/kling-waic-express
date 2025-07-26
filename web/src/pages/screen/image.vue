@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 
@@ -203,7 +203,7 @@ const route = useRoute();
 // 初始化加载
 onMounted(() => {
   if (route.query.token) {
-    localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+    // localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
   }
   fetchCastingImages();
   pinedImageCheckTimer.value = setInterval(fetchPinedImage, 1000);

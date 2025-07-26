@@ -71,12 +71,15 @@ export async function operateCasting({
 }
 
 // 获取固定的作品
-export async function getPined({
-  type,
-}: {
-  type: TaskType;
-}): Promise<CastingImage> {
-  return request.get(`/api/castings/${type}/pinned`);
+export async function getPined(
+  {
+    type,
+  }: {
+    type: TaskType;
+  },
+  config: any = {}
+): Promise<CastingImage> {
+  return request.get(`/api/castings/${type}/pinned`, config);
 }
 
 // 获取大屏列表

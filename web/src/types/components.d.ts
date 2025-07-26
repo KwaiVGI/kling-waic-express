@@ -14,6 +14,7 @@ declare module 'vue' {
     GuideOverly: typeof import('./../components/GuideOverly.vue')['default']
     IconSvg: typeof import('./../components/IconSvg.vue')['default']
     LangSwitcher: typeof import('./../components/LangSwitcher.vue')['default']
+    Login: typeof import('./../components/Login.vue')['default']
     NavBar: typeof import('./../components/NavBar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

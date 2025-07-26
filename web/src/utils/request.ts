@@ -51,16 +51,16 @@ function errorHandler(error: RequestError): Promise<any> {
 function requestHandler(
   config: InternalAxiosRequestConfig
 ): InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig> {
-  // const savedToken = localStorage.getItem(STORAGE_TOKEN_KEY);
+  const savedToken = localStorage.getItem(STORAGE_TOKEN_KEY);
   const savedUserToken = localStorage.getItem(STORAGE_USER_TOKEN_KEY);
   const isUserPage = location.pathname.startsWith("/creation");
   // 如果 token 存在
   // 让每个请求携带自定义 token, 请根据实际情况修改
-  // if ((savedToken || savedUserToken) && !config.headers[REQUEST_TOKEN_KEY]) {
-  // }
-  config.headers[REQUEST_TOKEN_KEY] = `Token ${
-    isUserPage ? savedUserToken : "nGvzUvp9dy308yVvuuoiu0-hobAxGL7Szh"
-  }`;
+  if ((savedToken || savedUserToken) && !config.headers[REQUEST_TOKEN_KEY]) {
+    config.headers[REQUEST_TOKEN_KEY] = `Token ${
+      isUserPage ? savedUserToken : savedToken
+    }`;
+  }
 
   return config;
 }
