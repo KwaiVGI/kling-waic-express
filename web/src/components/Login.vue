@@ -29,11 +29,6 @@
       >
         {{ errorMessage }}
       </div>
-
-      <p class="info-text">
-        <i class="fas fa-info-circle"></i>
-        首次访问请输入任意密码（建议使用"admin123"），刷新页面时会自动填充已保存的密码
-      </p>
     </div>
   </div>
 </template>
