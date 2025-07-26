@@ -25,7 +25,7 @@
   <!-- <van-config-provider :theme="mode"> -->
   <!-- <nav-bar /> -->
   <router-view></router-view>
-  <Login v-if="!$route.path.startsWith('/creation')" />
+  <Login v-if="!$route.path.startsWith('/creation') && $route.path !== '/'" />
   <!-- <tab-bar /> -->
   <!-- </van-config-provider> -->
 </template>
