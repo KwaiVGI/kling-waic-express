@@ -176,24 +176,28 @@ const saveCacheToIndexedDB = async (item: VideoCacheItem) => {
 
 // 清理缓存（LRU策略）
 const cleanUpCache = async () => {
-  // 清理内存缓存
+  // 收集正在使用的视频ID
+  const inUseIds = new Set<string>();
+  videoCells.value.forEach((cell) => {
+    if (cell.current?.id) inUseIds.add(cell.current.id);
+    if (cell.next?.id) inUseIds.add(cell.next.id);
+  });
+
+  // 清理内存缓存（跳过正在使用的）
   if (currentCacheSize > MAX_CACHE_SIZE) {
     const sortedEntries = [...videoCache.value.entries()].sort(
       (a, b) => a[1].lastUsed - b[1].lastUsed
     );
 
-    while (
-      currentCacheSize > MAX_CACHE_SIZE * 0.7 &&
-      sortedEntries.length > 0
-    ) {
-      const [id, item] = sortedEntries.shift()!;
+    for (const [id, item] of sortedEntries) {
+      if (currentCacheSize <= MAX_CACHE_SIZE * 0.7) break;
+      if (inUseIds.has(id)) continue; // 跳过正在使用的
 
       // 释放Blob URL
       if (item.blobUrl) {
         URL.revokeObjectURL(item.blobUrl);
       }
 
-      // 从内存缓存中移除
       videoCache.value.delete(id);
       currentCacheSize -= item.size;
 
@@ -268,7 +272,7 @@ const cacheVideo = async (item: VideoCacheItem) => {
   // 如果已存在缓存，先清理旧版本
   if (videoCache.value.has(item.id)) {
     const existing = videoCache.value.get(item.id)!;
-    URL.revokeObjectURL(existing.blobUrl);
+    // URL.revokeObjectURL(existing.blobUrl);
     currentCacheSize -= existing.size;
   }
 
@@ -437,6 +441,27 @@ const schedulePreload = () => {
     });
 };
 
+// 添加辅助函数：从缓存中随机获取一个视频
+const getRandomCachedVideo = (): VideoCacheItem | null => {
+  if (videoCache.value.size === 0) return null;
+
+  const cachedVideos = Array.from(videoCache.value.values());
+  // 过滤掉当前正在播放的视频
+  const currentIds = videoCells.value
+    .filter((cell) => cell.current)
+    .map((cell) => cell.current!.id);
+
+  const availableVideos = cachedVideos.filter(
+    (video) => !currentIds.includes(video.id)
+  );
+
+  // 优先选择非当前播放的视频，如果没有则使用所有缓存视频
+  const pool = availableVideos.length > 0 ? availableVideos : cachedVideos;
+
+  const randomIndex = Math.floor(Math.random() * pool.length);
+  return pool[randomIndex];
+};
+
 // 处理视频播放结束
 const onVideoEnded = (index: number) => {
   const cell = videoCells.value[index];
@@ -445,18 +470,50 @@ const onVideoEnded = (index: number) => {
     // 触发切换动画
     cell.transitioning = true;
   } else {
-    // 没有准备好的下一个视频，重新播放当前视频
-    const videoEl = currentVideos.value.find(
-      (el) => parseInt(el.dataset.index || "0") === index
-    );
-    if (videoEl && cell.current?.ready) {
-      videoEl.currentTime = 0;
-      safePlay(videoEl);
-    } else {
-      // 当前视频也不可用，触发紧急加载
-      reloadVideo(index);
-    }
+    // 尝试从缓存中随机获取一个视频
+    const randomCachedVideo = getRandomCachedVideo();
 
+    if (randomCachedVideo) {
+      // 创建新的视频项
+      const newVideoItem: VideoItem = {
+        id: randomCachedVideo.id,
+        url: randomCachedVideo.blobUrl, // 使用缓存中的blobUrl
+        poster: randomCachedVideo.poster,
+        ready: true,
+        blobUrl: randomCachedVideo.blobUrl,
+      };
+
+      // 更新当前格子状态
+      cell.current = newVideoItem;
+      cell.next = null;
+
+      // 确保新视频播放
+      nextTick(() => {
+        const videoEl = currentVideos.value.find(
+          (el) => parseInt(el.dataset.index || "0") === index
+        );
+        if (videoEl) {
+          videoEl.src = newVideoItem.blobUrl!;
+          videoEl.currentTime = 0;
+          safePlay(videoEl);
+        }
+      });
+
+      // 更新缓存使用时间
+      randomCachedVideo.lastUsed = Date.now();
+    } else {
+      // 缓存中没有可用视频，重新播放当前视频
+      const videoEl = currentVideos.value.find(
+        (el) => parseInt(el.dataset.index || "0") === index
+      );
+      if (videoEl && cell.current?.ready) {
+        videoEl.currentTime = 0;
+        safePlay(videoEl);
+      } else {
+        // 当前视频也不可用，触发紧急加载
+        reloadVideo(index);
+      }
+    }
     // 触发预加载补充
     schedulePreload();
   }
@@ -576,13 +633,22 @@ const safePlay = (video: HTMLVideoElement): Promise<void> => {
 const startHeartbeat = () => {
   const intervalId = setInterval(() => {
     currentVideos.value.forEach((video) => {
-      if (video.readyState > 0 && video.paused) {
+      const index = parseInt(video.dataset.index || "0");
+      const cell = videoCells.value[index];
+
+      // 更精确的卡顿检测
+      const isStuck =
+        video.readyState > 0 &&
+        video.paused &&
+        !video.seeking &&
+        cell.current?.ready;
+
+      if (isStuck) {
         console.warn("检测到卡顿视频，重新加载");
-        const index = parseInt(video.dataset.index || "0");
         reloadVideo(index);
       }
     });
-  }, 5000);
+  }, 10000); // 降低检测频率到10秒
 
   return intervalId;
 };
@@ -601,20 +667,13 @@ onUnmounted(() => {
     clearInterval(heartbeatInterval);
   }
 
-  // 清理所有视频资源
+  // 不再清理缓存中的Blob URL，只清理当前单元格
   videoCells.value.forEach((cell) => {
-    if (cell.current?.blobUrl) {
+    if (cell.current?.blobUrl && cell.current.blobUrl.startsWith("blob:")) {
       URL.revokeObjectURL(cell.current.blobUrl);
     }
-    if (cell.next?.blobUrl) {
+    if (cell.next?.blobUrl && cell.next.blobUrl.startsWith("blob:")) {
       URL.revokeObjectURL(cell.next.blobUrl);
-    }
-  });
-
-  // 清理缓存资源
-  videoCache.value.forEach((item) => {
-    if (item.blobUrl) {
-      URL.revokeObjectURL(item.blobUrl);
     }
   });
 });
