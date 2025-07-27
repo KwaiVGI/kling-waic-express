@@ -173,7 +173,7 @@
         >
           {{ $t("actions.back") }}
         </van-button>
-        <van-button
+        <!-- <van-button
           v-if="type === 'image'"
           icon="print"
           type="default"
@@ -182,7 +182,7 @@
           class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
         >
           {{ $t("actions.print") }}
-        </van-button>
+        </van-button> -->
 
         <van-button
           type="default"
