@@ -125,11 +125,15 @@ void Printer::monitorLoop() {
         }
 
         JOB_INFO_2* jobs = reinterpret_cast<JOB_INFO_2*>(buffer.data());
+        size_t spool_count = 0;
         for (DWORD i = 0; i < numJobs; i++) {
             DWORD jobId = jobs[i].JobId;
             DWORD status = jobs[i].Status;
             LPWSTR documentName = jobs[i].pDocument;
             // 检查状态并触发回调
+            if (status & JOB_STATUS_SPOOLING) {
+                spool_count++;
+            }
             if (status & JOB_STATUS_PRINTING) {
                 // 避免状态重复提交
                 if (printMap.find(jobId) != printMap.end()) {
@@ -147,8 +151,13 @@ void Printer::monitorLoop() {
                 completeMap[jobId] = true;
                 LOG(INFO) << "[job] ID:" << jobId << " complete";
             }
-            Sleep(1000);
         }
+        
+        if (spool_count >= 4) {
+            LOG(INFO) << wstring2string(m_printerName) << " spool too many. count:" << spool_count;
+            isBusy.store(true);
+        }
+        Sleep(1000);
     }
 }
 

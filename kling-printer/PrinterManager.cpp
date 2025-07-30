@@ -21,12 +21,18 @@ void PrinterManager::addImage(std::string imgPath) {
     int idxIdle = getMostIdlePrinter();
     m_printerList[idxIdle]->addPhotoFile(imgPath);
 }
-
+void PrinterManager::plusIndex() {
+    std::lock_guard<std::mutex> guard(m_mutex);
+    lastUseIdx++;
+    if (lastUseIdx >= m_printerList.size()) {
+        lastUseIdx = 0;
+    }
+}
 int PrinterManager::getMostIdlePrinter() {
     lastUseIdx++;
     if (lastUseIdx >= m_printerList.size()) {
         lastUseIdx = 0;
-    } 
+    }
     LOG(INFO) << "mostIdleID" << lastUseIdx;
     return lastUseIdx.load(std::memory_order_relaxed);
 }

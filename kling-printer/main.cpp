@@ -115,7 +115,7 @@ void httpRun(HttpClient* baseClient, HttpClient* downloadClient, PrinterManager*
             }
         }
         // http轮询次数
-        // Sleep(1000);
+        Sleep(500);
     }
 }
 
@@ -132,12 +132,12 @@ int main(int argc, char* argv[]) {
     LOG(INFO) << "Program Begin";
     std::vector<PrinterInfo> printerInfoList;
     printerInfoList.push_back({L"Canon SELPHY CP1500(1)", 100, 148 , 300, false});
-    printerInfoList.push_back({L"Canon SELPHY CP1500(2)", 100, 148 , 300, false});
-    printerInfoList.push_back({L"Canon SELPHY CP1500(3)", 100, 148 , 300, false});
-    printerInfoList.push_back({L"Canon SELPHY CP1500(4)", 100, 148 , 300, false});
+    printerInfoList.push_back({L"Canon SELPHY CP1500(8)", 100, 148 , 300, false});
+    printerInfoList.push_back({L"Canon SELPHY CP1500(7)", 100, 148 , 300, false});
     printerInfoList.push_back({L"Canon SELPHY CP1500(5)", 100, 148 , 300, false});
+    printerInfoList.push_back({L"Canon SELPHY CP1500(3)", 100, 148 , 300, false});
     PrinterManager* printerManager = new PrinterManager(printerInfoList);
-    HttpClient* baseClient = new HttpClient("waic-api.klingai.com", 443, "wEJvopXEvl6OnNUHl8DbAd-8Ixkjef9");
+    HttpClient* baseClient = new HttpClient("waic-api.klingai.com", 443, "KlingWAIC666");
     HttpClient* downloadClient = new HttpClient("kling-waic.s3.cn-north-1.amazonaws.com.cn", 443, "");
     printf("Wait Printer Jobs. Enter list for find all printer. remove and add for operate printer connect.\n");
     fflush(stdout);

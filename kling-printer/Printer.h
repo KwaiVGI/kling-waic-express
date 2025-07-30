@@ -40,6 +40,8 @@ private:
     std::unordered_map<DWORD, bool> printMap;
     std::unordered_map<DWORD, bool> completeMap;
 
+    std::atomic<bool> isBusy{false};
+
     HANDLE m_hPrinter = nullptr;
     std::wstring m_printerName;
     HGLOBAL m_hDevMode;
