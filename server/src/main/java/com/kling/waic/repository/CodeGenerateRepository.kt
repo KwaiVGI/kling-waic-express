@@ -13,12 +13,11 @@ class CodeGenerateRepository(
     fun nextCode(taskType: TaskType, prefix: String = "No."): String {
         val key = "kling-waic:${taskType.name}"
 //        val step = Random.nextInt(2, 10)
-        val step = 1
         val startValue = taskType.startValue
 
         val code = jedis.eval(
             nextCodeLuaScript,
-            listOf(key), listOf(step.toString(), startValue.toString())
+            listOf(key), listOf(startValue.toString())
         )
         return prefix + code
     }
