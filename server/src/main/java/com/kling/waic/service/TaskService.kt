@@ -70,7 +70,9 @@ abstract class TaskService {
 
     suspend fun createTask(type: TaskType,
                            requestImageUrl: String): Task {
-        val taskName = codeGenerateRepository.nextCode(type)
+        val taskName = requestImageUrl.substringAfterLast("/")
+            .removeSuffix(".jpg")
+            .removePrefix("request-")
         log.info("Generated task name: $taskName for type: $type")
 
         val taskIds = doCreateTask(requestImageUrl)
