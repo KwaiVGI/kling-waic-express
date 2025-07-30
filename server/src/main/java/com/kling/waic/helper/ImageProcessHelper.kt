@@ -165,7 +165,7 @@ class ImageProcessHelper(
 
         val sudokuImage = createKlingWAICSudokuImage(taskName, images, locale)
 
-        val outputFilename = aesCipherHelper.encrypt("sudoku-${taskName}") + ".jpg"
+        val outputFilename = taskName + "-" + aesCipherHelper.encrypt("sudoku-${taskName}") + ".jpg"
         val outputImageUrl = s3Helper.uploadBufferedImage(bucket,
             "output-images/$outputFilename",
             sudokuImage, "jpg")
