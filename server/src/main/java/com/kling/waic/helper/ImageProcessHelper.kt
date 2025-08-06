@@ -3,6 +3,7 @@ package com.kling.waic.helper
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifIFD0Directory
 import com.kling.waic.entity.Locale
+import com.kling.waic.exception.ImageFormatNotSupportedException
 import com.kling.waic.utils.FileUtils
 import com.kling.waic.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
@@ -50,25 +51,29 @@ class ImageProcessHelper(
         }
         
         // Check content type
-        val contentType = file.contentType
-        val supportedTypes = setOf(
-            "image/jpeg", "image/jpg", "image/png", "image/gif", 
-            "image/bmp", "image/webp", "image/tiff", "image/tif", "image/heic"
-        )
-        
-        if (contentType != null && !supportedTypes.contains(contentType.lowercase())) {
-            throw IllegalArgumentException("Unsupported image format: $contentType. " +
-                    "Supported formats: ${supportedTypes.joinToString(", ")}")
-        }
+//        val contentType = file.contentType
+//        val supportedTypes = setOf(
+//            "image/jpeg", "image/jpg", "image/png", "image/gif",
+//            "image/bmp", "image/webp", "image/tiff", "image/tif", "image/heic"
+//        )
+//
+//        if (contentType != null && !supportedTypes.contains(contentType.lowercase())) {
+//            throw IllegalArgumentException("Unsupported image format: $contentType. " +
+//                    "Supported formats: ${supportedTypes.joinToString(", ")}")
+//        }
         
         // Check file extension
         val originalFilename = file.originalFilename
         if (originalFilename != null) {
             val extension = originalFilename.substringAfterLast('.', "").lowercase()
-            val supportedExtensions = setOf("jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif")
+            val supportedExtensions = setOf(
+                "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif", "heic", "avif"
+            )
             if (extension.isNotEmpty() && !supportedExtensions.contains(extension)) {
-                throw IllegalArgumentException("Unsupported file extension: .$extension. " +
-                        "Supported extensions: ${supportedExtensions.joinToString(", ") { ".$it" }}")
+                throw ImageFormatNotSupportedException(
+                    "Unsupported file extension: .$extension. " +
+                        "Supported extensions: ${supportedExtensions.joinToString(", ") { ".$it" }}"
+                )
             }
         }
     }
