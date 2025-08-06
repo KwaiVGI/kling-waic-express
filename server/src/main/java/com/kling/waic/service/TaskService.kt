@@ -10,6 +10,7 @@ import com.kling.waic.entity.TaskOutputType
 import com.kling.waic.entity.TaskStatus
 import com.kling.waic.entity.TaskType
 import com.kling.waic.external.model.QueryTaskContext
+import com.kling.waic.helper.AESCipherHelper
 import com.kling.waic.helper.ImageCropHelper
 import com.kling.waic.helper.ImageProcessHelper
 import com.kling.waic.helper.S3Helper
@@ -41,6 +42,8 @@ abstract class TaskService {
     private lateinit var bucket: String
     @Value("\${waic.crop-image-with-opencv}")
     private lateinit var cropImageWithOpenCV: String
+    @Autowired
+    private lateinit var aesCipherHelper: AESCipherHelper
 
     @Autowired(required = false)
     @LazyInit
@@ -59,7 +62,7 @@ abstract class TaskService {
             inputImage
         }
 
-        val requestFilename = "request-${taskName}.jpg"
+        val requestFilename = taskName + "-" + aesCipherHelper.encrypt("sudoku-${taskName}") + ".jpg"
         val requestImageUrl = s3Helper.uploadBufferedImage(
             bucket,
             "request-images/$requestFilename",

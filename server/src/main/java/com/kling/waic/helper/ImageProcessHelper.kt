@@ -53,7 +53,7 @@ class ImageProcessHelper(
         val contentType = file.contentType
         val supportedTypes = setOf(
             "image/jpeg", "image/jpg", "image/png", "image/gif", 
-            "image/bmp", "image/webp", "image/tiff", "image/tif"
+            "image/bmp", "image/webp", "image/tiff", "image/tif", "image/heic"
         )
         
         if (contentType != null && !supportedTypes.contains(contentType.lowercase())) {
