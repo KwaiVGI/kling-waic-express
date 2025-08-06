@@ -66,9 +66,7 @@ class ImageProcessHelper(
         val originalFilename = file.originalFilename
         if (originalFilename != null) {
             val extension = originalFilename.substringAfterLast('.', "").lowercase()
-            val supportedExtensions = setOf(
-                "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif", "heic", "avif"
-            )
+            val supportedExtensions = setOf("jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif")
             if (extension.isNotEmpty() && !supportedExtensions.contains(extension)) {
                 throw ImageFormatNotSupportedException(
                     "Unsupported file extension: .$extension. " +
