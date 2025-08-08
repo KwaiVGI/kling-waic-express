@@ -73,9 +73,7 @@ abstract class TaskService {
 
     suspend fun createTask(type: TaskType,
                            requestImageUrl: String): Task {
-        val taskName = requestImageUrl.substringAfterLast("/")
-            .removeSuffix(".jpg")
-            .removePrefix("request-")
+        val taskName = requestImageUrl.substringAfter("request-images/").substringBefore("-")
         log.info("Generated task name: $taskName for type: $type")
 
         val taskIds = doCreateTask(requestImageUrl)
