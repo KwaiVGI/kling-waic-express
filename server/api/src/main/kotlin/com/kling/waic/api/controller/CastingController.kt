@@ -1,0 +1,58 @@
+package com.kling.waic.api.controller
+
+import com.kling.waic.component.auth.Authorization
+import com.kling.waic.component.auth.AuthorizationType
+import com.kling.waic.component.entity.Casting
+import com.kling.waic.component.entity.CastingListResult
+import com.kling.waic.component.entity.Result
+import com.kling.waic.component.entity.TaskOperateInput
+import com.kling.waic.component.entity.TaskType
+import com.kling.waic.component.repository.CastingRepository
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+@RequestMapping("/castings")
+class CastingController(
+    private val castingRepository: CastingRepository
+) {
+
+    @GetMapping("{type}/pinned")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun getPinned(@PathVariable type: TaskType): Result<Casting> {
+        val casting = castingRepository.getPinned(type)
+        return Result(casting)
+    }
+
+    @GetMapping("{type}/screen")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun screen(@PathVariable type: TaskType,
+               @RequestParam num: Long): Result<List<Casting>> {
+        val castings = castingRepository.screen(type, num)
+        return Result(castings)
+    }
+
+    @GetMapping("{type}/list")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun getList(@PathVariable type: TaskType,
+                @RequestParam(required = false) keyword: String = "",
+                @RequestParam(required = false) score: Double? = null,
+                @RequestParam pageSize: Int = 10,
+                @RequestParam pageNum: Int = 1): Result<CastingListResult> {
+        val result = castingRepository.list(type, keyword, score, pageSize, pageNum)
+        return Result(result)
+    }
+
+    @PostMapping("{type}/operate")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun operate(@PathVariable type: TaskType,
+                @RequestBody input: TaskOperateInput): Result<Boolean> {
+        val result = castingRepository.operate(type, input.name, input.action)
+        return Result(result)
+    }
+}

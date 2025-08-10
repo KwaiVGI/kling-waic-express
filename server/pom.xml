@@ -13,6 +13,13 @@
     <groupId>com.kling.kling-waic-express</groupId>
     <artifactId>server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>component</module>
+        <module>api</module>
+        <module>printer</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -139,7 +146,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.kling.waic.WAICExpressApplication</mainClass>
+                    <mainClass>com.kling.klingwaicexpress.api.WAICExpressApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

@@ -1,0 +1,52 @@
+package com.kling.waic.component.handler
+
+import com.kling.waic.component.entity.Result
+import com.kling.waic.component.entity.ResultStatus
+import com.kling.waic.component.exception.KlingOpenAPIException
+import com.kling.waic.component.exception.base.HumanOperationException
+import com.kling.waic.component.exception.base.WAICException
+import com.kling.waic.component.utils.Slf4j.Companion.log
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
+
+@RestControllerAdvice
+class GlobalExceptionHandler {
+
+    @ExceptionHandler(value = [Exception::class])
+    fun handleRuntimeException(ex: Exception): Result<Any> {
+        if (ex is NoResourceFoundException) {
+            log.debug("Static resource not found: ${ex.message}")
+            throw ex
+        }
+
+        if (ex is WAICException) {
+            if (ex is HumanOperationException) {
+                log.info("handle HumanOperationException: ${ex::class.java.simpleName}, " +
+                        "message: ${ex.message}")
+            } else {
+                log.error("handle WAICException: ${ex::class.java.simpleName}, " +
+                        "message: ${ex.message}", ex)
+            }
+
+            if (ex is KlingOpenAPIException) {
+                return Result(
+                    status = ex.resultStatus(),
+                    message = ex.message ?: "",
+                    klingOpenAPIResult = ex.result
+                )
+            }
+            return Result(
+                status = ex.resultStatus(),
+                message = ex.message ?: ""
+            )
+        }
+
+        log.error("handle Exception: ${ex::class.java.simpleName}, " +
+                "message: ${ex.message}", ex)
+        return Result(
+            status = ResultStatus.FAILED,
+            message = ex.message ?: ""
+        )
+    }
+}

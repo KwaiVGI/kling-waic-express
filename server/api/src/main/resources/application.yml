@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: kling-waic-express-server-api
+  config:
+    import: classpath:application-env.properties
+  mvc:
+    servlet:
+      path: /api
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+#  web:
+#    resources:
+#      static-locations: file:${waic.sudoku.images-dir}/
+
+server:
+  port: 8538
+
+jedis:
+  host: ${REDIS_HOST_WAIC:127.0.0.1}
+  port: ${REDIS_PORT_WAIC:6379}
+  password: ${REDIS_PASS_WAIC}
+  cluster-mode: ${REDIS_CLUSTER_MODE_WAIC:false}
+
+waic:
+  jwt:
+    expireAtInSeconds: 1800
+    notBeforeInSeconds: -5
+  sudoku:
+    images-dir: ${SUDOKU_IMAGES_DIR:./sudoku-images}
+    url-prefix: ${SUDOKU_IMAGES_URL_PREFIX:/sudoku-images}
+    server-domain: ${SUDOKU_IMAGES_SERVER_DOMAIN:localhost:8538}
+  management:
+    token: ${WAIC_MANAGEMENT_TOKEN}
+  open-api:
+    access-key: ${WAIC_OPENAPI_ACCESS_KEY}
+    secret-key: ${WAIC_OPENAPI_SECRET_KEY}
+  crop-image-with-opencv: ${WAIC_CROP_IMAGE_WITH_OPENCV:true}
+  cipher:
+    key: ${WAIC_OPENAPI_ACCESS_KEY}
+    iv: ${WAIC_CIPHER_IV:KlingAIWAICBest!}
+
+kling:
+  open-api:
+    base-url: https://api-beijing.klingai.com
+  proxy:
+    use-proxy: ${WAIC_KLING_USE_PROXY:true}
+    host: 10.52.57.90
+    port: 11080
+
+s3:
+  bucket: ${S3_BUCKET_NAME:kling-waic}
+  profileName: ${S3_PROFILE_NAME:}

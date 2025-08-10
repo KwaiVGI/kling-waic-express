@@ -1,0 +1,158 @@
+package com.kling.waic.component.external
+
+import com.kling.waic.component.external.model.CreateImageTaskRequest
+import com.kling.waic.component.external.model.CreateImageTaskResponse
+import com.kling.waic.component.external.model.CreateVideoTaskRequest
+import com.kling.waic.component.external.model.CreateVideoTaskResponse
+import com.kling.waic.component.external.model.KlingOpenAPIResult
+import com.kling.waic.component.external.model.QueryImageTaskRequest
+import com.kling.waic.component.external.model.QueryImageTaskResponse
+import com.kling.waic.component.external.model.QueryVideoTaskRequest
+import com.kling.waic.component.external.model.QueryVideoTaskResponse
+import com.kling.waic.component.helper.JWTHelper
+import com.kling.waic.component.utils.ObjectMapperUtils
+import com.kling.waic.component.utils.Slf4j.Companion.log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
+import java.io.IOException
+
+@Component
+class KlingOpenAPIClient(
+    @Value("\${kling.open-api.base-url}") private val baseUrl: String,
+    private val jwtHelper: JWTHelper,
+    private val okHttpClient: OkHttpClient,
+) {
+
+    companion object {
+        private val CONTENT_TYPE = "application/json; charset=utf-8".toMediaType()
+    }
+
+    @Throws(IOException::class)
+    suspend fun createImageTask(createImageTaskRequest: CreateImageTaskRequest):
+            KlingOpenAPIResult<CreateImageTaskResponse> = withContext(Dispatchers.IO) {
+        val url = "$baseUrl/v1/images/generations"
+
+        val body = ObjectMapperUtils.toJSON(createImageTaskRequest)!!
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer ${jwtHelper.getLatest()}")
+            .post(body.toRequestBody(CONTENT_TYPE))
+            .build()
+
+        try {
+            okHttpClient.newCall(request).execute().use { resp ->
+                val responseBody = resp.body?.string()
+                return@withContext responseBody
+                    ?.let {
+                        log.info(
+                            "Create image task with image: ${createImageTaskRequest.image}, " +
+                                    "prompt: ${createImageTaskRequest.prompt}, responseBody: $it"
+                        )
+                        KlingOpenAPIResult.ok<CreateImageTaskResponse>(it)
+                    }
+                    ?: throw IOException("Response body is empty")
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            log.error("Socket timeout when creating image task - URL: {}", url, e)
+            throw IOException("Request timeout when creating image task", e)
+        } catch (e: Exception) {
+            log.error("Error creating image task - URL: {}", url, e)
+            throw e
+        }
+    }
+
+    @Throws(IOException::class)
+    suspend fun queryImageTask(queryImageTaskRequest: QueryImageTaskRequest):
+            KlingOpenAPIResult<QueryImageTaskResponse> = withContext(Dispatchers.IO) {
+        val url = "$baseUrl/v1/images/generations/${queryImageTaskRequest.taskId}"
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer ${jwtHelper.getLatest()}")
+            .get()
+            .build()
+
+        try {
+            okHttpClient.newCall(request).execute().use { resp ->
+                val responseBody = resp.body?.string()
+                return@withContext responseBody
+                    ?.let { KlingOpenAPIResult.ok<QueryImageTaskResponse>(it) }
+                    ?: throw IOException("Response body is empty")
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            log.error("Socket timeout when querying image task - URL: {}", url, e)
+            throw IOException("Request timeout when querying image task", e)
+        } catch (e: Exception) {
+            log.error("Error querying image task - URL: {}", url, e)
+            throw e
+        }
+    }
+
+    @Throws(IOException::class)
+    suspend fun createVideoTask(createVideoTaskRequest: CreateVideoTaskRequest):
+            KlingOpenAPIResult<CreateVideoTaskResponse> = withContext(Dispatchers.IO) {
+        val url = "$baseUrl/v1/videos/effects"
+
+        val body = ObjectMapperUtils.toJSON(createVideoTaskRequest)!!
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer ${jwtHelper.getLatest()}")
+            .post(body.toRequestBody(CONTENT_TYPE))
+            .build()
+
+        try {
+            okHttpClient.newCall(request).execute().use { resp ->
+                val responseBody = resp.body?.string()
+                return@withContext responseBody
+                    ?.let {
+                        log.info(
+                            "Create video task with image: ${createVideoTaskRequest.input.image}, " +
+                                    "effectScene: ${createVideoTaskRequest.effectScene}, responseBody: $it"
+                        )
+                        KlingOpenAPIResult.ok<CreateVideoTaskResponse>(it)
+                    }
+                    ?: throw IOException("Response body is empty")
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            log.error("Socket timeout when creating video task - URL: {}", url, e)
+            throw IOException("Request timeout when creating video task", e)
+        } catch (e: Exception) {
+            log.error("Error creating video task - URL: {}", url, e)
+            throw e
+        }
+    }
+
+    @Throws(IOException::class)
+    suspend fun queryVideoTask(queryVideoTaskRequest: QueryVideoTaskRequest):
+            KlingOpenAPIResult<QueryVideoTaskResponse> = withContext(Dispatchers.IO) {
+        val url = "$baseUrl/v1/videos/effects/${queryVideoTaskRequest.taskId}"
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer ${jwtHelper.getLatest()}")
+            .get()
+            .build()
+
+        try {
+            okHttpClient.newCall(request).execute().use { resp ->
+                val responseBody = resp.body?.string()
+                return@withContext responseBody
+                    ?.let { KlingOpenAPIResult.ok<QueryVideoTaskResponse>(it) }
+                    ?: throw IOException("Response body is empty")
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            log.error("Socket timeout when querying video task - URL: {}", url, e)
+            throw IOException("Request timeout when querying video task", e)
+        } catch (e: Exception) {
+            log.error("Error querying video task - URL: {}", url, e)
+            throw e
+        }
+    }
+
+}
