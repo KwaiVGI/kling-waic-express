@@ -14,3 +14,7 @@ data class Printing(
 data class PrintingUpdateInput(
     val status: PrintingStatus
 )
+
+data class SetPrinterQueuedJobCountRequest(
+    val printerQueuedJobCount: Int
+)

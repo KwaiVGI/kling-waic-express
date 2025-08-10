@@ -4,5 +4,7 @@ enum class PrintingStatus {
     SUBMITTED,
     QUEUING,
     PRINTING,
-    COMPLETED
+    COMPLETED,
+    FAILED,
+    CANCELLED
 }

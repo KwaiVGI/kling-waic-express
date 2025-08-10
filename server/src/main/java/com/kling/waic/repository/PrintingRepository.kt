@@ -2,6 +2,7 @@ package com.kling.waic.repository
 
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.PrintingStatus
+import com.kling.waic.entity.SetPrinterQueuedJobCountRequest
 import com.kling.waic.entity.Task
 import com.kling.waic.entity.TaskType
 import com.kling.waic.exception.DuplicatePrintException
@@ -16,6 +17,7 @@ class PrintingRepository(
     private val jedis: JedisCommands,
 ) {
     private val printingQueue = "printing_queue_${TaskType.STYLED_IMAGE}"
+    private val printerQueuedJobCount = "printer_queued_job_count_${TaskType.STYLED_IMAGE}"
 
     fun addTaskToPrintingQueue(task: Task, fromConsole: Boolean = false): Printing {
         val printingName = "printing:${task.name}"
@@ -33,7 +35,7 @@ class PrintingRepository(
             id = IdUtils.generateId(),
             name = printingName,
             task = task,
-            status = PrintingStatus.SUBMITTED,
+            status = PrintingStatus.QUEUING,
         )
         val value = ObjectMapperUtils.toJSON(printing)
 
@@ -94,5 +96,13 @@ class PrintingRepository(
         return finalNames.map {
             getPrinting(it)
         }
+    }
+
+    fun getPrinterQueuedJobCount(): Int {
+        return jedis.get(printerQueuedJobCount)?.toInt() ?: 0
+    }
+
+    fun setPrinterQueuedJobCount(request: SetPrinterQueuedJobCountRequest): String {
+        return jedis.set(printerQueuedJobCount, request.printerQueuedJobCount.toString())
     }
 }

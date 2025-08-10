@@ -5,20 +5,15 @@ import com.kling.waic.auth.AuthorizationType
 import com.kling.waic.entity.Printing
 import com.kling.waic.entity.PrintingUpdateInput
 import com.kling.waic.entity.Result
+import com.kling.waic.entity.SetPrinterQueuedJobCountRequest
 import com.kling.waic.repository.PrintingRepository
 import com.kling.waic.utils.Slf4j.Companion.log
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/printings")
 class PrintingController(
-    private val printingRepository: PrintingRepository
+    private val printingRepository: PrintingRepository,
 ) {
 
     @PostMapping("fetch")
@@ -34,8 +29,10 @@ class PrintingController(
 
     @PostMapping("{name}/update")
     @Authorization(AuthorizationType.MANAGEMENT)
-    fun updatePrinting(@PathVariable name: String,
-                       @RequestBody input: PrintingUpdateInput): Result<Printing> {
+    fun updatePrinting(
+        @PathVariable name: String,
+        @RequestBody input: PrintingUpdateInput
+    ): Result<Printing> {
         log.debug("Update printing: ${name}, status: ${input.status}")
 
         val printing = printingRepository.updatePrintingStatus(name, input.status)
@@ -53,8 +50,24 @@ class PrintingController(
 
     @GetMapping("queryAll")
     @Authorization(AuthorizationType.MANAGEMENT)
-    fun queryAll(@RequestParam(required = false) keyword: String = "",): Result<List<Printing>> {
+    fun queryAll(@RequestParam(required = false) keyword: String = ""): Result<List<Printing>> {
         val allPrintings = printingRepository.queryAll(keyword)
         return Result(allPrintings)
+    }
+
+    @GetMapping("getPrinterQueuedJobCount")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun getPrinterQueuedJobCount(): Result<Int> {
+        val printerQueuedJobCount = printingRepository.getPrinterQueuedJobCount()
+        return Result(printerQueuedJobCount)
+    }
+
+    @PostMapping("setPrinterQueuedJobCount")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun setPrinterQueuedJobCount(
+        @RequestBody request: SetPrinterQueuedJobCountRequest
+    ): Result<String> {
+        val printerQueuedJobCount = printingRepository.setPrinterQueuedJobCount(request)
+        return Result(printerQueuedJobCount)
     }
 }
