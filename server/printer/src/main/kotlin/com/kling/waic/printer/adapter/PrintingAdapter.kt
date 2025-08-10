@@ -1,13 +1,13 @@
 package com.kling.waic.printer.adapter
 
+import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.printer.client.PrintingDataClient
 import com.kling.waic.printer.listener.PrintJobCallback
-import com.kling.waic.component.utils.Slf4j.Companion.log
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.lang.IllegalArgumentException
 import java.net.URL
+import java.util.*
 import javax.print.*
 import javax.print.attribute.HashDocAttributeSet
 import javax.print.attribute.HashPrintRequestAttributeSet
@@ -65,15 +65,15 @@ class PrintAdapter(
             .use { imageStream ->
                 val flavor = DocFlavor.INPUT_STREAM.JPEG
 
-                val docAttrs = HashDocAttributeSet().apply {
-                    add(JobName(taskName, null))
-                }
+                // Create document attributes - keep it simple to avoid ClassCastException
+                val docAttrs = HashDocAttributeSet()
 
                 val doc: Doc = SimpleDoc(imageStream, flavor, docAttrs)
 
                 val attrs = HashPrintRequestAttributeSet()
                 attrs.add(OrientationRequested.PORTRAIT)
                 attrs.add(MediaPrintableArea(0f, 0f, 4f, 6f, MediaPrintableArea.INCH))
+                attrs.add(JobName(taskName, Locale.getDefault()))
 
                 val job: DocPrintJob = printer.createPrintJob()
 

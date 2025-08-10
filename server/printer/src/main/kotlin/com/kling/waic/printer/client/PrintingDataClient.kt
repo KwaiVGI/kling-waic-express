@@ -29,7 +29,7 @@ class PrintingDataClient(
         val request = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Token $waicManagementToken")
-            .get()
+            .post("{}".toRequestBody(CONTENT_TYPE))
             .build()
 
         return try {
