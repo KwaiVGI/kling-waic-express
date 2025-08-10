@@ -13,6 +13,7 @@ class PrintJobCallback(
     private val printingDataClient: PrintingDataClient
 ) : PrintJobAdapter() {
     override fun printJobCompleted(pje: PrintJobEvent) {
+        // Completed event can not receive, use `lpstat -W not-completed` to show not-completed jobs.
         val taskName = getTaskName(pje)
         val printing = printingDataClient.updatePrintingStatus(taskName, PrintingStatus.COMPLETED)
         log.info("✅ Print job completed for taskName: ${taskName}, printing status: ${printing.status}!")
