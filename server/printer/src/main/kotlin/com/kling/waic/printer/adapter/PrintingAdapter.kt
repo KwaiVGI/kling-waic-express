@@ -16,6 +16,8 @@ import javax.print.attribute.standard.*
 @Component
 class PrintAdapter(
     @param:Value("\${PRINTER_NAME:DNP DP-DS620}") private val printerName: String,
+    @param:Value("\${PRINTER_SYSTEM_NAME:Dai_Nippon_Printing_DP_DS620}")
+    private val printerSystemName: String,
     private val printingDataClient: PrintingDataClient,
     private val printJobCallback: PrintJobCallback
 ) {
@@ -38,8 +40,32 @@ class PrintAdapter(
     }
 
     private fun fetchQueuedJobCount(): Int {
-        val queuedJobCount = printer.getAttribute(QueuedJobCount::class.java)
-        return queuedJobCount?.value ?: 0
+        return try {
+            val os = System.getProperty("os.name").lowercase()
+            if (os.contains("win")) {
+                // Windows 使用 PowerShell 查询
+                val command = arrayOf(
+                    "powershell", "-Command",
+                    "Get-PrintJob -PrinterName \"${printerName}\" | Measure-Object | Select -ExpandProperty Count"
+                )
+                val output = ProcessBuilder(*command)
+                    .redirectErrorStream(true)
+                    .start()
+                    .inputStream.bufferedReader().readText().trim()
+                output.toIntOrNull() ?: 0
+            } else {
+                // 再用真实名字查队列
+                val command = arrayOf("sh", "-c", "lpstat -o \"$printerSystemName\" | wc -l")
+                val output = ProcessBuilder(*command)
+                    .redirectErrorStream(true)
+                    .start()
+                    .inputStream.bufferedReader().readText().trim()
+                output.toIntOrNull() ?: 0
+            }
+        } catch (e: Exception) {
+            log.error("Failed to get queued job count", e)
+            0
+        }
     }
 
     fun tryFetchAndPrint() {
