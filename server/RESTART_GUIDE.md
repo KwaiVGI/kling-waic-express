@@ -20,7 +20,7 @@ server/
 **使用方法**:
 ```bash
 cd /path/to/server
-./restart.sh
+./restart-api.sh
 ```
 
 ### 2. API模块重启脚本
@@ -29,7 +29,7 @@ cd /path/to/server
 **使用方法**:
 ```bash
 cd /path/to/server/api
-./restart.sh
+./restart-api.sh
 ```
 
 ## 脚本功能
@@ -61,18 +61,18 @@ cd /path/to/server/api
 ```bash
 # 推荐：从server目录使用主脚本
 cd /path/to/server
-./restart.sh
+./restart-api.sh
 
 # 或者：直接在api目录使用
 cd /path/to/server/api
-./restart.sh
+./restart-api.sh
 ```
 
 ## 测试脚本
 运行测试脚本验证环境：
 ```bash
 cd /path/to/server
-./test-restart.sh
+./test-restart-api.sh
 ```
 
 ## 故障排除
@@ -87,8 +87,8 @@ kill -9 <PID>
 ### 权限问题
 确保脚本有执行权限：
 ```bash
-chmod +x restart.sh
-chmod +x api/restart.sh
+chmod +x restart-api.sh
+chmod +x api/restart-api.sh
 ```
 
 ### Maven问题
