@@ -45,7 +45,7 @@ class PrintAdapter(
     fun tryFetchAndPrint() {
         val queuedJobCount = fetchQueuedJobCount()
         val result = printingDataClient.setPrinterQueuedJobCount(queuedJobCount)
-        log.info("Set Printer queuedJobCount: $result")
+        log.info("Set Printer queuedJobCount: $queuedJobCount, result: $result")
 
         val printerIsAcceptingJobs = printer.getAttribute(PrinterIsAcceptingJobs::class.java)
         if (printerIsAcceptingJobs.value < 1) {
@@ -55,7 +55,7 @@ class PrintAdapter(
 
         val printing = printingDataClient.fetchPrinting()
         if (printing == null) {
-            log.info("Printing queue is empty, skip printing job.")
+            log.debug("Printing queue is empty, skip printing job.")
             return
         }
         val taskName = printing.task.name

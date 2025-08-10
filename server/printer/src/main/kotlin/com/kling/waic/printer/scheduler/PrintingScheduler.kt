@@ -16,22 +16,19 @@ class PrintingScheduler(
 ) : SchedulingConfigurer {
 
     override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
+        val cron = "*/1 * * * * *"
+        val timezone = TimeZone.getTimeZone("Asia/Shanghai")
+        log.info("Cron task registered, cron: {}, timezone: {}", cron, timezone)
+
         taskRegistrar.addTriggerTask(
             { process() },
             { triggerContext ->
-                val cron = "*/1 * * * * *" // execute each second
-                val timezone = TimeZone.getTimeZone("Asia/Shanghai")
-
-                val cronTrigger = CronTrigger(cron, timezone).nextExecution(triggerContext)
-                log.info("Cron task registered, cron: {}, timezone: {}", cron, timezone)
-
-                cronTrigger
+                CronTrigger(cron, timezone).nextExecution(triggerContext)
             }
         )
     }
 
     private fun process() {
-        log.debug("Printing image...")
         printAdapter.tryFetchAndPrint()
     }
 }

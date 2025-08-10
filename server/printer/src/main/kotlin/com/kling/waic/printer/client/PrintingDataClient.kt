@@ -41,7 +41,7 @@ class PrintingDataClient(
                 val responseBody = resp.body?.string()
                     ?: throw IOException("Response body is empty")
 
-                log.info("fetch printing response: $responseBody")
+                log.debug("fetch printing response: $responseBody")
 
                 val response = Result.fromJSON<Printing?>(responseBody)
                 val printing = response.data
@@ -118,7 +118,7 @@ class PrintingDataClient(
                 val responseBody = resp.body?.string()
                     ?: throw IOException("Response body is empty")
 
-                log.info("set printer queuedJobCount: $responseBody")
+                log.debug("set printer queuedJobCount: $responseBody")
 
                 val response = Result.fromJSON<String>(responseBody)
                 val result = response.data
