@@ -6,26 +6,33 @@ import com.kling.waic.component.exception.KlingOpenAPIException
 import com.kling.waic.component.external.KlingOpenAPIClient
 import com.kling.waic.component.external.model.*
 import com.kling.waic.component.helper.ImageProcessHelper
+import com.kling.waic.component.repository.TaskRepository
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+
+enum class ImageTaskMode(val taskN: Int) {
+    ALL_GENERATED(9),
+    WITH_ORIGIN(8)
+}
 
 @Service
 class ImageTaskService(
     private val klingOpenAPIClient: KlingOpenAPIClient,
     private val styleImagePrompts: List<String>,
     private val imageProcessHelper: ImageProcessHelper,
+    @Value("\${IMAGE_TASK_MODE:ALL_GENERATED}")
+    private val imageTaskMode: ImageTaskMode,
+    private val taskRepository: TaskRepository
 ) : TaskService() {
 
-    companion object {
-        const val TASK_N: Int = 9
-    }
-
     override suspend fun doCreateTask(requestImageUrl: String): List<String> {
-        val randomPrompts = styleImagePrompts.shuffled().take(TASK_N)
+        val taskN = imageTaskMode.taskN
+        val randomPrompts = styleImagePrompts.shuffled().take(taskN)
 
         // Use coroutineScope instead of runBlocking
         val taskIds = coroutineScope {
@@ -53,9 +60,9 @@ class ImageTaskService(
             results.filterNotNull().toMutableList()
         }
 
-        if (taskIds.size != TASK_N) {
+        if (taskIds.size != taskN) {
             throw IllegalStateException(
-                "Failed to create the expected number of tasks: $TASK_N, " +
+                "Failed to create the expected number of tasks: $taskN, " +
                         "only created ${taskIds.size} tasks."
             )
         }
@@ -111,11 +118,22 @@ class ImageTaskService(
         taskResponseMap: Map<String, QueryImageTaskResponse>,
         locale: Locale
     ): String {
-        val imageUrls: List<String> = taskResponseMap.values
+        val imageUrls: MutableList<String> = taskResponseMap.values
             .flatMap { it.taskResult.images ?: emptyList() }
-            .map { it.url }
-            .map { it.trim() }
+            .map { it.url.trim() }
             .filter { it.isNotEmpty() }
+            .toMutableList()
+
+        if (imageTaskMode == ImageTaskMode.WITH_ORIGIN) {
+            // add origin image to the center of imageUrls.
+            val task = taskRepository.getTask(taskName)
+                ?: throw IllegalStateException("Task with name $taskName not found")
+            val requestImageUrl = task.input.image
+
+            // calculate middle index of the list
+            val middleIndex = imageUrls.size / 2
+            imageUrls.add(middleIndex, requestImageUrl)
+        }
 
         val outputImageUrl = imageProcessHelper.downloadAndCreateSudoku(
             taskName,
