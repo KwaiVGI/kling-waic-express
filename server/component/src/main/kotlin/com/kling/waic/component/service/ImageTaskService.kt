@@ -7,6 +7,7 @@ import com.kling.waic.component.external.KlingOpenAPIClient
 import com.kling.waic.component.external.model.*
 import com.kling.waic.component.helper.ImageProcessHelper
 import com.kling.waic.component.repository.TaskRepository
+import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -81,8 +82,9 @@ class ImageTaskService(
                         throw KlingOpenAPIException(result)
                     }
                     log.info(
-                        "Query Image Task with result, taskId: {}, taskStatus: {}",
-                        result.data?.taskId ?: "null", result.data?.taskStatus ?: "null"
+                        "Query Image Task with result, taskId: {}, taskStatus: {}, result: {}",
+                        result.data?.taskId ?: "null", result.data?.taskStatus ?: "null",
+                        ObjectMapperUtils.toJSON(result)
                     )
                     taskId to result.data
                 }

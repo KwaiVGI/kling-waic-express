@@ -10,6 +10,7 @@ import com.kling.waic.component.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.component.external.model.QueryTaskContext
 import com.kling.waic.component.external.model.QueryVideoTaskRequest
 import com.kling.waic.component.helper.VideoResizeHelper
+import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Service
 
@@ -47,9 +48,10 @@ class VideoTaskService(
             throw KlingOpenAPIException(result)
         }
         log.debug(
-            "Query Video Task with result, taskId: {}, taskStatus: {}",
+            "Query Video Task with result, taskId: {}, taskStatus: {}, result: {}",
             taskId,
-            result.data?.taskStatus ?: "null"
+            result.data?.taskStatus ?: "null",
+            ObjectMapperUtils.toJSON(result)
         )
 
         val taskStatus = result.data!!.taskStatus
