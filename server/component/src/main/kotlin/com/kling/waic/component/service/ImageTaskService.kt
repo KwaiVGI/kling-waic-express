@@ -48,7 +48,7 @@ class ImageTaskService(
                         throw KlingOpenAPIException(result)
                     }
                     log.debug(
-                        "Create image task with image: $requestImageUrl, " +
+                        "Create Image Task with image: $requestImageUrl, " +
                                 "prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}"
                     )
                     result.data?.taskId
@@ -81,7 +81,7 @@ class ImageTaskService(
                         throw KlingOpenAPIException(result)
                     }
                     log.info(
-                        "Query task with result, taskId: {}, taskStatus: {}",
+                        "Query Image Task with result, taskId: {}, taskStatus: {}",
                         result.data?.taskId ?: "null", result.data?.taskStatus ?: "null"
                     )
                     taskId to result.data
@@ -99,7 +99,7 @@ class ImageTaskService(
 
         val summaryMap = summaryResponse(taskResponseMap)
         val overallStatus = calculateOverallStatus(summaryMap, taskIds.size)
-        log.info("Task $taskName overallStatus: $overallStatus, " +
+        log.info("Image Task $taskName overallStatus: $overallStatus, " +
                 "summaryInfo: ${summaryInfo(overallStatus, summaryMap, taskIds.size)}")
         return Pair(overallStatus, QueryTaskContext(taskResponseMap = taskResponseMap))
     }

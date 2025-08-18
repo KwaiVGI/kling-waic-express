@@ -32,7 +32,7 @@ class VideoTaskService(
         if (result.code != 0) {
             throw KlingOpenAPIException(result)
         }
-        log.debug("Create video task with effectScene: $effectScene, taskId: ${result.data?.taskId ?: "null"}")
+        log.debug("Create Video Task with effectScene: $effectScene, taskId: ${result.data?.taskId ?: "null"}")
         return listOf(result.data!!.taskId)
     }
 
@@ -47,14 +47,14 @@ class VideoTaskService(
             throw KlingOpenAPIException(result)
         }
         log.debug(
-            "Query task with result, taskId: {}, taskStatus: {}",
+            "Query Video Task with result, taskId: {}, taskStatus: {}",
             taskId,
             result.data?.taskStatus ?: "null"
         )
 
         val taskStatus = result.data!!.taskStatus
         val convertedStatus = calculateStatus(taskStatus)
-        log.info("Task $taskName convertedStatus: $convertedStatus")
+        log.info("Video Task $taskName convertedStatus: $convertedStatus")
 
         val video = result.data.taskResult.videos?.firstOrNull()
         return Pair(convertedStatus, QueryTaskContext(video = video))
