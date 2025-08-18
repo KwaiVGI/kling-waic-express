@@ -9,6 +9,7 @@ import com.kling.waic.component.external.model.CreateVideoTaskRequest
 import com.kling.waic.component.external.model.KlingOpenAPITaskStatus
 import com.kling.waic.component.external.model.QueryTaskContext
 import com.kling.waic.component.external.model.QueryVideoTaskRequest
+import com.kling.waic.component.helper.VideoResizeHelper
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.springframework.stereotype.Service
 
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service
 class VideoTaskService(
     private val videoSpecialEffects: List<String>,
     private val klingOpenAPIClient: KlingOpenAPIClient,
+    private val videoResizeHelper: VideoResizeHelper
 ) : TaskService() {
 
     override suspend fun doCreateTask(requestImageUrl: String): List<String> {
@@ -62,8 +64,15 @@ class VideoTaskService(
         taskName: String,
         queryTaskContext: QueryTaskContext,
         locale: Locale
-    ): String {
-        return queryTaskContext.video!!.url
+    ): Pair<String, String> {
+        val url = queryTaskContext.video!!.url
+        val thumbnailUrl = videoResizeHelper.resizeVideoByUrl(
+            taskName = taskName,
+            inputUrl = url,
+            targetWidth = 225,
+            targetHeight = 400
+        )
+        return Pair(url, thumbnailUrl)
     }
 
     private fun calculateStatus(taskStatus: KlingOpenAPITaskStatus): TaskStatus {

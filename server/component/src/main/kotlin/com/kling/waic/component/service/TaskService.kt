@@ -125,11 +125,12 @@ abstract class TaskService {
             return newTask
         }
 
-        val url = generateOutputUrl(name, taskQueryContext, locale)
+        val (url, thumbnailUrl) = generateOutputUrl(name, taskQueryContext, locale)
         val finalTask = newTask.copy(
             outputs = TaskOutput(
                 type = getTaskOutputType(type),
-                url = url
+                url = url,
+                thumbnailUrl = thumbnailUrl
             ),
             updateTime = Instant.now()
         )
@@ -159,7 +160,9 @@ abstract class TaskService {
 
     abstract suspend fun doQueryTask(taskIds: List<String>, taskName: String): Pair<TaskStatus, QueryTaskContext>
 
-    abstract suspend fun generateOutputUrl(taskName: String, queryTaskContext: QueryTaskContext, locale: Locale): String
+    abstract suspend fun generateOutputUrl(taskName: String,
+                                           queryTaskContext: QueryTaskContext,
+                                           locale: Locale): Pair<String, String>
 
     private fun getTaskOutputType(type: TaskType): TaskOutputType {
         return when (type) {

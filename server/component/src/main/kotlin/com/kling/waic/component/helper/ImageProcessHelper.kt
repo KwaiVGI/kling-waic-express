@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
+import java.awt.Image
 import java.awt.font.TextLayout
 import java.awt.geom.AffineTransform
 import java.awt.image.AffineTransformOp
@@ -149,7 +150,7 @@ class ImageProcessHelper(
         imageUrls:
         List<String>,
         locale: Locale
-    ): String {
+    ): Pair<String, String> {
         val images = withContext(Dispatchers.IO) {
             imageUrls.mapIndexed { index, url ->
                 async {
@@ -166,12 +167,22 @@ class ImageProcessHelper(
         }
 
         val sudokuImage = createKlingWAICSudokuImage(taskName, images, locale)
+        val thumbnailImage = resizeAndCropToRatio(sudokuImage, 400, 600)
 
-        val outputFilename = taskName + "-" + aesCipherHelper.encrypt("sudoku-${taskName}") + ".jpg"
-        val outputImageUrl = s3Helper.uploadBufferedImage(bucket,
-            "output-images/$outputFilename",
-            sudokuImage, "jpg")
-        return outputImageUrl
+        val encrypted = aesCipherHelper.encrypt("sudoku-$taskName")
+        val outputFilename = "$taskName-$encrypted.jpg"
+        val outputImageUrl = uploadTaskImage(outputFilename, sudokuImage)
+
+        val thumbnailFilename = "$taskName-$encrypted-thumbnail.jpg"
+        val thumbnailImageUrl = uploadTaskImage(thumbnailFilename, thumbnailImage)
+
+        return Pair(outputImageUrl, thumbnailImageUrl)
+    }
+
+    private fun uploadTaskImage(filename: String, image: BufferedImage): String {
+        return s3Helper.uploadBufferedImage(bucket,
+            "output-images/$filename",
+            image, "jpg")
     }
 
     fun readImageWithProxy(url: String): BufferedImage {
@@ -277,4 +288,43 @@ class ImageProcessHelper(
         g2d.dispose()
         return canvas
     }
+
+    fun resizeAndCropToRatio(
+        originalImage: BufferedImage,
+        targetWidth: Int,
+        targetHeight: Int
+    ): BufferedImage {
+        val targetRatio = targetWidth.toDouble() / targetHeight
+        val originalRatio = originalImage.width.toDouble() / originalImage.height
+
+        var scaledWidth = targetWidth
+        var scaledHeight = targetHeight
+
+        if (originalRatio > targetRatio) {
+            // 原图过宽 -> 高度对齐，宽度超出后裁掉
+            scaledHeight = targetHeight
+            scaledWidth = (targetHeight * originalRatio).toInt()
+        } else {
+            // 原图过高 -> 宽度对齐，高度超出后裁掉
+            scaledWidth = targetWidth
+            scaledHeight = (targetWidth / originalRatio).toInt()
+        }
+
+        // 先缩放
+        val temp = BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_RGB)
+        val g2dTemp = temp.createGraphics()
+        g2dTemp.drawImage(
+            originalImage.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH),
+            0,
+            0,
+            null
+        )
+        g2dTemp.dispose()
+
+        // 再居中裁剪成目标大小
+        val x = (scaledWidth - targetWidth) / 2
+        val y = (scaledHeight - targetHeight) / 2
+        return temp.getSubimage(x, y, targetWidth, targetHeight)
+    }
+
 }

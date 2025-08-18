@@ -7,5 +7,6 @@ data class TaskInput (
 
 data class TaskOutput (
     val type: TaskOutputType,
-    val url: String
+    val url: String,
+    val thumbnailUrl: String? = null
 )

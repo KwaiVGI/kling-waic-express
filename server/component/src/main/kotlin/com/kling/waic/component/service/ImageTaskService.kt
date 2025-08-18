@@ -108,7 +108,7 @@ class ImageTaskService(
         taskName: String,
         queryTaskContext: QueryTaskContext,
         locale: Locale
-    ): String {
+    ): Pair<String, String> {
         log.info("Generating Sudoku image URL for task: $taskName")
         return generateSudokuImageUrl(taskName, queryTaskContext.taskResponseMap, locale)
     }
@@ -117,7 +117,7 @@ class ImageTaskService(
         taskName: String,
         taskResponseMap: Map<String, QueryImageTaskResponse>,
         locale: Locale
-    ): String {
+    ): Pair<String, String> {
         val imageUrls: MutableList<String> = taskResponseMap.values
             .flatMap { it.taskResult.images ?: emptyList() }
             .map { it.url.trim() }
@@ -135,12 +135,12 @@ class ImageTaskService(
             imageUrls.add(middleIndex, requestImageUrl)
         }
 
-        val outputImageUrl = imageProcessHelper.downloadAndCreateSudoku(
+        val outputImageUrlPair = imageProcessHelper.downloadAndCreateSudoku(
             taskName,
             imageUrls,
             locale
         )
-        return outputImageUrl
+        return outputImageUrlPair
     }
 
     private fun summaryResponse(taskResponseMap: Map<String, QueryImageTaskResponse>):
