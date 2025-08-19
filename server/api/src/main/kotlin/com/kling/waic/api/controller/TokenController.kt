@@ -4,6 +4,7 @@ import com.kling.waic.component.auth.Authorization
 import com.kling.waic.component.auth.AuthorizationType
 import com.kling.waic.component.entity.Result
 import com.kling.waic.component.entity.Token
+import com.kling.waic.component.helper.AdminConfigHelper
 import com.kling.waic.component.helper.TokenHelper
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -14,12 +15,14 @@ import org.springframework.web.bind.annotation.PathVariable
 @RestController
 @RequestMapping("/tokens")
 class TokenController @Autowired constructor (
-    private val tokenHelper: TokenHelper
+    private val tokenHelper: TokenHelper,
+    private val adminConfigHelper: AdminConfigHelper
 ) {
     @GetMapping("latest")
     @Authorization(AuthorizationType.MANAGEMENT)
     fun getLatestToken(): Result<Token> {
-        return Result(tokenHelper.getLatest())
+        val adminConfig = adminConfigHelper.getAdminConfig()
+        return Result(tokenHelper.getLatest(adminConfig))
     }
 
     @GetMapping("{name}")

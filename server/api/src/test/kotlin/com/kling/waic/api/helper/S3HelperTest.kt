@@ -1,4 +1,4 @@
-package helper
+package com.kling.waic.api.helper
 
 import SpringBaseTest
 import com.kling.waic.component.helper.S3Helper

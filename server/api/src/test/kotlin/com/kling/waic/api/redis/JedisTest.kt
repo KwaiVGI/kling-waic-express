@@ -1,4 +1,4 @@
-package com.kling.waic.test.redis
+package com.kling.waic.api.redis
 
 import SpringBaseTest
 import org.junit.jupiter.api.Test

@@ -1,4 +1,4 @@
-package repository
+package com.kling.waic.api.repository
 
 import SpringBaseTest
 import com.kling.waic.component.entity.*

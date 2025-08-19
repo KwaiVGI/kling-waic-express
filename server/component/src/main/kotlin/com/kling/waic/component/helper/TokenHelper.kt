@@ -1,5 +1,6 @@
 package com.kling.waic.component.helper
 
+import com.kling.waic.component.config.AdminConfig
 import com.kling.waic.component.entity.Token
 import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
@@ -10,12 +11,12 @@ import java.util.*
 
 @Component
 class TokenHelper(
-    private val jedis: JedisCommands
+    private val jedis: JedisCommands,
 ) {
     @Volatile
     private var latestToken: Token? = null
 
-    fun getLatest(): Token {
+    fun getLatest(adminConfig: AdminConfig): Token {
         val now = Instant.now()
         val current = latestToken
         if (current != null && current.refreshTime > now) {
@@ -32,10 +33,12 @@ class TokenHelper(
                     UUID.randomUUID().toString(),
                     nowInLock,
                     nowInLock.plusSeconds(5),
-                    nowInLock.plusSeconds(EXPIRE_IN_SECONDS)
+                    nowInLock.plusSeconds(adminConfig.tokenExpireInSeconds)
                 )
                 latestToken = newToken
-                jedis.setex(newToken.value, EXPIRE_IN_SECONDS, ObjectMapperUtils.Companion.toJSON(newToken))
+                jedis.setex(newToken.value,
+                    adminConfig.tokenExpireInSeconds,
+                    ObjectMapperUtils.Companion.toJSON(newToken))
                 log.info("Generated and saved new token: id={}, name={}", newToken.id, newToken.value)
             }
             return latestToken!!
@@ -50,9 +53,5 @@ class TokenHelper(
     fun validate(token: String): Boolean {
         val storedToken = getByName(token)
         return storedToken?.let { Instant.now().isBefore(it.expireTime) } ?: false
-    }
-
-    companion object {
-        const val EXPIRE_IN_SECONDS: Long = 60 * 20 //20 minutes
     }
 }

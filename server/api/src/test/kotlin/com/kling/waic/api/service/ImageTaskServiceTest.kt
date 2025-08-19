@@ -1,4 +1,4 @@
-package service
+package com.kling.waic.api.service
 
 import SpringBaseTest
 import com.kling.waic.component.entity.Locale

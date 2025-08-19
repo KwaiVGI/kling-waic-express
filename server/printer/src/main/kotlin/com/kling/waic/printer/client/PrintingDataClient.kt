@@ -16,7 +16,7 @@ class PrintingDataClient(
     private val okHttpClient: OkHttpClient,
     @Value("\${SERVER_BASE_URI:https://waic-api.klingai.com}")
     private val serverBaseURI: String,
-    @Value("\${WAIC_MANAGEMENT_TOKEN:KlingWAIC666}")
+    @Value("\${WAIC_MANAGEMENT_TOKEN}")
     private val waicManagementToken: String
 ) {
     companion object {

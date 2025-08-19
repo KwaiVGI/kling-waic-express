@@ -1,4 +1,4 @@
-package com.kling.waic.test.repository
+package com.kling.waic.api.repository
 
 import SpringBaseTest
 import com.kling.waic.component.entity.TaskType
