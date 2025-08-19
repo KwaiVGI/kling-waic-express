@@ -23,7 +23,8 @@ enum class ResizeMode {
 class VideoResizeHelper(
     private val s3Helper: S3Helper,
     private val aesCipherHelper: AESCipherHelper,
-    @param:Value("\${s3.bucket}") private val bucket: String,
+    @param:Value("\${S3_BUCKET_NAME:kling-waic}")
+    private val bucket: String,
 ) {
 
     fun resizeVideoByUrl(

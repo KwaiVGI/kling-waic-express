@@ -6,12 +6,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import java.io.File
 
-@Configuration
+//@Configuration
 open class SudokuConfig(
-    @Value("\${waic.sudoku.images-dir}")
-    private val sudokuImagesDir: String,
-    @Value("\${waic.sudoku.url-prefix}")
-    private val sudokuUrlPrefix: String
+    @Value("\${SUDOKU_IMAGES_DIR:./sudoku-images}")
+    private val sudokuImagesDir: String
 ) {
 
     @PostConstruct

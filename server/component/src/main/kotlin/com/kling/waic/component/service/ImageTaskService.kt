@@ -26,7 +26,7 @@ class ImageTaskService(
     private val klingOpenAPIClient: KlingOpenAPIClient,
     private val styleImagePrompts: List<String>,
     private val imageProcessHelper: ImageProcessHelper,
-    @Value("\${IMAGE_TASK_MODE:ALL_GENERATED}")
+    @Value("\${IMAGE_TASK_MODE:WITH_ORIGIN}")
     private val imageTaskMode: ImageTaskMode,
     private val taskRepository: TaskRepository
 ) : TaskService() {

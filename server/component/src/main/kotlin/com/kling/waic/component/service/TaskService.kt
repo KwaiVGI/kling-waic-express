@@ -38,9 +38,9 @@ abstract class TaskService {
     private lateinit var castingRepository: CastingRepository
     @Autowired
     private lateinit var printingRepository: PrintingRepository
-    @Value("\${s3.bucket}")
+    @Value("\${S3_BUCKET_NAME:kling-waic}")
     private lateinit var bucket: String
-    @Value("\${waic.crop-image-with-opencv}")
+    @Value("\${WAIC_CROP_IMAGE_WITH_OPENCV:true}")
     private lateinit var cropImageWithOpenCV: String
     @Autowired
     private lateinit var aesCipherHelper: AESCipherHelper

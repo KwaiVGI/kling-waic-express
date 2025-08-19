@@ -11,9 +11,9 @@ import java.util.concurrent.TimeUnit
 
 @Configuration
 class ExternalClientConfig(
-    @param:Value("\${kling.proxy.host:localhost}") private val proxyHost: String,
-    @param:Value("\${kling.proxy.port:11080}") private val proxyPort: Int,
-    @param:Value("\${kling.proxy.use-proxy:false}") private val useProxy: Boolean,
+    @param:Value("\${KLING_PROXY_HOST:localhost}") private val proxyHost: String,
+    @param:Value("\${KLING_PROXY_PORT:6379}") private val proxyPort: Int,
+    @param:Value("\${WAIC_KLING_USE_PROXY:false}") private val useProxy: Boolean,
 ) {
 
     @Bean

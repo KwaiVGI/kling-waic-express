@@ -15,9 +15,9 @@ import javax.imageio.ImageIO
 
 @Component
 @ConditionalOnProperty(
-    name = ["waic.crop-image-with-opencv"],
+    name = ["WAIC_CROP_IMAGE_WITH_OPENCV"],
     havingValue = "true",
-    matchIfMissing = false
+    matchIfMissing = true
 )
 class ImageCropHelper(
     private val cascadeClassifiers: List<CascadeClassifier>,

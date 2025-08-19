@@ -9,9 +9,9 @@ import java.util.Date
 
 @Component
 class JWTHelper(
-    @Value("\${waic.open-api.access-key}")
+    @Value("\${WAIC_OPENAPI_ACCESS_KEY}")
     private val waicOpenApiAccessKey: String,
-    @Value("\${waic.open-api.secret-key}")
+    @Value("\${WAIC_OPENAPI_SECRET_KEY}")
     private val waicOpenApiSecretKey: String,
     @Value("\${waic.jwt.expireAtInSeconds}")
     private val expireAtInSeconds: Int,

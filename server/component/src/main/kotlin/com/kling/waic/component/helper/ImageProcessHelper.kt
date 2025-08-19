@@ -30,10 +30,10 @@ import javax.imageio.ImageIO
 
 @Component
 class ImageProcessHelper(
-    @param:Value("\${kling.proxy.host}") private val proxyHost: String,
-    @param:Value("\${kling.proxy.port}") private val proxyPort: Int,
-    @param:Value("\${kling.proxy.use-proxy}") private val useProxy: Boolean,
-    @param:Value("\${s3.bucket}") private val bucket: String,
+    @param:Value("\${KLING_PROXY_HOST:localhost}") private val proxyHost: String,
+    @param:Value("\${KLING_PROXY_PORT:6379}") private val proxyPort: Int,
+    @param:Value("\${WAIC_KLING_USE_PROXY:false}") private val useProxy: Boolean,
+    @param:Value("\${S3_BUCKET_NAME:kling-waic}") private val bucket: String,
     private val s3Helper: S3Helper,
     private val aesCipherHelper: AESCipherHelper,
 ) {
@@ -155,7 +155,7 @@ class ImageProcessHelper(
             imageUrls.mapIndexed { index, url ->
                 async {
                     log.info("Downloading image ${index + 1} from $url")
-                    readImageWithProxy(url)
+                    readImage(url)
                 }
             }.awaitAll()
         }
@@ -185,7 +185,7 @@ class ImageProcessHelper(
             image, "jpg")
     }
 
-    fun readImageWithProxy(url: String): BufferedImage {
+    fun readImage(url: String): BufferedImage {
         val url = URL(url)
         val connection = if (useProxy) {
             log.info("Proxy connect to $url via $proxyHost:$proxyPort")

@@ -19,11 +19,11 @@ import java.io.FileOutputStream
 
 @Configuration
 open class ServiceConfig(
-    @param:Value("\${jedis.host}") private val jedisHost: String,
-    @param:Value("\${jedis.port}") private val jedisPort: Int,
-    @param:Value("\${jedis.password}") private val jedisPassword: String,
-    @param:Value("\${jedis.cluster-mode}") private val jedisClusterMode: Boolean,
-    @param:Value("\${s3.profileName}") private val s3ProfileName: String
+    @param:Value("\${REDIS_CLUSTER_MODE_WAIC:false}") private val jedisClusterMode: Boolean,
+    @param:Value("\${REDIS_HOST_WAIC:}") private val jedisHost: String,
+    @param:Value("\${REDIS_PORT_WAIC:}") private val jedisPort: Int,
+    @param:Value("\${REDIS_PASS_WAIC:}") private val jedisPassword: String,
+    @param:Value("\${S3_PROFILE_NAME:}") private val s3ProfileName: String
 ) {
 
     @Bean
@@ -84,9 +84,9 @@ open class ServiceConfig(
 
     @Bean
     @ConditionalOnProperty(
-        name = ["waic.crop-image-with-opencv"],
+        name = ["WAIC_CROP_IMAGE_WITH_OPENCV"],
         havingValue = "true",
-        matchIfMissing = false
+        matchIfMissing = true
     )
     open fun loadCascadeClassifiersFromResources(): List<CascadeClassifier> {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME)

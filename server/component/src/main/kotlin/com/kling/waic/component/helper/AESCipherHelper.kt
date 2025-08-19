@@ -10,9 +10,9 @@ import javax.crypto.spec.SecretKeySpec
 
 @Component
 class AESCipherHelper(
-    @Value("\${waic.cipher.key}")
+    @Value("\${WAIC_OPENAPI_ACCESS_KEY}")
     private val cipherKey: String,
-    @Value("\${waic.cipher.iv}")
+    @Value("\${WAIC_CIPHER_IV:KlingAIWAICBest!}")
     private val cipherIV: String,
 ) {
     private fun getKeySpec(): SecretKeySpec {

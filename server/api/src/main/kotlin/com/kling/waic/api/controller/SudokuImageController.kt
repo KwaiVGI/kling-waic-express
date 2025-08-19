@@ -17,7 +17,7 @@ import java.nio.file.Paths
 //@RestController
 @RequestMapping("/sudoku-images")
 class SudokuImageController (
-    @Value("\${waic.sudoku.images-dir}")
+    @Value("\${SUDOKU_IMAGES_DIR:./sudoku-images}")
     private val sudokuImagesDir: String,
 ){
 
