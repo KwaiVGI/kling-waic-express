@@ -1,4 +1,4 @@
-package external
+package com.kling.waic.api.external
 
 import SpringBaseTest
 import com.google.common.base.Stopwatch

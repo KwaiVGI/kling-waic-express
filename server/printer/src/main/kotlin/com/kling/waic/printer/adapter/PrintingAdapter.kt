@@ -32,7 +32,7 @@ class PrintAdapter(
         val services = PrintServiceLookup.lookupPrintServices(null, null)
         for (service in services) {
             if (printerName == service.name) {
-                println("Printer found: ${service.name}")
+                log.error("Printer found: ${service.name}")
                 return service
             }
         }
@@ -75,13 +75,14 @@ class PrintAdapter(
 
         val printerIsAcceptingJobs = printer.getAttribute(PrinterIsAcceptingJobs::class.java)
         if (printerIsAcceptingJobs.value < 1) {
-            println("Printer is not accepting jobs, skip printing job.")
+            log.warn("Printer is not accepting jobs, skip printing job.")
             return
         }
 
         val printing = printingDataClient.fetchPrinting()
         if (printing == null) {
-            log.debug("Printing queue is empty, skip printing job.")
+            log.debug("Printing queue is empty, or queuedJobCount: $queuedJobCount is too large" +
+                    ", skip printing job.")
             return
         }
         val taskName = printing.task.name

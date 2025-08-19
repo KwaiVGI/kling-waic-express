@@ -8,6 +8,7 @@ import com.kling.waic.component.entity.Result
 import com.kling.waic.component.entity.Task
 import com.kling.waic.component.entity.TaskNewInput
 import com.kling.waic.component.entity.TaskType
+import com.kling.waic.component.helper.AdminConfigHelper
 import com.kling.waic.component.selector.TaskServiceSelector
 import com.kling.waic.component.utils.CoroutineUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/tasks")
 class TaskController (
     private val taskServiceSelector: TaskServiceSelector,
+    private val adminConfigHelper: AdminConfigHelper
 ) {
 
     @PostMapping("{type}/upload_image")
@@ -80,6 +82,10 @@ class TaskController (
         @PathVariable type: TaskType,
         @PathVariable name: String): Result<Printing> {
 
+        val adminConfig = adminConfigHelper.getAdminConfig()
+        if (!adminConfig.allowPrint) {
+            throw IllegalStateException("Print is not allowed at current time")
+        }
         val printing = taskServiceSelector.selectTaskService(type).printTask(type, name)
         return Result(printing)
     }

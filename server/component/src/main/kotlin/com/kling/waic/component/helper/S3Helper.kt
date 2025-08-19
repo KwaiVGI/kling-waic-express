@@ -1,6 +1,7 @@
 package com.kling.waic.component.helper
 
 import com.kling.waic.component.utils.Slf4j.Companion.log
+import com.kling.waic.component.utils.ThreadContextUtils
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.core.sync.RequestBody
@@ -52,16 +53,22 @@ class S3Helper(
         contentType: String,
         requestBody: RequestBody
     ): String {
+        val activity = ThreadContextUtils.getActivity()
+        val newKey = if (activity.isEmpty()) {
+            key
+        } else {
+            "$activity/$key"
+        }
         val putRequest = PutObjectRequest.builder()
             .bucket(bucket)
-            .key(key)
+            .key(newKey)
             .contentType(contentType)
             .contentDisposition("inline")
             .build()
 
         val response = s3Client.putObject(putRequest, requestBody)
-        val fileUrl = "https://cdn-${bucket}-aws-cn-staging.klingai.com/$key"
-        log.info("File uploaded to S3, bucket: $bucket, key: $key, fileUrl: $fileUrl, response: $response")
+        val fileUrl = "https://cdn-${bucket}-aws-cn-staging.klingai.com/$newKey"
+        log.info("File uploaded to S3, bucket: $bucket, key: $newKey, fileUrl: $fileUrl, response: $response")
         return fileUrl
     }
 
