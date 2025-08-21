@@ -14,7 +14,7 @@ import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
 
 @Component
-open class AuthorizationInterceptor (
+class AuthorizationInterceptor(
     private val tokenHelper: TokenHelper,
     @Value("\${WAIC_MANAGEMENT_TOKEN}")
     private val waicManagementToken: String,
@@ -40,10 +40,7 @@ open class AuthorizationInterceptor (
             )
             return true
         }
-        val annotation = handler.getMethodAnnotation(Authorization::class.java)
-        if (annotation == null) {
-            return true
-        }
+        val annotation = handler.getMethodAnnotation(Authorization::class.java) ?: return true
 
         log.debug("Authorization required for: {}, type: {}", request.requestURI, annotation.type)
 
@@ -77,13 +74,31 @@ open class AuthorizationInterceptor (
         token: String,
         type: AuthorizationType
     ): Boolean {
-        return if (type == AuthorizationType.CREATE_TASK) {
-            tokenHelper.validate(activity, token)
-        } else if (type == AuthorizationType.MANAGEMENT) {
-            val manageToken = tokenMapConfig.map[activity] ?: waicManagementToken
-            token == manageToken
-        } else {
-            false
+        if (!validateOnActivity(activity)) {
+            throw IllegalArgumentException("activity: ${activity} not supported!")
         }
+
+        return when (type) {
+            AuthorizationType.CREATE_TASK -> {
+                tokenHelper.validate(activity, token)
+            }
+            AuthorizationType.MANAGEMENT -> {
+                val manageToken = tokenMapConfig.map[activity] ?: waicManagementToken
+                token == manageToken
+            }
+        }
+    }
+
+    private fun validateOnActivity(activity: String): Boolean {
+        if (activity.isEmpty()) {
+            return true
+        }
+        if (activity == "nextCodeLuaScript") {
+            return false
+        }
+        if (!tokenMapConfig.map.containsKey(activity)) {
+            return false
+        }
+        return true
     }
 }
