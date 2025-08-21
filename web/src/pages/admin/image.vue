@@ -60,7 +60,10 @@
         >
           <div
             class="image-container"
-            :style="{ backgroundImage: `url(${image.url})` }"
+            :style="{
+              backgroundImage: `url(${image.thumbnailUrl || image.url})`,
+            }"
+            @click="openImagePreview(idx)"
           >
             <span class="image-id">{{ image.name }}</span>
             <div class="item-badges">
@@ -131,6 +134,14 @@
         </button>
       </div>
     </div>
+
+    <!-- 图片预览组件 -->
+    <ImagePreview
+      v-model:visible="showPreview"
+      v-model:currentIndex="currentPreviewIndex"
+      :images="images"
+      @close="closeImagePreview"
+    />
   </div>
 </template>
 
@@ -140,6 +151,8 @@ import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 import { confirmDelete } from "@/utils/confirm";
 import { showImagePreview, showToast } from "vant";
+import { useRoute } from "vue-router";
+import ImagePreview from "@/components/ImagePreview.vue";
 
 const route = useRoute();
 // 数据状态
@@ -152,6 +165,12 @@ const totalImages = ref(0);
 const searchQuery = ref("");
 const pinnedImageId = ref<string | null>(null);
 const promotedImageId = ref<string | null>(null);
+
+// 图片预览相关状态
+const showPreview = ref(false);
+const currentPreviewIndex = ref(0);
+
+
 
 // 计算可见的分页按钮
 const visiblePages = computed(() => {
@@ -284,6 +303,16 @@ const printImage = async (imageId: string) => {
     showToast("打印失败，请重试");
     console.error("打印图片失败:", error);
   }
+};
+
+// 图片预览相关方法
+const openImagePreview = (index: number) => {
+  currentPreviewIndex.value = index;
+  showPreview.value = true;
+};
+
+const closeImagePreview = () => {
+  showPreview.value = false;
 };
 
 // 初始化加载图片
@@ -671,5 +700,10 @@ watch(searchQuery, (newVal) => {
 
 .page-button:not(.active):hover {
   background-color: #e6e9ed;
+}
+
+/* 添加图片容器的鼠标指针样式 */
+.image-container {
+  cursor: pointer;
 }
 </style>

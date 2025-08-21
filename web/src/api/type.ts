@@ -15,4 +15,5 @@ export enum TaskOutputType {
 export interface TaskOutput {
   type: TaskOutputType;
   url: string;
+  thumbnailUrl?: string;
 }

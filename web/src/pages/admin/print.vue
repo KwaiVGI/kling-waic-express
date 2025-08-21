@@ -32,13 +32,21 @@
             promoted: image.id === promotedImageId,
           }"
         >
-          <div class="image-container">
+          <div class="image-container" @click="openImagePreview(image, images.indexOf(image))">
             <img class="w-full h-full" :src="image.url" />
             <span class="image-id">{{ image.no }}</span>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 图片预览组件 -->
+    <ImagePreview
+      v-model:visible="showPreview"
+      v-model:currentIndex="currentPreviewIndex"
+      :images="images"
+      @close="closeImagePreview"
+    />
   </div>
 </template>
 
@@ -47,6 +55,8 @@ import { ref, onMounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 import { showToast } from "vant";
+import { useRoute } from "vue-router";
+import ImagePreview from "@/components/ImagePreview.vue";
 
 const route = useRoute();
 // 数据状态
@@ -55,6 +65,10 @@ const loading = ref(false);
 const searchQuery = ref("");
 const pinnedImageId = ref<string | null>(null);
 const promotedImageId = ref<string | null>(null);
+
+// 图片预览相关状态
+const showPreview = ref(false);
+const currentPreviewIndex = ref(0);
 
 // 加载图片
 const loadImages = async () => {
@@ -73,6 +87,16 @@ const loadImages = async () => {
 // 搜索图片
 const searchImages = () => {
   loadImages();
+};
+
+// 图片预览相关方法
+const openImagePreview = (image: CastingImage, index: number) => {
+  currentPreviewIndex.value = index;
+  showPreview.value = true;
+};
+
+const closeImagePreview = () => {
+  showPreview.value = false;
 };
 
 // 初始化加载图片
@@ -310,5 +334,10 @@ watch(searchQuery, (newVal) => {
   border-radius: 4px;
   font-size: 11px;
   font-weight: bold;
+}
+
+/* 添加图片容器的鼠标指针样式 */
+.image-container {
+  cursor: pointer;
 }
 </style>

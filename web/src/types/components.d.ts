@@ -13,6 +13,7 @@ declare module 'vue' {
     GuideOverlay: typeof import('./../components/GuideOverlay.vue')['default']
     GuideOverly: typeof import('./../components/GuideOverly.vue')['default']
     IconSvg: typeof import('./../components/IconSvg.vue')['default']
+    ImagePreview: typeof import('./../components/ImagePreview.vue')['default']
     LangSwitcher: typeof import('./../components/LangSwitcher.vue')['default']
     Login: typeof import('./../components/Login.vue')['default']
     NavBar: typeof import('./../components/NavBar.vue')['default']
@@ -45,5 +46,6 @@ declare module 'vue' {
     VanTextEllipsis: typeof import('vant/es')['TextEllipsis']
     VanUploader: typeof import('vant/es')['Uploader']
     VideoPlayer: typeof import('./../components/VideoPlayer.vue')['default']
+    VideoPreview: typeof import('./../components/VideoPreview.vue')['default']
   }
 }

@@ -24,7 +24,7 @@
 
       <div v-else class="gallery-grid">
         <div
-          v-for="image in images"
+          v-for="(image, idx) in images"
           :key="image.id"
           class="gallery-item"
           :class="{
@@ -32,18 +32,20 @@
             promoted: image.id === promotedImageId,
           }"
         >
-          <div class="image-container">
+          <div class="image-container" @click="openPreview(idx)">
             <video
               class="w-full h-full"
               :src="image.url"
-              controls
+              :poster="image.poster"
               preload="metadata"
+              muted
+              style="pointer-events: none;"
             ></video>
             <span class="image-id">{{ image.name }}</span>
 
             <div class="item-actions">
               <button
-                @click="deleteImage(image.id)"
+                @click.stop="deleteImage(image.id)"
                 :disabled="
                   image.id === pinnedImageId || image.id === promotedImageId
                 "
@@ -86,15 +88,25 @@
         </button>
       </div>
     </div>
+
+    <!-- 视频预览组件 -->
+    <VideoPreview
+      v-model:visible="previewVisible"
+      v-model:currentIndex="previewIndex"
+      :videos="images"
+      @close="closePreview"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
+import { useRoute } from "vue-router";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
 import { confirmDelete } from "@/utils/confirm";
 import { showToast } from "vant";
+import VideoPreview from "@/components/VideoPreview.vue";
 
 const route = useRoute();
 // 数据状态
@@ -108,6 +120,10 @@ const searchQuery = ref("");
 const pinnedImageId = ref<string | null>(null);
 const promotedImageId = ref<string | null>(null);
 const currentType = "VIDEO_EFFECT";
+
+// 预览相关状态
+const previewVisible = ref(false);
+const previewIndex = ref(0);
 
 // 计算可见的分页按钮
 const visiblePages = computed(() => {
@@ -178,6 +194,17 @@ const deleteImage = async (imageId: string) => {
   } catch (error) {
     console.error("删除失败:", error);
   }
+};
+
+// 打开预览
+const openPreview = (index: number) => {
+  previewIndex.value = index;
+  previewVisible.value = true;
+};
+
+// 关闭预览
+const closePreview = () => {
+  previewVisible.value = false;
 };
 
 // 初始化加载图片
@@ -392,6 +419,7 @@ watch(searchQuery, (newVal) => {
   background-size: cover;
   background-position: center;
   position: relative;
+  cursor: pointer;
 }
 
 .image-id {

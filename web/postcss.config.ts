@@ -31,6 +31,8 @@ export default {
         ".ds-container",
         ".ds-password-container",
         ".ds-modal-mask",
+        ".viewer-modal",
+        ".video-viewer-modal",
       ],
     },
   },
