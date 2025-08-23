@@ -1,11 +1,14 @@
 package com.kling.waic.api.config
 
+import com.kling.waic.component.handler.ActivityHandler
 import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.opencv.core.Core
 import org.opencv.objdetect.CascadeClassifier
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import redis.clients.jedis.*
@@ -25,6 +28,9 @@ open class ServiceConfig(
     @param:Value("\${REDIS_PASS_WAIC:}") private val jedisPassword: String,
     @param:Value("\${S3_PROFILE_NAME:}") private val s3ProfileName: String
 ) {
+
+    @Autowired
+    lateinit var applicationContext: ApplicationContext
 
     @Bean
     open fun jedis(): JedisCommands {
@@ -148,5 +154,15 @@ open class ServiceConfig(
             .region(Region.CN_NORTH_1)
             .credentialsProvider(awsCredentialsProvider)
             .build()
+    }
+
+    @Bean
+    fun activityHandlerMap(): Map<String, ActivityHandler> {
+        val activityHandlers = applicationContext.getBeansOfType(ActivityHandler::class.java)
+        val map = mutableMapOf<String, ActivityHandler>()
+        activityHandlers.values.forEach { activityHandler ->
+            map[activityHandler.activityName()] = activityHandler
+        }
+        return map
     }
 }
