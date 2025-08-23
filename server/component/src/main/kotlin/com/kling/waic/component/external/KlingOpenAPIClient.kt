@@ -4,6 +4,7 @@ import com.kling.waic.component.external.model.CreateImageTaskRequest
 import com.kling.waic.component.external.model.CreateImageTaskResponse
 import com.kling.waic.component.external.model.CreateVideoTaskRequest
 import com.kling.waic.component.external.model.CreateVideoTaskResponse
+import com.kling.waic.component.external.model.GetCurrentConcurrencyRequest
 import com.kling.waic.component.external.model.KlingOpenAPIResult
 import com.kling.waic.component.external.model.QueryImageTaskRequest
 import com.kling.waic.component.external.model.QueryImageTaskResponse
@@ -12,8 +13,7 @@ import com.kling.waic.component.external.model.QueryVideoTaskResponse
 import com.kling.waic.component.helper.JWTHelper
 import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -32,6 +32,36 @@ class KlingOpenAPIClient(
     companion object {
         private val CONTENT_TYPE = "application/json; charset=utf-8".toMediaType()
     }
+
+    @Throws(IOException::class)
+    fun getCurrentConcurrency(getCurrentConcurrencyRequest: GetCurrentConcurrencyRequest):
+            KlingOpenAPIResult<Long> {
+        val url = "$baseUrl/account/concurrency".toHttpUrl().newBuilder()
+            .addQueryParameter("budget_type", getCurrentConcurrencyRequest.budgetType.toString())
+            .build()
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer ${jwtHelper.getLatest()}")
+            .get()
+            .build()
+
+        try {
+            okHttpClient.newCall(request).execute().use { resp ->
+                val responseBody = resp.body?.string()
+                return responseBody
+                    ?.let { KlingOpenAPIResult.ok<Long>(it) }
+                    ?: throw IOException("Response body is empty")
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            log.error("Socket timeout when querying image task - URL: {}", url, e)
+            throw IOException("Request timeout when querying image task", e)
+        } catch (e: Exception) {
+            log.error("Error querying image task - URL: {}", url, e)
+            throw e
+        }
+    }
+
 
     @Throws(IOException::class)
     suspend fun createImageTask(createImageTaskRequest: CreateImageTaskRequest):

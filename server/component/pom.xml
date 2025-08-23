@@ -69,6 +69,12 @@
             <artifactId>javacv-platform</artifactId>
             <version>1.5.10</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.redisson/redisson -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.50.0</version>
+        </dependency>
     </dependencies>
 
     <build>

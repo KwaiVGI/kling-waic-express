@@ -1,7 +1,8 @@
 package com.kling.waic.component.helper
 
+import com.kling.waic.component.utils.ActivityUtils
+import com.kling.waic.component.utils.ActivityUtils.SLASH
 import com.kling.waic.component.utils.Slf4j.Companion.log
-import com.kling.waic.component.utils.ThreadContextUtils
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.core.sync.RequestBody
@@ -53,12 +54,7 @@ class S3Helper(
         contentType: String,
         requestBody: RequestBody
     ): String {
-        val activity = ThreadContextUtils.getActivity()
-        val newKey = if (activity.isEmpty()) {
-            key
-        } else {
-            "$activity/$key"
-        }
+        val newKey = ActivityUtils.generateNewKey(key, SLASH)
         val putRequest = PutObjectRequest.builder()
             .bucket(bucket)
             .key(newKey)

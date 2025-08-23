@@ -2,17 +2,20 @@ package com.kling.waic.component.service
 
 import com.kling.waic.component.entity.Locale
 import com.kling.waic.component.entity.TaskStatus
+import com.kling.waic.component.entity.TaskType
 import com.kling.waic.component.exception.KlingOpenAPIException
+import com.kling.waic.component.exception.TooManyRequestException
 import com.kling.waic.component.external.KlingOpenAPIClient
 import com.kling.waic.component.external.model.*
 import com.kling.waic.component.helper.ImageProcessHelper
+import com.kling.waic.component.repository.LockRepository
 import com.kling.waic.component.repository.TaskRepository
 import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
@@ -28,39 +31,47 @@ class ImageTaskService(
     private val imageProcessHelper: ImageProcessHelper,
     @Value("\${IMAGE_TASK_MODE:WITH_ORIGIN}")
     private val imageTaskMode: ImageTaskMode,
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val lockRepository: LockRepository,
+    @Value("\${IMAGE_TASK_CONCURRENCY:90}")
+    private val imageTaskConcurrency: Int
 ) : TaskService() {
 
     override suspend fun doCreateTask(requestImageUrl: String): List<String> {
         val taskN = imageTaskMode.taskN
         val randomPrompts = styleImagePrompts.shuffled().take(taskN)
 
-        // Use coroutineScope with current context to preserve thread
-        val taskIds = coroutineScope {
-            val deferredResults = randomPrompts.map { prompt ->
-                // Use current context instead of Dispatchers.IO
-                async {
-                    val request = CreateImageTaskRequest(
-                        image = requestImageUrl,
-                        prompt = prompt
-                    )
+        // 因为 executeWithLock 是同步方法，所以这里只能用 runBlocking 包住挂起逻辑
+        val taskIds = lockRepository.executeWithLock(
+            lockKey = "doCreateTask_${TaskType.STYLED_IMAGE}",
+            action = {
+                runBlocking {
+                    // 在锁内检查并发限制，确保互斥访问
+                    checkConcurrency(taskN)
 
-                    val result = klingOpenAPIClient.createImageTask(request)
-                    if (result.code != 0) {
-                        throw KlingOpenAPIException(result)
+                    val deferredResults = randomPrompts.map { prompt ->
+                        async {
+                            val request = CreateImageTaskRequest(
+                                image = requestImageUrl,
+                                prompt = prompt
+                            )
+
+                            val result = klingOpenAPIClient.createImageTask(request)
+                            if (result.code != 0) {
+                                throw KlingOpenAPIException(result)
+                            }
+                            log.debug(
+                                "Create Image Task with image: $requestImageUrl, " +
+                                        "prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}"
+                            )
+                            result.data?.taskId
+                        }
                     }
-                    log.debug(
-                        "Create Image Task with image: $requestImageUrl, " +
-                                "prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}"
-                    )
-                    result.data?.taskId
+
+                    deferredResults.awaitAll().filterNotNull()
                 }
             }
-
-            // await all deferred results
-            val results = deferredResults.awaitAll()
-            results.filterNotNull().toMutableList()
-        }
+        )
 
         if (taskIds.size != taskN) {
             throw IllegalStateException(
@@ -188,6 +199,22 @@ class ImageTaskService(
                     "submitted: ${summaryMap[KlingOpenAPITaskStatus.submitted]?.size ?: 0} / $totalCount, " +
                     "processing: ${summaryMap[KlingOpenAPITaskStatus.processing]?.size ?: 0} / $totalCount, " +
                     "succeed: ${summaryMap[KlingOpenAPITaskStatus.succeed]?.size ?: 0} / $totalCount."
+        }
+    }
+
+    private fun checkConcurrency(taskN: Int) {
+        val getCurrentConcurrencyRequest = GetCurrentConcurrencyRequest(
+            budgetType = BudgetType.image
+        )
+        val response = klingOpenAPIClient.getCurrentConcurrency(getCurrentConcurrencyRequest)
+        val currentConcurrency = response.data!!
+        log.info("Current concurrency for ${TaskType.STYLED_IMAGE}: ${currentConcurrency}")
+
+        val availableConcurrency = imageTaskConcurrency - currentConcurrency
+        if (availableConcurrency < taskN) {
+            throw TooManyRequestException(
+                "Too many requests, " +
+                        "availableConcurrency: $availableConcurrency, taskN: $taskN")
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.kling.waic.api.aspect
 
+import com.kling.waic.component.utils.ActivityUtils
+import com.kling.waic.component.utils.ActivityUtils.COLON
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.component.utils.ThreadContextUtils
 import org.aspectj.lang.ProceedingJoinPoint
@@ -55,7 +57,7 @@ class JedisAspect {
         } else {
             // 默认认为第 0 个参数是 redis key
             val redisKey = args[0] as String
-            val newRedisKey = getNewRedisKey(redisKey)
+            val newRedisKey = ActivityUtils.generateNewKey(redisKey, COLON)
             val newArgs = args.copyOf()
             newArgs[0] = newRedisKey
 
@@ -76,7 +78,7 @@ class JedisAspect {
         argv: Any?,
         argIndex: Int
     ): Any? {
-        val newKeys = keys.map { getNewRedisKey(it) }
+        val newKeys = keys.map { ActivityUtils.generateNewKey(it, COLON) }
         val newArgs = pjp.args.copyOf()
 
         // eval with keyCount + params  → keys.toTypedArray()
@@ -92,14 +94,5 @@ class JedisAspect {
                     "keys: $keys, newKeys: $newKeys, argv: $argv"
         )
         return pjp.proceed(newArgs)
-    }
-
-    private fun getNewRedisKey(redisKey: String): String {
-        val activity = ThreadContextUtils.getActivity()
-        return if (activity.isEmpty()) {
-            redisKey
-        } else {
-            "$activity:$redisKey"
-        }
     }
 }
