@@ -52,7 +52,9 @@ class AuthorizationInterceptor(
         }
 
         // Check token
-        val activity = request.getHeader("Activity") ?: ""
+//        val activity = request.getHeader("Activity") ?: ""
+        // todo: remove this, it's only for mock
+        val activity = "xiaozhao"
         val token = authHeader.substring(6) // Remove "Token " prefix
         if (!validateToken(activity, token, annotation.type)) {
             log.warn(
