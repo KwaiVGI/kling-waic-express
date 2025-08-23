@@ -4,7 +4,6 @@ import com.kling.waic.component.auth.Authorization
 import com.kling.waic.component.auth.AuthorizationType
 import com.kling.waic.component.entity.TokenMapConfig
 import com.kling.waic.component.helper.TokenHelper
-import com.kling.waic.component.utils.Constants
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.component.utils.ThreadContextUtils
 import jakarta.servlet.http.HttpServletRequest
@@ -61,6 +60,9 @@ class AuthorizationInterceptor(
             authHeader.substring(6) // Remove "Token " prefix
         }
 
+        // Set activity in ThreadContext BEFORE validation so JedisAspect can use it
+        ThreadContextUtils.putActivity(activity)
+
         if (!validateToken(activity, token, annotation.type)) {
             log.warn(
                 "Authorization failed - invalid token: $token with type: ${annotation.type} " +
@@ -71,7 +73,6 @@ class AuthorizationInterceptor(
             return false
         }
 
-        ThreadContextUtils.putActivity(activity)
         log.debug("Authorization successful for: ${request.requestURI}")
         return true
     }
