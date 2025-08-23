@@ -51,7 +51,7 @@ class KlingOpenAPIClient(
                 return@withContext responseBody
                     ?.let {
                         log.info(
-                            "Create image task with image: ${createImageTaskRequest.image}, " +
+                            "Create OpenAPI image task with image: ${createImageTaskRequest.image}, " +
                                     "prompt: ${createImageTaskRequest.prompt}, responseBody: $it"
                         )
                         KlingOpenAPIResult.ok<CreateImageTaskResponse>(it)
