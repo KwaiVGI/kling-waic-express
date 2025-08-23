@@ -35,10 +35,11 @@ class ImageTaskService(
         val taskN = imageTaskMode.taskN
         val randomPrompts = styleImagePrompts.shuffled().take(taskN)
 
-        // Use coroutineScope instead of runBlocking
+        // Use coroutineScope with current context to preserve thread
         val taskIds = coroutineScope {
             val deferredResults = randomPrompts.map { prompt ->
-                async(Dispatchers.IO) {
+                // Use current context instead of Dispatchers.IO
+                async {
                     val request = CreateImageTaskRequest(
                         image = requestImageUrl,
                         prompt = prompt
@@ -71,10 +72,11 @@ class ImageTaskService(
     }
 
     override suspend fun doQueryTask(taskIds: List<String>, taskName: String): Pair<TaskStatus, QueryTaskContext> {
-        // Use coroutineScope instead of runBlocking
+        // Use coroutineScope with current context to preserve thread
         val taskResponseMap = coroutineScope {
             val queryTaskRequests = taskIds.map { taskId ->
-                async(Dispatchers.IO) {
+                // Use current context instead of Dispatchers.IO
+                async {
                     val request = QueryImageTaskRequest(taskId = taskId)
 
                     val result = klingOpenAPIClient.queryImageTask(request)

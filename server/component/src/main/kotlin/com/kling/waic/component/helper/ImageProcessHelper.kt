@@ -11,6 +11,7 @@ import com.kling.waic.component.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -152,8 +153,10 @@ class ImageProcessHelper(
         List<String>,
         locale: Locale
     ): Pair<String, String> {
-        val images = withContext(Dispatchers.IO) {
+        // Use coroutineScope with current context to preserve thread
+        val images = coroutineScope {
             imageUrls.mapIndexed { index, url ->
+                // Use current context instead of withContext(Dispatchers.IO)
                 async {
                     log.info("Downloading image ${index + 1} from $url")
                     readImage(url)

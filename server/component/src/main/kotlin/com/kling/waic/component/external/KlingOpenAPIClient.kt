@@ -35,7 +35,8 @@ class KlingOpenAPIClient(
 
     @Throws(IOException::class)
     suspend fun createImageTask(createImageTaskRequest: CreateImageTaskRequest):
-            KlingOpenAPIResult<CreateImageTaskResponse> = withContext(Dispatchers.IO) {
+            KlingOpenAPIResult<CreateImageTaskResponse> {
+        // Remove withContext to preserve original thread
         val url = "$baseUrl/v1/images/generations"
 
         val body = ObjectMapperUtils.toJSON(createImageTaskRequest)!!
@@ -48,7 +49,7 @@ class KlingOpenAPIClient(
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                return@withContext responseBody
+                return responseBody
                     ?.let {
                         log.info(
                             "Create OpenAPI image task with image: ${createImageTaskRequest.image}, " +
@@ -69,7 +70,8 @@ class KlingOpenAPIClient(
 
     @Throws(IOException::class)
     suspend fun queryImageTask(queryImageTaskRequest: QueryImageTaskRequest):
-            KlingOpenAPIResult<QueryImageTaskResponse> = withContext(Dispatchers.IO) {
+            KlingOpenAPIResult<QueryImageTaskResponse> {
+        // Remove withContext to preserve original thread
         val url = "$baseUrl/v1/images/generations/${queryImageTaskRequest.taskId}"
 
         val request = Request.Builder()
@@ -81,7 +83,7 @@ class KlingOpenAPIClient(
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                return@withContext responseBody
+                return responseBody
                     ?.let { KlingOpenAPIResult.ok<QueryImageTaskResponse>(it) }
                     ?: throw IOException("Response body is empty")
             }
@@ -96,7 +98,8 @@ class KlingOpenAPIClient(
 
     @Throws(IOException::class)
     suspend fun createVideoTask(createVideoTaskRequest: CreateVideoTaskRequest):
-            KlingOpenAPIResult<CreateVideoTaskResponse> = withContext(Dispatchers.IO) {
+            KlingOpenAPIResult<CreateVideoTaskResponse> {
+        // Remove withContext to preserve original thread
         val url = "$baseUrl/v1/videos/effects"
 
         val body = ObjectMapperUtils.toJSON(createVideoTaskRequest)!!
@@ -109,7 +112,7 @@ class KlingOpenAPIClient(
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                return@withContext responseBody
+                return responseBody
                     ?.let {
                         log.info(
                             "Create video task with image: ${createVideoTaskRequest.input.image}, " +
@@ -130,7 +133,8 @@ class KlingOpenAPIClient(
 
     @Throws(IOException::class)
     suspend fun queryVideoTask(queryVideoTaskRequest: QueryVideoTaskRequest):
-            KlingOpenAPIResult<QueryVideoTaskResponse> = withContext(Dispatchers.IO) {
+            KlingOpenAPIResult<QueryVideoTaskResponse> {
+        // Remove withContext to preserve original thread
         val url = "$baseUrl/v1/videos/effects/${queryVideoTaskRequest.taskId}"
 
         val request = Request.Builder()
@@ -142,7 +146,7 @@ class KlingOpenAPIClient(
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                return@withContext responseBody
+                return responseBody
                     ?.let { KlingOpenAPIResult.ok<QueryVideoTaskResponse>(it) }
                     ?: throw IOException("Response body is empty")
             }
