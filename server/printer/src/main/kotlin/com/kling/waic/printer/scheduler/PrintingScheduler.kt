@@ -21,14 +21,16 @@ class PrintingScheduler(
         log.info("Cron task registered, cron: {}, timezone: {}", cron, timezone)
 
         taskRegistrar.addTriggerTask(
-            { process() },
+            { printAdapter.tryFetchAndPrint() },
             { triggerContext ->
                 CronTrigger(cron, timezone).nextExecution(triggerContext)
             }
         )
-    }
-
-    private fun process() {
-        printAdapter.tryFetchAndPrint()
+        taskRegistrar.addTriggerTask(
+            { printAdapter.setQueuedJobCount() },
+            { triggerContext ->
+                CronTrigger(cron, timezone).nextExecution(triggerContext)
+            }
+        )
     }
 }

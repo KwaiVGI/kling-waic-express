@@ -25,14 +25,20 @@ class PrintingDataClient(
         private val CONTENT_TYPE = "application/json; charset=utf-8".toMediaType()
     }
 
-    fun fetchPrinting(): Printing? {
-        val url = "$serverBaseURI/api/printings/fetch"
+    fun fetchPrinting(count: Int): List<Printing> {
+        val url = "$serverBaseURI/api/printings/batch_fetch"
+
+        val body = ObjectMapperUtils.toJSON(
+            BatchFetchPrintingRequest(
+                count = count
+            )
+        )
 
         val request = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Token $waicManagementToken")
             .addHeader("Activity", waicManagementActivity)
-            .post("{}".toRequestBody(CONTENT_TYPE))
+            .post(body!!.toRequestBody(CONTENT_TYPE))
             .build()
 
         return try {
@@ -46,10 +52,10 @@ class PrintingDataClient(
 
                 log.debug("fetch printing response: $responseBody")
 
-                val response = Result.fromJSON<Printing?>(responseBody)
-                val printing = response.data
+                val response = Result.fromJSON<BatchFetchPrintingResponse>(responseBody)
+                val printings = response.data!!.printings
 
-                printing
+                printings
             }
         } catch (e: Exception) {
             log.error("Error fetching printing - URL: {}", url, e)

@@ -2,6 +2,8 @@ package com.kling.waic.api.controller
 
 import com.kling.waic.component.auth.Authorization
 import com.kling.waic.component.auth.AuthorizationType
+import com.kling.waic.component.entity.BatchFetchPrintingRequest
+import com.kling.waic.component.entity.BatchFetchPrintingResponse
 import com.kling.waic.component.entity.Printing
 import com.kling.waic.component.entity.PrintingUpdateInput
 import com.kling.waic.component.entity.Result
@@ -25,6 +27,19 @@ class PrintingController(
         log.debug("Fetched printing: ${printing}")
 
         return Result(printing)
+    }
+
+    @PostMapping("batch_fetch")
+    @Authorization(AuthorizationType.MANAGEMENT)
+    fun batchFetchPrinting(
+        @RequestBody input: BatchFetchPrintingRequest
+    ): Result<BatchFetchPrintingResponse> {
+        log.debug("Batch fetching printing from queue")
+
+        val printings = printingRepository.pollBatchFromPrintingQueue(input.count)
+        log.debug("Batch fetched printing: ${printings}")
+
+        return Result(BatchFetchPrintingResponse(printings))
     }
 
     @PostMapping("{name}/update")
