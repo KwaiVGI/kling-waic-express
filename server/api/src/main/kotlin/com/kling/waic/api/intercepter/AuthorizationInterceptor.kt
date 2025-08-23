@@ -50,8 +50,17 @@ class AuthorizationInterceptor(
         }
 
         // Check token
-        val activity = request.getHeader("Activity") ?: Constants.DEFAULT_ACTIVITY
-        val token = authHeader.substring(6) // Remove "Token " prefix
+//        val activity = request.getHeader("Activity") ?: ""
+//        val token = authHeader.substring(6) // Remove "Token " prefix
+
+        // todo: remove this, it's only for mock
+        val activity = "xiaozhao"
+        val token = if (annotation.type == AuthorizationType.MANAGEMENT) {
+            "KlingXIAOZHAO666"
+        } else {
+            authHeader.substring(6) // Remove "Token " prefix
+        }
+
         if (!validateToken(activity, token, annotation.type)) {
             log.warn(
                 "Authorization failed - invalid token: $token with type: ${annotation.type} " +
