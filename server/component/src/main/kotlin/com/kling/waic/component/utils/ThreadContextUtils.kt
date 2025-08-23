@@ -10,6 +10,10 @@ object ThreadContextUtils {
     }
 
     fun getActivity(): String {
-        return MDC.get(ACTIVITY) ?: ""
+        return MDC.get(ACTIVITY) ?: Constants.DEFAULT_ACTIVITY
     }
+}
+
+object Constants {
+    const val DEFAULT_ACTIVITY = "default"
 }

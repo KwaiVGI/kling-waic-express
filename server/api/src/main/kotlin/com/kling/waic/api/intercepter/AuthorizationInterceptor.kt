@@ -4,11 +4,11 @@ import com.kling.waic.component.auth.Authorization
 import com.kling.waic.component.auth.AuthorizationType
 import com.kling.waic.component.entity.TokenMapConfig
 import com.kling.waic.component.helper.TokenHelper
+import com.kling.waic.component.utils.Constants
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.component.utils.ThreadContextUtils
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
@@ -16,8 +16,6 @@ import org.springframework.web.servlet.HandlerInterceptor
 @Component
 class AuthorizationInterceptor(
     private val tokenHelper: TokenHelper,
-    @Value("\${WAIC_MANAGEMENT_TOKEN}")
-    private val waicManagementToken: String,
     private val tokenMapConfig: TokenMapConfig
 ) : HandlerInterceptor {
 
@@ -52,9 +50,7 @@ class AuthorizationInterceptor(
         }
 
         // Check token
-//        val activity = request.getHeader("Activity") ?: ""
-        // todo: remove this, it's only for mock
-        val activity = "xiaozhao"
+        val activity = request.getHeader("Activity") ?: Constants.DEFAULT_ACTIVITY
         val token = authHeader.substring(6) // Remove "Token " prefix
         if (!validateToken(activity, token, annotation.type)) {
             log.warn(
@@ -85,7 +81,7 @@ class AuthorizationInterceptor(
                 tokenHelper.validate(activity, token)
             }
             AuthorizationType.MANAGEMENT -> {
-                val manageToken = tokenMapConfig.map[activity] ?: waicManagementToken
+                val manageToken = tokenMapConfig.map[activity]
                 token == manageToken
             }
         }
@@ -93,7 +89,7 @@ class AuthorizationInterceptor(
 
     private fun validateOnActivity(activity: String): Boolean {
         if (activity.isEmpty()) {
-            return true
+            return false
         }
         if (activity == "nextCodeLuaScript") {
             return false

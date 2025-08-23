@@ -1,5 +1,6 @@
 package com.kling.waic.component.handler
 
+import com.kling.waic.component.utils.Constants
 import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.ImageUtils
 import org.springframework.stereotype.Component
@@ -18,7 +19,7 @@ interface ActivityHandler {
 class DefaultActivityHandler: ActivityHandler {
 
     override fun activityName(): String {
-        return "default"
+        return Constants.DEFAULT_ACTIVITY
     }
 
     override fun getCanvas(
