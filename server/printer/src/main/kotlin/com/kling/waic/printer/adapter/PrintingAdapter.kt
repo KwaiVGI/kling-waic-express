@@ -32,7 +32,7 @@ class PrintAdapter(
         val services = PrintServiceLookup.lookupPrintServices(null, null)
         for (service in services) {
             if (printerName == service.name) {
-                log.error("Printer found: ${service.name}")
+                log.info("Printer found: ${service.name}")
                 return service
             }
         }
