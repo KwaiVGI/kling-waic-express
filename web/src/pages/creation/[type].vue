@@ -166,13 +166,13 @@
         class="result-actions h-48px flex gap-8px mt-24px"
         :class="type === 'image' ? 'w-full' : 'w-340px'"
       >
-        <van-button
+        <!-- <van-button
           type="default"
           @click="backToEdit"
           class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
         >
           {{ $t("actions.back") }}
-        </van-button>
+        </van-button> -->
         <van-button
           v-if="type === 'image'"
           icon="print"
