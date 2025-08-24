@@ -1,7 +1,7 @@
 <template>
   <div class="display-screen">
     <!-- 双图片容器实现无缝切换 -->
-    <div class="ds-image-container">
+    <div class="ds-image-container" :style="imageContainerStyle">
       <div class="absolute left-0 top-0 w-full z-50">
         <img
           class="w-full"
@@ -12,18 +12,25 @@
       <div
         v-if="pinedImage"
         class="ds-casting-image pined"
-        :style="{ backgroundImage: `url(${pinedImage})` }"
+        :style="{
+          backgroundImage: `url(${pinedImage})`,
+          ...imageStyle,
+        }"
       ></div>
       <template v-else>
         <div
           class="ds-casting-image active"
           :style="{
             backgroundImage: currentImage ? `url(${currentImage.url})` : '',
+            ...imageStyle,
           }"
         ></div>
         <div
           class="ds-casting-image next"
-          :style="{ backgroundImage: nextImage ? `url(${nextImage.url})` : '' }"
+          :style="{
+            backgroundImage: nextImage ? `url(${nextImage.url})` : '',
+            ...imageStyle,
+          }"
           :class="{ ready: nextImageLoaded }"
         ></div>
       </template>
@@ -47,13 +54,17 @@
         </div>
       </div>
     </template>
+
+    
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
+import { aspectRatioService } from "@/api/aspectRatioService";
 import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+import { useRoute } from "vue-router";
 
 // 图片队列管理
 const imageQueue = ref<CastingImage[]>([]);
@@ -68,6 +79,55 @@ const retryCountdown = ref(0);
 const isFetching = ref(false);
 const pinedImage = ref<string | null>(null);
 const pinedImageCheckTimer = ref<NodeJS.Timeout | null>(null);
+
+// 宽高比管理
+const containerAspectRatio = ref<[number, number]>([9, 16]); // 容器宽高比，默认9:16
+const imageAspectRatio: [number, number] = [2, 3]; // 图片宽高比，固定2:3
+
+// 获取容器宽高比配置
+const fetchContainerAspectRatio = async (): Promise<[number, number]> => {
+  return await aspectRatioService.getAspectRatio();
+};
+
+// 计算图片容器样式
+const imageContainerStyle = computed(() => {
+  const [width, height] = containerAspectRatio.value;
+  const ratio = width / height;
+  const screenRatio = window.innerWidth / window.innerHeight;
+
+  let containerWidth: string;
+  let containerHeight: string;
+
+  if (ratio > screenRatio) {
+    // 宽度为长边，以屏幕宽度为准
+    containerWidth = "100vw";
+    containerHeight = `${100 / ratio}vw`;
+  } else {
+    // 高度为长边，以屏幕高度为准
+    containerHeight = "100vh";
+    containerWidth = `${100 * ratio}vh`;
+  }
+
+  return {
+    width: containerWidth,
+    height: containerHeight,
+    aspectRatio: `${width}/${height}`,
+  };
+});
+
+// 计算图片样式（2:3比例，宽度与容器等宽，放在容器最下面）
+const imageStyle = computed(() => {
+  const [imgWidth, imgHeight] = imageAspectRatio;
+  const paddingBottomPercent = (imgHeight / imgWidth) * 100; // 3/2 * 100 = 150%
+
+  return {
+    width: "100%", // 与容器等宽
+    height: "0", // 高度设为0，通过padding-bottom来撑开
+    paddingBottom: `${paddingBottomPercent}%`, // 150%，相对于自身宽度
+    bottom: "2vh", // 距离容器底部2vh
+    left: "0",
+  };
+});
 
 // 预加载图片资源
 const preloadImage = (url: string): Promise<void> => {
@@ -107,6 +167,10 @@ const fetchCastingImages = async () => {
   loadingError.value = false;
 
   try {
+    // 获取容器宽高比配置
+    const ratio = await fetchContainerAspectRatio();
+    containerAspectRatio.value = ratio;
+
     const result = await castingService.getCurrentCasting(
       "STYLED_IMAGE",
       preloadCount
@@ -200,13 +264,37 @@ watch([currentImage, nextImage], ([cur, next]) => {
   }
 });
 const route = useRoute();
+
+// 初始化容器宽高比
+const initializeContainerAspectRatio = async () => {
+  try {
+    const ratio = await fetchContainerAspectRatio();
+    containerAspectRatio.value = ratio;
+  } catch (error) {
+    console.error("获取容器宽高比失败:", error);
+    // 使用默认值 [9, 16]
+  }
+};
+
+// 窗口大小变化处理
+const handleResize = () => {
+  // 触发重新计算，computed会自动更新
+};
+
 // 初始化加载
-onMounted(() => {
+onMounted(async () => {
   if (route.query.token) {
     // localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
   }
+
+  // 先初始化容器宽高比
+  await initializeContainerAspectRatio();
+
   fetchCastingImages();
   pinedImageCheckTimer.value = setInterval(fetchPinedImage, 1000);
+
+  // 监听窗口大小变化
+  window.addEventListener("resize", handleResize);
 });
 
 // 清理资源
@@ -214,6 +302,9 @@ onUnmounted(() => {
   if (transitionTimer.value) clearInterval(transitionTimer.value);
   if (retryTimer.value) clearInterval(retryTimer.value);
   if (pinedImageCheckTimer.value) clearInterval(pinedImageCheckTimer.value);
+
+  // 移除窗口大小变化监听
+  window.removeEventListener("resize", handleResize);
 });
 </script>
 
@@ -229,28 +320,18 @@ onUnmounted(() => {
   align-items: center;
 }
 
-/* 9:16比例容器 */
+/* 动态比例容器 */
 .ds-image-container {
   position: relative;
-  width: 100%;
-  height: 100%;
-  /* width: 100vw; 使用视口最小单位 */
-  /* height: 100vh; 16/9 * 100vmin */
-  /* max-width: 100%; */
-  /* max-height: 100vh; */
-  /* aspect-ratio: 9/16; 现代浏览器支持 */
   overflow: hidden;
+  /* 宽高由计算属性动态设置 */
 }
 
 /* 图片通用样式 */
 .ds-casting-image {
   position: absolute;
-  bottom: 2vh;
-  /* 适配现场大屏 */
-  left: 0.5%;
-  width: 100vw;
-  height: calc(100vw * 3 / 2);
-  background-size: contain;
+  /* 位置和尺寸由计算属性动态设置 */
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   transition: opacity 1.5s ease-in-out;
@@ -350,4 +431,6 @@ onUnmounted(() => {
   font-size: 0.9rem;
   z-index: 20;
 }
+
+
 </style>
