@@ -42,7 +42,7 @@ class KlingOpenAPIClientTest : SpringBaseTest() {
             val stopwatch = Stopwatch.createStarted()
             var finalResponse: QueryImageTaskResponse? = null
             while (taskStatus in setOf(
-                    KlingOpenAPITaskStatus.succeed,
+                    KlingOpenAPITaskStatus.submitted,
                     KlingOpenAPITaskStatus.processing
                 )
             ) {
