@@ -11,7 +11,7 @@
         @click="toggleDropdown"
         :class="{ visible: !transparent || isHovered }"
       >
-        {{ currentActivityLabel }}
+        {{ currentActivity || '未知活动' }}
       </button>
 
       <div
@@ -22,12 +22,8 @@
       >
         <div class="current-activity">
           <span class="activity-label">当前活动:</span>
-          <span class="activity-name">{{ currentActivityLabel }}</span>
+          <span class="activity-name">{{ currentActivity || '未知活动' }}</span>
         </div>
-        <button class="dropdown-item" @click="switchActivity">
-          <div class="i-carbon-arrows-horizontal"></div>
-          切换活动
-        </button>
         <button class="dropdown-item logout" @click="logout">
           <div class="i-carbon-logout"></div>
           退出登录
@@ -54,16 +50,7 @@ const isHovered = ref(false);
 const currentActivity = ref("");
 let hideTimeout: number | null = null;
 
-// 活动配置
-const activities = [
-  { label: "光合大会", value: "guanghe" },
-  { label: "校招", value: "xiaozhao" },
-];
 
-const currentActivityLabel = computed(() => {
-  const activity = activities.find((a) => a.value === currentActivity.value);
-  return activity ? activity.label : "未知活动";
-});
 
 const handleMouseEnter = () => {
   if (props.transparent) {
@@ -109,12 +96,6 @@ const handleDropdownMouseLeave = () => {
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
-};
-
-const switchActivity = () => {
-  localStorage.removeItem(STORAGE_TOKEN_KEY);
-  localStorage.removeItem(STORAGE_ACTIVE_KEY);
-  window.location.reload();
 };
 
 const logout = () => {

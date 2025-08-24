@@ -3,33 +3,18 @@
     <div class="password-box">
       <div class="i-carbon-locked lock-icon"></div>
       <h2>需要授权访问</h2>
-      <p class="info-text">请选择活动并输入访问密码以查看受保护内容</p>
+      <p class="info-text">请输入活动名称和访问密码以查看受保护内容</p>
 
-      <div class="activity-select">
-        <div class="custom-select" :class="{ 'is-open': showActivityDropdown }">
-          <div 
-            class="select-trigger" 
-            @click="toggleActivityDropdown"
-            :class="{ 'has-value': selectedActivity }"
-          >
-            <span class="select-value">
-              {{ selectedActivity ? getActivityLabel(selectedActivity) : '请选择活动' }}
-            </span>
-            <div class="i-carbon-chevron-down select-arrow"></div>
-          </div>
-          <div class="select-options" v-show="showActivityDropdown">
-            <div 
-              v-for="activity in activities" 
-              :key="activity.value"
-              class="select-option"
-              :class="{ 'is-selected': selectedActivity === activity.value }"
-              @click="selectActivity(activity.value)"
-            >
-              <div class="i-carbon-star-filled option-icon"></div>
-              <span>{{ activity.label }}</span>
-              <div v-if="selectedActivity === activity.value" class="i-carbon-checkmark option-check"></div>
-            </div>
-          </div>
+      <div class="activity-input">
+        <div class="input-wrapper">
+          <input
+            type="text"
+            v-model="selectedActivity"
+            placeholder="请输入活动名称"
+            ref="activityInput"
+            :class="{ shake: errorMessage }"
+          />
+          <div class="i-carbon-star-filled activity-icon"></div>
         </div>
       </div>
 
@@ -69,11 +54,7 @@ import { STORAGE_TOKEN_KEY, STORAGE_ACTIVE_KEY } from "@/stores/mutation-type";
 import { ref, onMounted } from "vue";
 const emit = defineEmits(["success"]);
 
-// 活动配置
-const activities = [
-  { label: '光合大会', value: 'guanghe' },
-  { label: '校招', value: 'xiaozhao' }
-];
+
 
 // 本地存储的密码键名
 // 接口请求模拟
@@ -95,8 +76,8 @@ const selectedActivity = ref("");
 const showModal = ref(false);
 const errorMessage = ref("");
 const showPassword = ref(false);
-const showActivityDropdown = ref(false);
 const passwordInput = ref(null);
+const activityInput = ref(null);
 
 // 检查本地存储的密码和活动
 onMounted(async () => {
@@ -116,32 +97,10 @@ onMounted(async () => {
     showModal.value = true;
   }
 
-  // 点击外部关闭下拉菜单
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.custom-select')) {
-      showActivityDropdown.value = false;
-    }
-  });
+  
 });
 
-// 获取活动标签
-const getActivityLabel = (value: string) => {
-  const activity = activities.find(a => a.value === value);
-  return activity ? activity.label : '';
-};
 
-// 切换活动下拉菜单
-const toggleActivityDropdown = () => {
-  showActivityDropdown.value = !showActivityDropdown.value;
-};
-
-// 选择活动
-const selectActivity = (value: string) => {
-  selectedActivity.value = value;
-  showActivityDropdown.value = false;
-  errorMessage.value = ""; // 清除错误信息
-};
 
 // 切换密码可见性
 const togglePasswordVisibility = () => {
@@ -153,8 +112,8 @@ const togglePasswordVisibility = () => {
 
 // 处理登录逻辑
 const handleLogin = async () => {
-  if (!selectedActivity.value) {
-    errorMessage.value = "请选择活动";
+  if (!selectedActivity.value.trim()) {
+    errorMessage.value = "请输入活动名称";
     return;
   }
   
@@ -244,138 +203,40 @@ const handleLogin = async () => {
   font-weight: 600;
 }
 
-.activity-select {
+.activity-input {
   margin-bottom: 20px;
 }
 
-.custom-select {
+.activity-input .input-wrapper {
   position: relative;
 }
 
-.select-trigger {
+.activity-input input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 45px 12px 16px;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
   font-size: 0.95rem;
-  background: white;
-  cursor: pointer;
   transition: all 0.3s ease;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   min-height: 44px;
 }
 
-.select-trigger:hover {
-  border-color: #bdc3c7;
-}
-
-.select-trigger.has-value {
+.activity-input input:focus {
   border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  outline: none;
   background: linear-gradient(135deg, #f8fbff 0%, #f0f8ff 100%);
 }
 
-.custom-select.is-open .select-trigger {
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom: none;
-}
-
-.select-value {
-  color: #333;
-  font-weight: 500;
-}
-
-.select-trigger:not(.has-value) .select-value {
-  color: #999;
-}
-
-.select-arrow {
-  color: #666;
-  transition: transform 0.3s ease;
+.activity-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f39c12;
   width: 16px;
   height: 16px;
-}
-
-.custom-select.is-open .select-arrow {
-  transform: rotate(180deg);
-}
-
-.select-options {
-  position: absolute;
-  top: calc(100% - 2px);
-  left: 0;
-  right: 0;
-  background: white;
-  border: 2px solid #3498db;
-  border-top: none;
-  border-radius: 0 0 10px 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  max-height: 160px;
-  overflow-y: auto;
-  animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    max-height: 160px;
-  }
-}
-
-.select-option {
-  padding: 10px 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.select-option:last-child {
-  border-bottom: none;
-}
-
-.select-option:hover {
-  background: linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%);
-}
-
-.select-option.is-selected {
-  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-  color: white;
-}
-
-.select-option.is-selected:hover {
-  background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
-}
-
-.option-icon {
-  color: #f39c12;
-  width: 14px;
-  height: 14px;
-}
-
-.select-option.is-selected .option-icon {
-  color: #fff;
-}
-
-.option-check {
-  margin-left: auto;
-  color: #fff;
-  width: 14px;
-  height: 14px;
+  pointer-events: none;
 }
 
 .password-input {
