@@ -1,5 +1,6 @@
 <template>
   <div class="video-wall-container">
+    <LogoutButton :transparent="true" />
     <div class="video-grid">
       <div
         v-for="(cell, index) in videoCells"
@@ -58,6 +59,7 @@
 <script setup lang="ts">
 import { castingService } from "@/api/castingService";
 import { ref, onMounted, onUnmounted, shallowRef, nextTick } from "vue";
+import LogoutButton from "@/components/LogoutButton.vue";
 
 // 视频缓存项接口
 interface VideoCacheItem {

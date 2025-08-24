@@ -103,7 +103,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { castingService, type CastingImage } from "@/api/castingService";
-import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+
 import { confirmDelete } from "@/utils/confirm";
 import { showToast } from "vant";
 import VideoPreview from "@/components/VideoPreview.vue";
@@ -210,7 +210,7 @@ const closePreview = () => {
 // 初始化加载图片
 onMounted(() => {
   if (route.query.token) {
-    // localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+    // Token handling removed
   }
   loadImages();
 });

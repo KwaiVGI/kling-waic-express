@@ -1,5 +1,6 @@
 <template>
   <div class="display-screen">
+    <LogoutButton :transparent="true" />
     <!-- 双图片容器实现无缝切换 -->
     <div class="ds-image-container" :style="imageContainerStyle">
       <div class="absolute left-0 top-0 w-full z-50">
@@ -39,7 +40,7 @@
       <!-- 加载状态提示 -->
       <div v-if="!currentImage && !loadingError" class="no-image">
         <div class="no-image-content">
-          <i class="fas fa-image"></i>
+          <div class="i-carbon-image"></div>
           <h3>正在加载图片...</h3>
           <p>系统正在获取展示内容</p>
         </div>
@@ -48,7 +49,7 @@
       <!-- 错误提示 -->
       <div v-if="loadingError" class="error-message">
         <div class="error-content">
-          <i class="fas fa-exclamation-triangle"></i>
+          <div class="i-carbon-warning-alt"></div>
           <h3>图片加载失败</h3>
           <p>正在尝试重新连接... {{ retryCountdown }}秒</p>
         </div>
@@ -63,8 +64,9 @@
 import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
 import { aspectRatioService } from "@/api/aspectRatioService";
-import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+
 import { useRoute } from "vue-router";
+import LogoutButton from "@/components/LogoutButton.vue";
 
 // 图片队列管理
 const imageQueue = ref<CastingImage[]>([]);
@@ -284,7 +286,7 @@ const handleResize = () => {
 // 初始化加载
 onMounted(async () => {
   if (route.query.token) {
-    // localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+    // Token handling removed
   }
 
   // 先初始化容器宽高比

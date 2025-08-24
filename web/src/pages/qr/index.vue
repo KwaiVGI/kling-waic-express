@@ -2,6 +2,7 @@
   <div
     class="creation-index flex flex-col items-center justify-center min-h-100vh bg-gray-50"
   >
+    <LogoutButton :transparent="true" />
     <h1 class="text-24px font-bold text-blue mb-8">选择创作类型</h1>
 
     <div class="creation-types grid grid-cols-2 gap-20px w-80% max-w-400px">
@@ -33,7 +34,9 @@
   </div>
 </template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import LogoutButton from "@/components/LogoutButton.vue";
+</script>
 
 <style scoped>
 .creation-index {

@@ -32,7 +32,7 @@
     </div>
 
     <div class="loading-indicator" v-show="isLoading">
-      <i class="fas fa-spinner fa-spin"></i>
+      <div class="i-carbon-circle-dash animate-spin"></div>
     </div>
 
     <div class="controls">

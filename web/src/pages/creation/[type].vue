@@ -388,6 +388,8 @@ const handleGenerate = async () => {
       showToast(t("upload.noFaceDetected"));
     } else if (errorMap[error.message]) {
       showToast(errorMap[error.message]);
+    } else if (error.message === "TOO_MANY_REQUESTS") {
+      showToast(t("errors.api.quotaExceeded"));
     } else {
       showToast(t("upload.generationFailed"));
     }

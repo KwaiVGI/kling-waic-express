@@ -1,5 +1,6 @@
 <template>
   <div class="control-view">
+    <LogoutButton />
     <div class="header">
       <h1>WAIC 大屏控制系统</h1>
       <div class="text-12px text-left text-yellow-500">
@@ -21,6 +22,8 @@
 import ImageComponent from "./image.vue";
 import VideoComponent from "./video.vue";
 import PrintComponent from "./print.vue";
+import LogoutButton from "@/components/LogoutButton.vue";
+
 const tabs = [
   { value: "image", label: "图片", component: ImageComponent },
   { value: "video", label: "视频", component: VideoComponent },

@@ -33,6 +33,7 @@ export default {
         ".ds-modal-mask",
         ".viewer-modal",
         ".video-viewer-modal",
+        ".logout-container",
       ],
     },
   },

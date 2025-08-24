@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
-import { STORAGE_TOKEN_KEY } from "@/stores/mutation-type";
+
 import { showToast } from "vant";
 import { useRoute } from "vue-router";
 import ImagePreview from "@/components/ImagePreview.vue";
@@ -102,7 +102,7 @@ const closeImagePreview = () => {
 // 初始化加载图片
 onMounted(() => {
   if (route.query.token) {
-    // localStorage.setItem(STORAGE_TOKEN_KEY, route.query.token as string);
+    // Token handling removed
   }
   loadImages();
 });

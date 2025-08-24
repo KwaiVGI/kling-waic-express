@@ -4,6 +4,7 @@ import { showNotify } from "vant";
 import {
   STORAGE_TOKEN_KEY,
   STORAGE_USER_TOKEN_KEY,
+  STORAGE_ACTIVE_KEY,
 } from "@/stores/mutation-type";
 
 // 这里是用于设定请求后端时，所用的 Token KEY
@@ -53,13 +54,20 @@ function requestHandler(
 ): InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig> {
   const savedToken = localStorage.getItem(STORAGE_TOKEN_KEY);
   const savedUserToken = localStorage.getItem(STORAGE_USER_TOKEN_KEY);
+  const savedActive = localStorage.getItem(STORAGE_ACTIVE_KEY);
   const isUserPage = location.pathname.startsWith("/creation");
+  
   // 如果 token 存在
   // 让每个请求携带自定义 token, 请根据实际情况修改
   if ((savedToken || savedUserToken) && !config.headers[REQUEST_TOKEN_KEY]) {
     config.headers[REQUEST_TOKEN_KEY] = `Token ${
       isUserPage ? savedUserToken : savedToken
     }`;
+  }
+  
+  // 添加活动头部
+  if (savedActive && !config.headers.Activity) {
+    config.headers.Activity = savedActive
   }
 
   return config;
