@@ -10,7 +10,7 @@ object ThreadContextUtils {
     }
 
     fun getActivity(): String {
-        return MDC.get(ACTIVITY) ?: Constants.DEFAULT_ACTIVITY
+        return MDC.get(ACTIVITY) ?: ""
     }
 }
 
