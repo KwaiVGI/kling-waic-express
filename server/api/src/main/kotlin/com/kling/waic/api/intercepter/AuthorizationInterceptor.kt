@@ -8,12 +8,15 @@ import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.component.utils.ThreadContextUtils
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
 
 @Component
 class AuthorizationInterceptor(
+    @Value("\${WAIC_MANAGEMENT_TOKEN}")
+    private val waicManagementToken: String,
     private val tokenHelper: TokenHelper,
     private val tokenMapConfig: TokenMapConfig
 ) : HandlerInterceptor {
@@ -91,7 +94,11 @@ class AuthorizationInterceptor(
                 tokenHelper.validate(activity, token)
             }
             AuthorizationType.MANAGEMENT -> {
-                val manageToken = tokenMapConfig.map[activity]
+                val manageToken = if (activity.isEmpty()) {
+                    waicManagementToken
+                } else {
+                    tokenMapConfig.map[activity]
+                }
                 token == manageToken
             }
         }
@@ -99,7 +106,7 @@ class AuthorizationInterceptor(
 
     private fun validateOnActivity(activity: String): Boolean {
         if (activity.isEmpty()) {
-            return false
+            return true
         }
         if (activity == "nextCodeLuaScript") {
             return false
