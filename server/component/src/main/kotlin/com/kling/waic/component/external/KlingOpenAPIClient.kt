@@ -81,10 +81,18 @@ class KlingOpenAPIClient(
                 val responseBody = resp.body?.string()
                 return responseBody
                     ?.let {
-                        log.info(
-                            "Create OpenAPI image task with image: ${createImageTaskRequest.image}, " +
-                                    "prompt: ${createImageTaskRequest.prompt}, responseBody: $it"
-                        )
+                        if (createImageTaskRequest.image.startsWith("http")) {
+                            log.info(
+                                "Create OpenAPI image task with image url: ${createImageTaskRequest.image}, " +
+                                        "prompt: ${createImageTaskRequest.prompt}, responseBody: $it"
+                            )
+                        } else {
+                            log.info(
+                                "Create OpenAPI image task with base64 image data size: " +
+                                        "${createImageTaskRequest.image.length}, " +
+                                        "prompt: ${createImageTaskRequest.prompt}, responseBody: $it"
+                            )
+                        }
                         KlingOpenAPIResult.ok<CreateImageTaskResponse>(it)
                     }
                     ?: throw IOException("Response body is empty")

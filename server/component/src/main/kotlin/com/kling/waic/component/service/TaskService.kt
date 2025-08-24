@@ -4,6 +4,7 @@ import com.google.errorprone.annotations.concurrent.LazyInit
 import com.kling.waic.component.helper.S3Helper
 import com.kling.waic.component.repository.CodeGenerateRepository
 import com.kling.waic.component.entity.Locale
+import com.kling.waic.component.entity.OpenApiRecord
 import com.kling.waic.component.entity.Printing
 import com.kling.waic.component.entity.Task
 import com.kling.waic.component.entity.TaskInput
@@ -20,6 +21,7 @@ import com.kling.waic.component.repository.CastingRepository
 import com.kling.waic.component.repository.PrintingRepository
 import com.kling.waic.component.repository.TaskRepository
 import com.kling.waic.component.utils.IdUtils
+import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -89,7 +91,7 @@ abstract class TaskService {
         val taskName = requestImageUrl.substringAfter("request-images/").substringBefore("-")
         log.info("Generated task name: $taskName for type: $type")
 
-        val taskIds = doCreateTask(requestImageUrl)
+        val openApiRecords = doCreateTask(requestImageUrl)
         val filename = requestImageUrl.substringAfterLast("/")
         val task = Task(
             id = IdUtils.generateId(),
@@ -98,7 +100,8 @@ abstract class TaskService {
                 type = type,
                 image = requestImageUrl,
             ),
-            taskIds = taskIds,
+            taskIds = openApiRecords.map { it.taskId },
+            openApiResultMap = openApiRecords.associateBy { it.taskId },
             status = TaskStatus.SUBMITTED,
             type = type,
             filename = filename,
@@ -135,11 +138,21 @@ abstract class TaskService {
             updateTime = now,
             elapsedTimeInSeconds = Duration.between(task.createTime, now).seconds
         )
+        taskQueryContext.taskResponseMap.forEach { (taskId, response) ->
+            if (!response.taskResult.images.isNullOrEmpty()) {
+                newTask.openApiResultMap[taskId]?.outputImage =
+                    response.taskResult.images[0].url
+            }
+        }
         taskRepository.setTask(newTask)
         if (overallStatus != TaskStatus.SUCCEED) {
             return newTask
         }
         log.info("Task succeed, name: {}, elapsedTimeInSeconds: {}", name, newTask.elapsedTimeInSeconds)
+
+        newTask.openApiResultMap.forEach { (taskId, record) ->
+            log.info("OpenApiResult record ${taskId}: ${ObjectMapperUtils.toJSON(record)}")
+        }
 
         val (url, thumbnailUrl) = generateOutputUrl(name, taskQueryContext, locale)
         val finalTask = newTask.copy(
@@ -172,7 +185,7 @@ abstract class TaskService {
         }
     }
 
-    abstract suspend fun doCreateTask(requestImageUrl: String): List<String>
+    abstract suspend fun doCreateTask(requestImageUrl: String): List<OpenApiRecord>
 
     abstract suspend fun doQueryTask(taskIds: List<String>, taskName: String): Pair<TaskStatus, QueryTaskContext>
 

@@ -158,7 +158,7 @@ class ImageProcessHelper(
             imageUrls.mapIndexed { index, url ->
                 // Use current context instead of withContext(Dispatchers.IO)
                 async {
-                    log.info("Downloading image ${index + 1} from $url")
+                    log.info("Downloading image ${index} from $url")
                     readImage(url)
                 }
             }.awaitAll()
