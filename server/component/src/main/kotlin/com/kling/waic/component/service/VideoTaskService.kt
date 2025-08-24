@@ -1,6 +1,7 @@
 package com.kling.waic.component.service
 
 import com.kling.waic.component.entity.Locale
+import com.kling.waic.component.entity.OpenApiRecord
 import com.kling.waic.component.entity.TaskStatus
 import com.kling.waic.component.exception.KlingOpenAPIException
 import com.kling.waic.component.external.KlingOpenAPIClient
@@ -21,7 +22,7 @@ class VideoTaskService(
     private val videoResizeHelper: VideoResizeHelper
 ) : TaskService() {
 
-    override suspend fun doCreateTask(requestImageUrl: String): List<String> {
+    override suspend fun doCreateTask(requestImageUrl: String): List<OpenApiRecord> {
         val effectScene = videoSpecialEffects.random()
         val request = CreateVideoTaskRequest(
             effectScene = effectScene,
@@ -34,7 +35,10 @@ class VideoTaskService(
             throw KlingOpenAPIException(result)
         }
         log.debug("Create Video Task with effectScene: $effectScene, taskId: ${result.data?.taskId ?: "null"}")
-        return listOf(result.data!!.taskId)
+        return listOf(OpenApiRecord(
+            taskId = result.data!!.taskId,
+            inputImage = requestImageUrl
+        ))
     }
 
     override suspend fun doQueryTask(

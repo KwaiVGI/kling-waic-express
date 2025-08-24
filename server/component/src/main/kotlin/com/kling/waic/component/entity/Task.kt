@@ -8,7 +8,8 @@ data class Task (
     val id: Long,
     val name: String,
     val input: TaskInput,
-    val taskIds: List<String>,
+    val taskIds: List<String> = emptyList(),
+    val openApiResultMap: Map<String, OpenApiRecord> = emptyMap(),
     val status: TaskStatus,
     val type: TaskType,
     val filename: String,
@@ -20,4 +21,12 @@ data class Task (
 
 data class TaskNewInput(
     val url: String
+)
+
+data class OpenApiRecord (
+    val taskId: String,
+    val inputImage: String,
+    val promptIndex: Int? = null,
+    val prompt: String? = null,
+    var outputImage: String? = null
 )

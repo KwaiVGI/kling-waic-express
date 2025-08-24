@@ -1,6 +1,7 @@
 package com.kling.waic.component.service
 
 import com.kling.waic.component.entity.Locale
+import com.kling.waic.component.entity.OpenApiRecord
 import com.kling.waic.component.entity.TaskStatus
 import com.kling.waic.component.entity.TaskType
 import com.kling.waic.component.exception.KlingOpenAPIException
@@ -37,19 +38,19 @@ class ImageTaskService(
     private val imageTaskConcurrency: Int
 ) : TaskService() {
 
-    override suspend fun doCreateTask(requestImageUrl: String): List<String> {
+    override suspend fun doCreateTask(requestImageUrl: String): List<OpenApiRecord> {
         val taskN = imageTaskMode.taskN
         val randomPrompts = styleImagePrompts.shuffled().take(taskN)
 
         // 因为 executeWithLock 是同步方法，所以这里只能用 runBlocking 包住挂起逻辑
-        val taskIds = lockRepository.executeWithLock(
+        val openApiRecords = lockRepository.executeWithLock(
             lockKey = "doCreateTask_${TaskType.STYLED_IMAGE}",
             action = {
                 runBlocking {
                     // 在锁内检查并发限制，确保互斥访问
                     checkConcurrency(taskN)
 
-                    val deferredResults = randomPrompts.map { prompt ->
+                    val deferredResults = randomPrompts.mapIndexed { index, prompt ->
                         async {
                             val request = CreateImageTaskRequest(
                                 image = requestImageUrl,
@@ -64,7 +65,14 @@ class ImageTaskService(
                                 "Create Image Task with image: $requestImageUrl, " +
                                         "prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}"
                             )
-                            result.data?.taskId
+                            result.data?.taskId?.let { taskId ->
+                                OpenApiRecord(
+                                    taskId = taskId,
+                                    promptIndex = index,
+                                    prompt = prompt,
+                                    inputImage = requestImageUrl,
+                                )
+                            }
                         }
                     }
 
@@ -73,13 +81,13 @@ class ImageTaskService(
             }
         )
 
-        if (taskIds.size != taskN) {
+        if (openApiRecords.size != taskN) {
             throw IllegalStateException(
                 "Failed to create the expected number of tasks: $taskN, " +
-                        "only created ${taskIds.size} tasks."
+                        "only created ${openApiRecords.size} tasks."
             )
         }
-        return taskIds
+        return openApiRecords
     }
 
     override suspend fun doQueryTask(taskIds: List<String>, taskName: String): Pair<TaskStatus, QueryTaskContext> {
