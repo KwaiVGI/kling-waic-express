@@ -1,7 +1,7 @@
 package com.kling.waic.component.entity
 
 enum class PrintingStatus {
-    SUBMITTED,
+    READY,
     QUEUING,
     PRINTING,
     COMPLETED,

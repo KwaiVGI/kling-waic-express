@@ -1,5 +1,6 @@
 package com.kling.waic.printer.adapter
 
+import com.kling.waic.component.entity.Printing
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.printer.client.PrintingDataClient
 import com.kling.waic.printer.listener.PrintJobCallback
@@ -32,7 +33,7 @@ class PrintAdapter(
         val services = PrintServiceLookup.lookupPrintServices(null, null)
         for (service in services) {
             if (printerName == service.name) {
-                println("Printer found: ${service.name}")
+                log.info("Printer found: ${service.name}")
                 return service
             }
         }
@@ -69,21 +70,23 @@ class PrintAdapter(
     }
 
     fun tryFetchAndPrint() {
-        val queuedJobCount = fetchQueuedJobCount()
-        val result = printingDataClient.setPrinterQueuedJobCount(queuedJobCount)
-        log.info("Set Printer queuedJobCount: $queuedJobCount, result: $result")
-
         val printerIsAcceptingJobs = printer.getAttribute(PrinterIsAcceptingJobs::class.java)
         if (printerIsAcceptingJobs.value < 1) {
-            println("Printer is not accepting jobs, skip printing job.")
+            log.warn("Printer is not accepting jobs, skip printing job.")
             return
         }
 
-        val printing = printingDataClient.fetchPrinting()
-        if (printing == null) {
-            log.debug("Printing queue is empty, skip printing job.")
+        val printings = printingDataClient.fetchPrinting(2)
+        if (printings.isEmpty()) {
+            log.debug("Printing queue is empty, or queuedJobCount is too large" +
+                    ", skip printing job.")
             return
         }
+
+        printings.forEach { printOne(it) }
+    }
+
+    private fun printOne(printing: Printing) {
         val taskName = printing.task.name
         val imageUrl = printing.task.outputs!!.url
 
@@ -108,5 +111,11 @@ class PrintAdapter(
 
                 job.print(doc, attrs)
             }
+    }
+
+    fun setQueuedJobCount() {
+        val queuedJobCount = fetchQueuedJobCount()
+        val result = printingDataClient.setPrinterQueuedJobCount(queuedJobCount)
+        log.info("Set Printer queuedJobCount: $queuedJobCount, result: $result")
     }
 }

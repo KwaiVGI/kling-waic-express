@@ -18,3 +18,11 @@ data class PrintingUpdateInput(
 data class SetPrinterQueuedJobCountRequest(
     val printerQueuedJobCount: Int
 )
+
+data class BatchFetchPrintingRequest (
+    val count: Int = 2
+)
+
+data class BatchFetchPrintingResponse (
+    val printings: List<Printing> = emptyList()
+)

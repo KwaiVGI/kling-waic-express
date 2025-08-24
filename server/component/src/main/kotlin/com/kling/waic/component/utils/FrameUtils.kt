@@ -23,8 +23,8 @@ object FrameUtils {
         val ratio = img.width.toDouble() / img.height
         val targetRatio = width.toDouble() / height
 
-        var scaledW = width
-        var scaledH = height
+        var scaledW: Int
+        var scaledH: Int
         if (ratio > targetRatio) {
             scaledW = width
             scaledH = (width / ratio).toInt()
@@ -47,8 +47,8 @@ object FrameUtils {
         val ratio = img.width.toDouble() / img.height
         val targetRatio = width.toDouble() / height
 
-        var scaledW = width
-        var scaledH = height
+        var scaledW: Int
+        var scaledH: Int
         if (ratio > targetRatio) {
             scaledH = height
             scaledW = (height * ratio).toInt()

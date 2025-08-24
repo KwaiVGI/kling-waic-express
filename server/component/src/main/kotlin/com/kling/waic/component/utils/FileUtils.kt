@@ -4,6 +4,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.File
+import java.io.IOException
 import java.util.*
 import javax.imageio.ImageIO
 
@@ -21,6 +22,14 @@ class FileUtils {
             val resource = this::class.java.classLoader.getResource(filePath)
                 ?: throw IllegalArgumentException("File not found: $filePath")
             return File(resource.file)
+        }
+
+        fun getImageFromResources(filePath: String): BufferedImage {
+            val resource = this::class.java.classLoader.getResourceAsStream(filePath)
+                ?: throw IllegalArgumentException("File not found: $filePath")
+            return resource.use { input ->
+                ImageIO.read(input) ?: throw IOException("Unsupported image format: $filePath")
+            }
         }
 
         fun readBytesFromResources(filePath: String): ByteArray {

@@ -1,9 +1,11 @@
 package com.kling.waic.component.helper
 
-import com.kling.waic.component.config.AdminConfig
+import com.kling.waic.component.entity.AdminConfig
+import com.kling.waic.component.entity.TaskType
 import com.kling.waic.component.entity.Token
 import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
+import com.kling.waic.component.utils.ThreadContextUtils
 import org.springframework.stereotype.Component
 import redis.clients.jedis.commands.JedisCommands
 import java.time.Instant
@@ -16,7 +18,7 @@ class TokenHelper(
     @Volatile
     private var latestToken: Token? = null
 
-    fun getLatest(adminConfig: AdminConfig): Token {
+    fun getLatest(type : TaskType, adminConfig: AdminConfig): Token {
         val now = Instant.now()
         val current = latestToken
         if (current != null && current.refreshTime > now) {
@@ -33,13 +35,19 @@ class TokenHelper(
                     UUID.randomUUID().toString(),
                     nowInLock,
                     nowInLock.plusSeconds(5),
-                    nowInLock.plusSeconds(adminConfig.tokenExpireInSeconds)
+                    nowInLock.plusSeconds(adminConfig.imageTokenExpireInSeconds),
+                    activity = ThreadContextUtils.getActivity()
                 )
                 latestToken = newToken
+                val tokenExpireInSeconds = when (type) {
+                    TaskType.STYLED_IMAGE -> adminConfig.imageTokenExpireInSeconds
+                    TaskType.VIDEO_EFFECT -> adminConfig.videoTokenExpireInSeconds
+                }
                 jedis.setex(newToken.value,
-                    adminConfig.tokenExpireInSeconds,
+                    tokenExpireInSeconds,
                     ObjectMapperUtils.Companion.toJSON(newToken))
-                log.info("Generated and saved new token: id={}, name={}", newToken.id, newToken.value)
+                log.info("Generated and saved new token: id={}, type={}, name={}",
+                    newToken.id, type, newToken.value)
             }
             return latestToken!!
         }
@@ -47,11 +55,14 @@ class TokenHelper(
 
     fun getByName(name: String): Token? {
         val valueStr = jedis.get(name)
-        return ObjectMapperUtils.Companion.fromJSON(valueStr, Token::class.java)
+        return ObjectMapperUtils.fromJSON(valueStr, Token::class.java)
     }
 
-    fun validate(token: String): Boolean {
+    fun validate(activity: String, token: String): Boolean {
         val storedToken = getByName(token)
-        return storedToken?.let { Instant.now().isBefore(it.expireTime) } ?: false
+        return storedToken?.let {
+            (activity.isEmpty() || activity == storedToken.activity)
+                    && Instant.now().isBefore(it.expireTime)
+        } ?: false
     }
 }

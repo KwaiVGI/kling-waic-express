@@ -1,6 +1,7 @@
 package com.kling.waic.api.repository
 
 import SpringBaseTest
+import com.kling.waic.component.entity.TaskType
 import com.kling.waic.component.helper.AdminConfigHelper
 import com.kling.waic.component.helper.TokenHelper
 import org.junit.jupiter.api.Test
@@ -16,7 +17,7 @@ class TokenRepositoryTest : SpringBaseTest() {
     @Test
     fun testGetLatest() {
         val adminConfig = adminConfigHelper.getAdminConfig()
-        tokenHelper.getLatest(adminConfig).also {
+        tokenHelper.getLatest(TaskType.VIDEO_EFFECT, adminConfig).also {
             println("Latest token: $it")
         }
     }

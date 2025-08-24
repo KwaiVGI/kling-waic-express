@@ -1,11 +1,17 @@
 package com.kling.waic.api.config
 
+import com.kling.waic.component.handler.ActivityHandler
 import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.opencv.core.Core
 import org.opencv.objdetect.CascadeClassifier
+import org.redisson.Redisson
+import org.redisson.api.RedissonClient
+import org.redisson.config.Config
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import redis.clients.jedis.*
@@ -23,8 +29,12 @@ open class ServiceConfig(
     @param:Value("\${REDIS_HOST_WAIC:}") private val jedisHost: String,
     @param:Value("\${REDIS_PORT_WAIC:}") private val jedisPort: Int,
     @param:Value("\${REDIS_PASS_WAIC:}") private val jedisPassword: String,
-    @param:Value("\${S3_PROFILE_NAME:}") private val s3ProfileName: String
+    @param:Value("\${S3_PROFILE_NAME:}") private val s3ProfileName: String,
+    @param:Value("\${REDISSON_PROTOCOL:rediss}") private val redisProtocol: String
 ) {
+
+    @Autowired
+    lateinit var applicationContext: ApplicationContext
 
     @Bean
     open fun jedis(): JedisCommands {
@@ -148,5 +158,33 @@ open class ServiceConfig(
             .region(Region.CN_NORTH_1)
             .credentialsProvider(awsCredentialsProvider)
             .build()
+    }
+
+    @Bean
+    fun activityHandlerMap(): Map<String, ActivityHandler> {
+        val activityHandlers = applicationContext.getBeansOfType(ActivityHandler::class.java)
+        val map = mutableMapOf<String, ActivityHandler>()
+        activityHandlers.values.forEach { activityHandler ->
+            map[activityHandler.activityName()] = activityHandler
+        }
+        return map
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    fun redissonClient(): RedissonClient {
+        log.info("Configuring Redisson with " +
+                "host: '$jedisHost', port: $jedisPort, password: $jedisPassword")
+
+        val config = Config()
+        config.useSingleServer()
+            .apply {
+                address = "${redisProtocol}://${jedisHost}:${jedisPort}"
+                connectionMinimumIdleSize = 1
+                connectionPoolSize = 10
+                if (!jedisClusterMode && jedisPassword.isNotBlank()) {
+                    password = jedisPassword
+                }
+            }
+        return Redisson.create(config)
     }
 }

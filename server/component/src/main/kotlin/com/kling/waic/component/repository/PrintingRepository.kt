@@ -2,6 +2,7 @@ package com.kling.waic.component.repository
 
 import com.kling.waic.component.entity.*
 import com.kling.waic.component.exception.DuplicatePrintException
+import com.kling.waic.component.helper.AdminConfigHelper
 import com.kling.waic.component.utils.IdUtils
 import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
@@ -11,6 +12,7 @@ import redis.clients.jedis.commands.JedisCommands
 @Repository
 class PrintingRepository(
     private val jedis: JedisCommands,
+    private val adminConfigHelper: AdminConfigHelper
 ) {
     private val printingQueue = "printing_queue_${TaskType.STYLED_IMAGE}"
     private val printerQueuedJobCount = "printer_queued_job_count_${TaskType.STYLED_IMAGE}"
@@ -31,7 +33,7 @@ class PrintingRepository(
             id = IdUtils.generateId(),
             name = printingName,
             task = task,
-            status = PrintingStatus.QUEUING,
+            status = PrintingStatus.READY,
         )
         val value = ObjectMapperUtils.toJSON(printing)
 
@@ -44,7 +46,16 @@ class PrintingRepository(
         return printing
     }
 
-    private fun calculateAheadCount(printingName: String): Int {
+    private fun calculateAheadCount(status: PrintingStatus, printingName: String): Int {
+        return when (status) {
+            PrintingStatus.READY -> getPrinterQueuedJobCount() + calculateAheadCountInPrintingQueue(printingName)
+            PrintingStatus.QUEUING -> getPrinterQueuedJobCount()
+            PrintingStatus.PRINTING -> 0
+            else -> -1
+        }
+    }
+
+    private fun calculateAheadCountInPrintingQueue(printingName: String): Int {
         val allElements = jedis.lrange(printingQueue, 0, -1)
         val index = allElements.indexOf(printingName)
 
@@ -52,22 +63,62 @@ class PrintingRepository(
     }
 
     fun pollOneFromPrintingQueue(): Printing? {
-        val printingName = jedis.rpop(printingQueue) ?: return null
-        log.info("Rpop printingName from Redis queue: $printingName")
-
-        val value = jedis.get(printingName) ?: return null
-        log.info("Get printing value from Redis: $printingName, value: $value")
-
-        return ObjectMapperUtils.fromJSON(value, Printing::class.java)
+        return pollBatchFromPrintingQueue(1).firstOrNull()
     }
 
-    fun getPrinting(name: String): Printing {
-        val value = jedis.get(name)
-            ?: throw IllegalArgumentException("$name is not exists")
-        log.debug("Get printing value from Redis: $name, value: $value")
+    fun pollBatchFromPrintingQueue(count: Int): List<Printing> {
+        val printerQueuedJobCount = getPrinterQueuedJobCount()
+        val adminConfig = adminConfigHelper.getAdminConfig()
+        if (printerQueuedJobCount > adminConfig.maxPrinterJobCount) {
+            return emptyList()
+        }
+        
+        val printings = mutableListOf<Printing>()
+        
+        // 批量从队列中取出指定数量的打印任务
+        repeat(count) {
+            val printingName = jedis.rpop(printingQueue) ?: return printings
+            log.info("Rpop printingName from Redis queue: $printingName")
+
+            val value = jedis.get(printingName)
+            if (value == null) {
+                log.warn("Printing value not found for name: $printingName, skipping")
+                return@repeat
+            }
+            log.info("Get printing value from Redis: $printingName, value: $value")
+
+            val printing = ObjectMapperUtils.fromJSON(value, Printing::class.java)
+            if (printing == null) {
+                log.warn("Failed to parse printing JSON for name: $printingName, skipping")
+                return@repeat
+            }
+
+            val newPrinting = printing.copy(
+                status = PrintingStatus.QUEUING
+            )
+            val newValue = ObjectMapperUtils.toJSON(newPrinting)
+            if (newValue == null) {
+                log.error("Failed to serialize printing to JSON for name: $printingName, skipping")
+                return@repeat
+            }
+
+            jedis.set(printingName, newValue)
+            log.info("Update printing status in Redis: ${printing.name}, value: $newValue")
+
+            // 只有成功处理的 printing 才会被添加到列表中
+            printings.add(newPrinting)
+        }
+        
+        return printings
+    }
+
+    fun getPrinting(printingName: String): Printing {
+        val value = jedis.get(printingName)
+            ?: throw IllegalArgumentException("$printingName is not exists")
+        log.debug("Get printing value from Redis: $printingName, value: $value")
         val printing = ObjectMapperUtils.fromJSON(value, Printing::class.java)!!
         return printing.copy(
-            aheadCount = calculateAheadCount(name)
+            aheadCount = calculateAheadCount(printing.status, printingName)
         )
     }
 

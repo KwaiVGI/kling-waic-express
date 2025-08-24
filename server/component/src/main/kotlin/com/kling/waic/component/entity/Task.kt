@@ -15,6 +15,7 @@ data class Task (
     val outputs: TaskOutput? = null,
     val createTime: Instant,
     val updateTime: Instant,
+    val elapsedTimeInSeconds: Long = 0
 )
 
 data class TaskNewInput(

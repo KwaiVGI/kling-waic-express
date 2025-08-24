@@ -4,19 +4,20 @@ import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.ExifIFD0Directory
 import com.kling.waic.component.entity.Locale
 import com.kling.waic.component.exception.ImageFormatNotSupportedException
+import com.kling.waic.component.selector.ActivityHandlerSelector
 import com.kling.waic.component.utils.FileUtils
+import com.kling.waic.component.utils.ImageUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import java.awt.Color
 import java.awt.Font
-import java.awt.Graphics2D
-import java.awt.Image
 import java.awt.font.TextLayout
 import java.awt.geom.AffineTransform
 import java.awt.image.AffineTransformOp
@@ -36,6 +37,7 @@ class ImageProcessHelper(
     @param:Value("\${S3_BUCKET_NAME:kling-waic}") private val bucket: String,
     private val s3Helper: S3Helper,
     private val aesCipherHelper: AESCipherHelper,
+    private val activityHandlerSelector: ActivityHandlerSelector
 ) {
 
     private fun validateImageFile(file: MultipartFile) {
@@ -151,8 +153,10 @@ class ImageProcessHelper(
         List<String>,
         locale: Locale
     ): Pair<String, String> {
-        val images = withContext(Dispatchers.IO) {
+        // Use coroutineScope with current context to preserve thread
+        val images = coroutineScope {
             imageUrls.mapIndexed { index, url ->
+                // Use current context instead of withContext(Dispatchers.IO)
                 async {
                     log.info("Downloading image ${index + 1} from $url")
                     readImage(url)
@@ -167,7 +171,7 @@ class ImageProcessHelper(
         }
 
         val sudokuImage = createKlingWAICSudokuImage(taskName, images, locale)
-        val thumbnailImage = resizeAndCropToRatio(sudokuImage, 400, 600)
+        val thumbnailImage = ImageUtils.resizeAndCropToRatio(sudokuImage, 400, 600)
 
         val encrypted = aesCipherHelper.encrypt("sudoku-$taskName")
         val outputFilename = "$taskName-$encrypted.jpg"
@@ -210,6 +214,8 @@ class ImageProcessHelper(
         images: List<BufferedImage>,
         locale: Locale
     ): BufferedImage {
+        val activityHandler = activityHandlerSelector.selectActivityHandler()
+
         // Get actual image dimensions (assuming all images have the same size)
         val actualImageWidth = images[0].width
         val actualImageHeight = images[0].height
@@ -235,12 +241,8 @@ class ImageProcessHelper(
         
         val totalWidth = leftMargin + cellWidth * 3 + gap * 2 + rightMargin
         val totalHeight = topMargin + cellHeight * 3 + gap * 2 + bottomMargin
-        
-        val canvas = BufferedImage(totalWidth, totalHeight, BufferedImage.TYPE_INT_RGB)
-        val g2d: Graphics2D = canvas.createGraphics()
-        
-        g2d.color = Color.BLACK
-        g2d.fillRect(0, 0, totalWidth, totalHeight)
+
+        val (canvas, g2d) = activityHandler.getCanvas(totalWidth, totalHeight)
         
         for (i in 0 until 9) {
             val row = i / 3
@@ -288,43 +290,4 @@ class ImageProcessHelper(
         g2d.dispose()
         return canvas
     }
-
-    fun resizeAndCropToRatio(
-        originalImage: BufferedImage,
-        targetWidth: Int,
-        targetHeight: Int
-    ): BufferedImage {
-        val targetRatio = targetWidth.toDouble() / targetHeight
-        val originalRatio = originalImage.width.toDouble() / originalImage.height
-
-        var scaledWidth = targetWidth
-        var scaledHeight = targetHeight
-
-        if (originalRatio > targetRatio) {
-            // 原图过宽 -> 高度对齐，宽度超出后裁掉
-            scaledHeight = targetHeight
-            scaledWidth = (targetHeight * originalRatio).toInt()
-        } else {
-            // 原图过高 -> 宽度对齐，高度超出后裁掉
-            scaledWidth = targetWidth
-            scaledHeight = (targetWidth / originalRatio).toInt()
-        }
-
-        // 先缩放
-        val temp = BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_RGB)
-        val g2dTemp = temp.createGraphics()
-        g2dTemp.drawImage(
-            originalImage.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH),
-            0,
-            0,
-            null
-        )
-        g2dTemp.dispose()
-
-        // 再居中裁剪成目标大小
-        val x = (scaledWidth - targetWidth) / 2
-        val y = (scaledHeight - targetHeight) / 2
-        return temp.getSubimage(x, y, targetWidth, targetHeight)
-    }
-
 }

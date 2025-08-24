@@ -13,6 +13,7 @@ import com.kling.waic.component.entity.TaskStatus
 import com.kling.waic.component.entity.TaskType
 import com.kling.waic.component.external.model.QueryTaskContext
 import com.kling.waic.component.helper.AESCipherHelper
+import com.kling.waic.component.helper.AdminConfigHelper
 import com.kling.waic.component.helper.ImageCropHelper
 import com.kling.waic.component.helper.ImageProcessHelper
 import com.kling.waic.component.repository.CastingRepository
@@ -23,6 +24,7 @@ import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.multipart.MultipartFile
+import java.time.Duration
 import java.time.Instant
 
 abstract class TaskService {
@@ -44,6 +46,8 @@ abstract class TaskService {
     private lateinit var cropImageWithOpenCV: String
     @Autowired
     private lateinit var aesCipherHelper: AESCipherHelper
+    @Autowired
+    private lateinit var adminConfigHelper: AdminConfigHelper
 
     @Autowired(required = false)
     @LazyInit
@@ -73,6 +77,15 @@ abstract class TaskService {
 
     suspend fun createTask(type: TaskType,
                            requestImageUrl: String): Task {
+        val adminConfig = adminConfigHelper.getAdminConfig()
+        val serviceOnline = when (type) {
+            TaskType.STYLED_IMAGE -> adminConfig.imageServiceOnline
+            TaskType.VIDEO_EFFECT -> adminConfig.videoServiceOnline
+        }
+        if (!serviceOnline) {
+            throw IllegalStateException("Service is offline for type: $type")
+        }
+
         val taskName = requestImageUrl.substringAfter("request-images/").substringBefore("-")
         log.info("Generated task name: $taskName for type: $type")
 
@@ -116,14 +129,17 @@ abstract class TaskService {
             return task // No status change, return existing task
         }
 
+        val now = Instant.now()
         val newTask = task.copy(
             status = overallStatus,
-            updateTime = Instant.now(),
+            updateTime = now,
+            elapsedTimeInSeconds = Duration.between(task.createTime, now).seconds
         )
         taskRepository.setTask(newTask)
         if (overallStatus != TaskStatus.SUCCEED) {
             return newTask
         }
+        log.info("Task succeed, name: {}, elapsedTimeInSeconds: {}", name, newTask.elapsedTimeInSeconds)
 
         val (url, thumbnailUrl) = generateOutputUrl(name, taskQueryContext, locale)
         val finalTask = newTask.copy(

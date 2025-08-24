@@ -3,6 +3,7 @@ package com.kling.waic.api.repository
 import SpringBaseTest
 import com.kling.waic.component.entity.TaskType
 import com.kling.waic.component.repository.CodeGenerateRepository
+import com.kling.waic.component.utils.ThreadContextUtils
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.lang.Thread.sleep
@@ -14,6 +15,7 @@ class CodeGenerateRepositoryTest : SpringBaseTest() {
 
     @Test
     fun testGenerateNameForCreateImage() {
+        ThreadContextUtils.putActivity("test_activity")
         for (i in 1..10) {
             codeGenerateRepository.nextCode(TaskType.STYLED_IMAGE).also {
                 println("Generated code: $it")
