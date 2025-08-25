@@ -5,6 +5,7 @@ import com.kling.waic.component.utils.PhotoUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.printer.client.PrintingDataClient
 import com.kling.waic.printer.listener.PrintJobCallback
+import com.kling.waic.printer.model.PrintingMode
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -21,9 +22,14 @@ import javax.print.attribute.standard.PrinterIsAcceptingJobs
 
 @Component
 class PrintAdapter(
-    @param:Value("\${PRINTER_NAME:DNP DP-DS620}") private val printerName: String,
+    @param:Value("\${PRINTER_NAME:DNP DP-DS620}")
+    private val printerName: String,
     @param:Value("\${PRINTER_SYSTEM_NAME:Dai_Nippon_Printing_DP_DS620}")
     private val printerSystemName: String,
+    @param:Value("\${PRINTER_PRINTING_MODE:PDF_BATCH}")
+    private val printingMode: PrintingMode,
+    @param:Value("\${PRINTER_PRINTING_BATCH_SIZE:2}")
+    private val printingBatchSize: Int,
     private val printingDataClient: PrintingDataClient,
     private val printJobCallback: PrintJobCallback
 ) {
@@ -81,14 +87,17 @@ class PrintAdapter(
             return
         }
 
-        val printings = printingDataClient.fetchPrinting(6)
+        val printings = printingDataClient.fetchPrinting(printingBatchSize)
         if (printings.isEmpty()) {
             log.debug("Printing queue is empty, or queuedJobCount is too large" +
                     ", skip printing job.")
             return
         }
 
-        printBatchAsPDF(printings)
+        when (printingMode) {
+            PrintingMode.EACH_ONE -> printings.forEach { printOne(it) }
+            PrintingMode.PDF_BATCH -> printBatchAsPDF(printings)
+        }
     }
 
     private fun printOne(printing: Printing) {
