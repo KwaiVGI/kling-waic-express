@@ -52,8 +52,16 @@ class AuthorizationInterceptor(
         }
 
         // Check token
-        val activity = request.getHeader("Activity") ?: ""
-        val token = authHeader.substring(6) // Remove "Token " prefix
+//        val activity = request.getHeader("Activity") ?: ""
+//        val token = authHeader.substring(6) // Remove "Token " prefix
+
+        // todo: remove this mock codes
+        val activity = "xiaozhao"
+        val token = if (annotation.type == AuthorizationType.MANAGEMENT) {
+            "KlingXIAOZHAO666"
+        } else {
+            authHeader.substring(6)
+        }
 
         // Set activity in ThreadContext BEFORE validation so JedisAspect can use it
         ThreadContextUtils.putActivity(activity)
