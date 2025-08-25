@@ -27,6 +27,7 @@ import LogoutButton from "@/components/LogoutButton.vue";
 import QRCodeStyling from "qr-code-styling";
 import { getLatestToken } from "@/api";
 import { type TaskType } from "@/api/type";
+import { STORAGE_ACTIVE_KEY } from "@/stores/mutation-type";
 const route = useRoute();
 const qrCodeElement = ref<HTMLElement | null>(null);
 const qrCode = ref<QRCodeStyling | null>(null);
@@ -87,7 +88,9 @@ const initQrCode = () => {
 const updateQrCode = () => {
   if (!qrCode.value || !token.value) return;
 
-  const url = `${window.location.origin}/creation/${route.params.type}?token=${token.value}`;
+  const url = `${window.location.origin}/creation/${route.params.type}?token=${
+    token.value
+  }&activity=${localStorage.getItem(STORAGE_ACTIVE_KEY)}`;
   qrCode.value.update({
     data: url,
   });

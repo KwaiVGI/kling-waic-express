@@ -146,7 +146,10 @@
       :style="{ zoom: step2Zoom }"
       class="result-section w-full box-border px-18px py-40px flex flex-col items-center relative z-10 animate-slideUp"
     >
-      <div v-if="type === 'image' && adminConfig?.allowPrint !== false" class="w-380px h-570px rounded-8px relative">
+      <div
+        v-if="type === 'image' && adminConfig?.allowPrint !== false"
+        class="w-380px h-570px rounded-8px relative"
+      >
         <img
           :src="generatedResult"
           alt="生成的图片"
@@ -178,22 +181,26 @@
         :style="{ width: type === 'image' ? '100%' : '340px' }"
       >
         <div class="flex items-center justify-center gap-8px">
-          <van-loading 
-            v-if="printStatus === READY || printStatus === QUEUING || printStatus === PRINTING"
-            type="circular" 
+          <van-loading
+            v-if="
+              printStatus === READY ||
+              printStatus === QUEUING ||
+              printStatus === PRINTING
+            "
+            type="circular"
             size="16px"
             :color="printStatus === PRINTING ? '#1976d2' : '#f57c00'"
           />
-          <IconSvg 
+          <IconSvg
             v-else-if="printStatus === COMPLETED"
-            name="success" 
-            :size="16" 
+            name="success"
+            :size="16"
             color="#388e3c"
           />
-          <IconSvg 
+          <IconSvg
             v-else-if="printStatus === FAILED || printStatus === CANCELLED"
-            name="inform" 
-            :size="16" 
+            name="inform"
+            :size="16"
             color="#d32f2f"
           />
           <span>{{ printStatusText }}</span>
@@ -247,7 +254,10 @@
         class="flex flex-col justify-center items-center loading-bg-white rounded-16px p-24px gap-12px backdrop-blur-24px"
       >
         <van-loading type="circular" color="#0B8A1B" />
-        <div v-if="type === 'image' && adminConfig?.allowPrint !== false" class="text-14px text-black">
+        <div
+          v-if="type === 'image' && adminConfig?.allowPrint !== false"
+          class="text-14px text-black"
+        >
           {{ $t("status.processing") }}
         </div>
         <div v-else class="text-14px text-black">
@@ -270,7 +280,10 @@ import { showToast } from "vant";
 import useCreation, { type CreationType } from "@/composables/useCreation";
 import { getTaskStatus, newTask, PrintingStatus } from "@/api/creation";
 import { fetchConfig, type AdminConfig } from "@/api/admin";
-import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
+import {
+  STORAGE_ACTIVE_KEY,
+  STORAGE_USER_TOKEN_KEY,
+} from "@/stores/mutation-type";
 import { useZoom } from "@/composables/useZoom";
 import { updateQueryParams } from "@/utils/url";
 import { waitWithAbort } from "@/utils/time";
@@ -290,7 +303,6 @@ const route = useRoute();
 const { t } = useI18n();
 // 从路由参数获取类型
 const type = ref<string>((route.params.type as CreationType) || "image");
-
 
 // 管理员配置
 const adminConfig = ref<AdminConfig | null>(null);
@@ -314,7 +326,7 @@ const screenTip = computed(() => {
 // 打印状态文本
 const printStatusText = computed(() => {
   if (!printStatus.value) return null;
-  
+
   // 检查状态是否在有效的 PrintingStatus 枚举中
   const validStatuses = Object.values(PrintingStatus);
   if (!validStatuses.includes(printStatus.value as PrintingStatus)) {
@@ -338,7 +350,8 @@ const printStatusText = computed(() => {
 });
 
 // 暴露 PrintingStatus 给模板使用
-const { READY, QUEUING, PRINTING, COMPLETED, FAILED, CANCELLED } = PrintingStatus;
+const { READY, QUEUING, PRINTING, COMPLETED, FAILED, CANCELLED } =
+  PrintingStatus;
 
 // 使用组合函数
 const {
@@ -502,7 +515,6 @@ const containerRef = ref<HTMLElement | null>(null);
 const step1Zoom = useZoom(step1Ref);
 const step2Zoom = useZoom(step2Ref);
 
-
 // 获取管理员配置
 const loadAdminConfig = async () => {
   try {
@@ -525,6 +537,11 @@ const loadAdminConfig = async () => {
 onMounted(() => {
   if (route.query.token) {
     localStorage.setItem(STORAGE_USER_TOKEN_KEY, route.query.token as string);
+  }
+  if (route.query.activity) {
+    localStorage.setItem(STORAGE_ACTIVE_KEY, route.query.activity as string);
+  } else {
+    localStorage.setItem(STORAGE_ACTIVE_KEY, "xiaozhao");
   }
   console.log({ userAgent: navigator.userAgent });
   if (route.query.resultUrl) {
