@@ -63,8 +63,7 @@ class PrintingDataClient(
         }
     }
 
-    fun updatePrintingStatus(taskName: String, status: PrintingStatus): Printing {
-        val printingName = "printing:$taskName"
+    fun updatePrintingStatus(printingName: String, status: PrintingStatus): Printing {
         val url = "$serverBaseURI/api/printings/${printingName}/update"
 
         val body = ObjectMapperUtils.toJSON(
@@ -76,6 +75,7 @@ class PrintingDataClient(
         val request = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Token $waicManagementToken")
+            .addHeader("Activity", waicManagementActivity)
             .post(body!!.toRequestBody(CONTENT_TYPE))
             .build()
 
@@ -115,6 +115,7 @@ class PrintingDataClient(
         val request = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Token $waicManagementToken")
+            .addHeader("Activity", waicManagementActivity)
             .post(body!!.toRequestBody(CONTENT_TYPE))
             .build()
 

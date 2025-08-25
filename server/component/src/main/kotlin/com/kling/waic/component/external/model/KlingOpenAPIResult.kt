@@ -10,7 +10,7 @@ data class KlingOpenAPIResult<T>(
     val code: Int = 0,
     val message: String = "",
     @JsonProperty(value = "request_id")
-    val requestId: String? = "",
+    val requestId: String = "",
     val data: T? = null
 ) {
     companion object {
