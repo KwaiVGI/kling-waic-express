@@ -21,7 +21,7 @@ object PhotoUtils {
         outputPath: String,
         pageWidthInches: Float = 6f,
         pageHeightInches: Float = 4f,
-        extraScale: Float = 1.02f
+        extraScale: Float = 1.00f
     ): String {
         val pageWidthPt = pageWidthInches * 72f * extraScale
         val pageHeightPt = pageHeightInches * 72f * extraScale
@@ -40,7 +40,7 @@ object PhotoUtils {
                     val pdfImage = convertBufferedImageToPDImage(processedImage, doc)
 
                     PDPageContentStream(doc, page).use { contentStream ->
-                        contentStream.drawImage(pdfImage, 0f, 0f, pageWidthPt, pageHeightPt)
+                        contentStream.drawImage(pdfImage, 5f, 4.5f, pageWidthPt, pageHeightPt)
                     }
 
                 } catch (e: Exception) {
