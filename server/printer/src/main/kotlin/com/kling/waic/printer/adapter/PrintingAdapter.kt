@@ -26,7 +26,7 @@ class PrintAdapter(
     private val printerName: String,
     @param:Value("\${PRINTER_SYSTEM_NAME:Dai_Nippon_Printing_DP_DS620}")
     private val printerSystemName: String,
-    @param:Value("\${PRINTER_PRINTING_MODE:EACH_ONE}")
+    @param:Value("\${PRINTER_PRINTING_MODE:PDF_BATCH}")
     private val printingMode: PrintingMode,
     @param:Value("\${PRINTER_PRINTING_BATCH_SIZE:2}")
     private val printingBatchSize: Int,
