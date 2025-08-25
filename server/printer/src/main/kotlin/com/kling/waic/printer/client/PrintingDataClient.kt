@@ -63,8 +63,7 @@ class PrintingDataClient(
         }
     }
 
-    fun updatePrintingStatus(taskName: String, status: PrintingStatus): Printing {
-        val printingName = "printing:$taskName"
+    fun updatePrintingStatus(printingName: String, status: PrintingStatus): Printing {
         val url = "$serverBaseURI/api/printings/${printingName}/update"
 
         val body = ObjectMapperUtils.toJSON(

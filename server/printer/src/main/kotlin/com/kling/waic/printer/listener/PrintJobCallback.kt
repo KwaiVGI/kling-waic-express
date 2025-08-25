@@ -13,44 +13,55 @@ class PrintJobCallback(
     private val printingDataClient: PrintingDataClient
 ) : PrintJobAdapter() {
     override fun printJobCompleted(pje: PrintJobEvent) {
-        // Completed event can not receive, use `lpstat -W not-completed` to show not-completed jobs.
-        val taskName = getTaskName(pje)
-        val printing = printingDataClient.updatePrintingStatus(taskName, PrintingStatus.COMPLETED)
-        log.info("✅ Print job completed for taskName: ${taskName}, printing status: ${printing.status}!")
+        updatePrintingStatus(pje, PrintingStatus.COMPLETED)
     }
 
     override fun printJobFailed(pje: PrintJobEvent) {
-        val taskName = getTaskName(pje)
-        val printing = printingDataClient.updatePrintingStatus(taskName, PrintingStatus.FAILED)
-        log.info("❌ Print job failed for taskName: ${taskName}, printing status: ${printing.status}!")
+        updatePrintingStatus(pje, PrintingStatus.FAILED)
     }
 
     override fun printJobCanceled(pje: PrintJobEvent) {
-        val taskName = getTaskName(pje)
-        val printing = printingDataClient.updatePrintingStatus(taskName, PrintingStatus.CANCELLED)
-        log.info("⚠️ Print job cancelled for taskName: ${taskName}, printing status: ${printing.status}!")
+        updatePrintingStatus(pje, PrintingStatus.CANCELLED)
     }
 
     override fun printDataTransferCompleted(pje: PrintJobEvent) {
-        val taskName = getTaskName(pje)
-        val printing = printingDataClient.updatePrintingStatus(taskName, PrintingStatus.PRINTING)
-        log.info("📤 Data transfer completed for taskName: ${taskName}, printing status: ${printing.status}!")
+        updatePrintingStatus(pje, PrintingStatus.PRINTING)
     }
 
     override fun printJobNoMoreEvents(pje: PrintJobEvent) {
-        val taskName = getTaskName(pje)
-        log.info("✅ No more events for taskName: ${taskName}!")
+        val printingName = getPrintingName(pje)
+        log.info("✅ No more events for taskName: ${printingName}!")
     }
 
     override fun printJobRequiresAttention(pje: PrintJobEvent) {
-        val taskName = getTaskName(pje)
-        log.info("⚠️ Requires attention for taskName: ${taskName}!")
+        val printingName = getPrintingName(pje)
+        log.info("⚠️ Requires attention for taskName: ${printingName}!")
     }
 
-    private fun getTaskName(pje: PrintJobEvent): String {
+    private fun updatePrintingStatus(pje: PrintJobEvent, status: PrintingStatus) {
+        val printingName = getPrintingName(pje)
+
+        if (printingName.startsWith("Two:")) {
+            val twoPrintingNames: String = printingName.substring("Two:".length)
+            val names = twoPrintingNames.split("-")
+            names.forEach { printingName ->
+                updatePrintingStatusForOne(printingName, status)
+            }
+        } else {
+            updatePrintingStatusForOne(printingName, status)
+        }
+    }
+
+    private fun updatePrintingStatusForOne(printingName: String, status: PrintingStatus) {
+        val printing = printingDataClient.updatePrintingStatus(printingName, status)
+        log.info("Receive event from printer, update printingName: ${printingName}, " +
+                "status: ${status}, result status: ${printing.status}!")
+    }
+
+    private fun getPrintingName(pje: PrintJobEvent): String {
         val job = pje.printJob
         val jobNameAttr = job.attributes.get(JobName::class.java)
-        val taskName = (jobNameAttr as? JobName)?.value ?: "Unknown Task"
-        return taskName
+        val printingName = (jobNameAttr as? JobName)?.value ?: "Unknown Task"
+        return printingName
     }
 }
