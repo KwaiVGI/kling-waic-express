@@ -60,7 +60,7 @@
           </div>
         </van-uploader>
         <div
-          v-if="type === 'image'"
+          v-if="type === 'image' && adminConfig?.allowPrint !== false"
           class="absolute bottom-0 left-0 w-360px h-124px"
         >
           <img class="w-full h-full" :src="assets.imageTip" alt="" />
@@ -146,7 +146,7 @@
       :style="{ zoom: step2Zoom }"
       class="result-section w-full box-border px-18px py-40px flex flex-col items-center relative z-10 animate-slideUp"
     >
-      <div v-if="type === 'image'" class="w-380px h-570px rounded-8px relative">
+      <div v-if="type === 'image' && adminConfig?.allowPrint !== false" class="w-380px h-570px rounded-8px relative">
         <img
           :src="generatedResult"
           alt="生成的图片"
@@ -212,7 +212,7 @@
           {{ $t("actions.back") }}
         </van-button> -->
         <van-button
-          v-if="type === 'image'"
+          v-if="type === 'image' && adminConfig?.allowPrint !== false"
           icon="print"
           type="default"
           @click="printImage(currentImageNo)"
@@ -247,7 +247,7 @@
         class="flex flex-col justify-center items-center loading-bg-white rounded-16px p-24px gap-12px backdrop-blur-24px"
       >
         <van-loading type="circular" color="#0B8A1B" />
-        <div v-if="type === 'image'" class="text-14px text-black">
+        <div v-if="type === 'image' && adminConfig?.allowPrint !== false" class="text-14px text-black">
           {{ $t("status.processing") }}
         </div>
         <div v-else class="text-14px text-black">
@@ -269,6 +269,7 @@
 import { showToast } from "vant";
 import useCreation, { type CreationType } from "@/composables/useCreation";
 import { getTaskStatus, newTask, PrintingStatus } from "@/api/creation";
+import { fetchConfig, type AdminConfig } from "@/api/admin";
 import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
 import { useZoom } from "@/composables/useZoom";
 import { updateQueryParams } from "@/utils/url";
@@ -290,6 +291,9 @@ const { t } = useI18n();
 // 从路由参数获取类型
 const type = ref<string>((route.params.type as CreationType) || "image");
 
+
+// 管理员配置
+const adminConfig = ref<AdminConfig | null>(null);
 const assets = computed(() => {
   const isZh = locale.value === "zh-CN";
   const bannerImage = isZh ? bannerImageZh : bannerImageEn;
@@ -498,6 +502,26 @@ const containerRef = ref<HTMLElement | null>(null);
 const step1Zoom = useZoom(step1Ref);
 const step2Zoom = useZoom(step2Ref);
 
+
+// 获取管理员配置
+const loadAdminConfig = async () => {
+  try {
+    adminConfig.value = await fetchConfig();
+  } catch (error) {
+    console.error("获取管理员配置失败:", error);
+    // 如果获取失败，使用默认配置
+    adminConfig.value = {
+      allowPrint: true,
+      imageServiceOnline: true,
+      videoServiceOnline: true,
+      imageTokenExpireInSeconds: 180,
+      videoTokenExpireInSeconds: 600,
+      maxPrinterJobCount: 10,
+      screenImageRatios: { first: 9, second: 16 },
+      screenVideoRatios: { first: 9, second: 16 },
+    };
+  }
+};
 onMounted(() => {
   if (route.query.token) {
     localStorage.setItem(STORAGE_USER_TOKEN_KEY, route.query.token as string);
@@ -510,6 +534,8 @@ onMounted(() => {
     uploadedImage.value = decodeURIComponent(route.query.sourceUrl as string);
     sourceImageUrl.value = decodeURIComponent(route.query.sourceUrl as string);
   }
+  // 加载管理员配置
+  loadAdminConfig();
 });
 
 onUnmounted(() => {

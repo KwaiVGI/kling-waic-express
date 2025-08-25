@@ -2,17 +2,13 @@
   <div class="control-view">
     <LogoutButton />
     <div class="header">
-      <h1>WAIC 大屏控制系统</h1>
-      <div class="text-12px text-left text-yellow-500">
-        固定：将某张图片固定在大屏上一直展示直到被另一张固定的图片冲掉或被取消固定<br />
-        置顶：将某张图片放到队头展示，不影响轮播，后置顶的在先置顶的前面<br />
-        删除：不会大屏上展示，已经在展示的不受影响<br />
-        打印：协助现场用户打印照片
+      <h1>活动控制后台</h1>
+      <div class="feature-tips">
+        📌 固定：大屏持续展示 • 🗑️ 删除：移出队列 • 🖨️ 打印：协助现场打印
       </div>
     </div>
 
     <div class="control-panel">
-      <Image></Image>
       <Tab :tabs="tabs" defaultActive="image" />
     </div>
   </div>
@@ -22,12 +18,14 @@
 import ImageComponent from "./image.vue";
 import VideoComponent from "./video.vue";
 import PrintComponent from "./print.vue";
+import ConfigComponent from "./config.vue";
 import LogoutButton from "@/components/LogoutButton.vue";
 
 const tabs = [
   { value: "image", label: "图片", component: ImageComponent },
   { value: "video", label: "视频", component: VideoComponent },
   { value: "print", label: "打印队列", component: PrintComponent },
+  { value: "config", label: "系统配置", component: ConfigComponent },
 ];
 </script>
 
@@ -58,6 +56,15 @@ const tabs = [
   color: rgba(255, 255, 255, 0.8);
   max-width: 800px;
   margin: 0 auto;
+}
+
+.feature-tips {
+  max-width: 800px;
+  margin: 16px auto 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  line-height: 1.3;
 }
 
 .control-panel {

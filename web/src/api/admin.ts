@@ -120,8 +120,14 @@ export interface AdminConfig {
   imageTokenExpireInSeconds: number; // 图片服务token过期时间
   videoTokenExpireInSeconds: number; // 视频服务token过期时间
   maxPrinterJobCount: number; // 打印机最大打印任务数
-  screenImageRatios: [number, number]; // 图片大屏宽高比例
-  screenVideoRatios: [number, number]; // 视频大屏宽高比例
+  screenImageRatios: {
+    first: number;
+    second: number;
+  }; // 图片大屏宽高比例
+  screenVideoRatios: {
+    first: number;
+    second: number;
+  }; // 视频大屏宽高比例
 }
 
 export async function fetchConfig(): Promise<AdminConfig> {

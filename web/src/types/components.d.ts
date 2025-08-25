@@ -30,6 +30,7 @@ declare module 'vue' {
     VanPopup: typeof import('vant/es')['Popup']
     VanSpace: typeof import('vant/es')['Space']
     VanStepper: typeof import('vant/es')['Stepper']
+    VanSwitch: typeof import('vant/es')['Switch']
     VanUploader: typeof import('vant/es')['Uploader']
     VideoPlayer: typeof import('./../components/VideoPlayer.vue')['default']
     VideoPreview: typeof import('./../components/VideoPreview.vue')['default']

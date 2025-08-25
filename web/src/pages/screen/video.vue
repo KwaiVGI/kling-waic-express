@@ -58,7 +58,8 @@
 
 <script setup lang="ts">
 import { castingService } from "@/api/castingService";
-import { ref, onMounted, onUnmounted, shallowRef, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, shallowRef, nextTick, computed } from "vue";
+import { fetchConfig } from "@/api/admin";
 import LogoutButton from "@/components/LogoutButton.vue";
 
 // 视频缓存项接口
@@ -88,6 +89,24 @@ interface VideoCell {
 
 // 配置参数
 const gridSize = ref(3); // 默认3x3网格
+const containerAspectRatio = ref<[number, number]>([9, 16]); // 容器宽高比，默认9:16
+
+// 获取容器宽高比配置
+const fetchContainerAspectRatio = async (): Promise<[number, number]> => {
+  try {
+    const config = await fetchConfig();
+    return [config.screenVideoRatios.first, config.screenVideoRatios.second];
+  } catch (error) {
+    console.error('获取视频屏幕配置失败，使用默认宽高比:', error);
+    return [9, 16]; // 默认宽高比
+  }
+};
+
+// 计算容器宽度的computed属性
+const containerWidth = computed(() => {
+  const [width, height] = containerAspectRatio.value;
+  return `calc(100vh * ${width} / ${height})`;
+});
 
 // 视频格子数据
 const videoCells = ref<VideoCell[]>([]);
@@ -291,6 +310,9 @@ const cacheVideo = async (item: VideoCacheItem) => {
 
 // 初始化视频格子
 const initVideoCells = async () => {
+  // 获取容器宽高比配置
+  containerAspectRatio.value = await fetchContainerAspectRatio();
+
   const total = gridSize.value * gridSize.value;
   videoCells.value = Array(total)
     .fill(null)
@@ -684,7 +706,7 @@ onUnmounted(() => {
 <style scoped>
 .video-wall-container {
   height: 100vh;
-  width: calc(100vh * 9 / 16); /* 9:16 竖屏比例 */
+  width: v-bind("containerWidth");
   margin: 0 auto;
   overflow: hidden;
   background-color: #000;

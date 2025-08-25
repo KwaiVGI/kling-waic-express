@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { castingService, type CastingImage } from "@/api/castingService";
-import { aspectRatioService } from "@/api/aspectRatioService";
+import { fetchConfig } from "@/api/admin";
 
 import { useRoute } from "vue-router";
 import LogoutButton from "@/components/LogoutButton.vue";
@@ -88,7 +88,13 @@ const imageAspectRatio: [number, number] = [2, 3]; // 图片宽高比，固定2:
 
 // 获取容器宽高比配置
 const fetchContainerAspectRatio = async (): Promise<[number, number]> => {
-  return await aspectRatioService.getAspectRatio();
+  try {
+    const config = await fetchConfig();
+    return [config.screenImageRatios.first, config.screenImageRatios.second];
+  } catch (error) {
+    console.error('获取屏幕配置失败，使用默认宽高比:', error);
+    return [9, 16]; // 默认宽高比
+  }
 };
 
 // 计算图片容器样式
