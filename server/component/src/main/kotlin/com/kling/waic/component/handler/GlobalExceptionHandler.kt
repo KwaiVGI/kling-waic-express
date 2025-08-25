@@ -3,6 +3,7 @@ package com.kling.waic.component.handler
 import com.kling.waic.component.entity.Result
 import com.kling.waic.component.entity.ResultStatus
 import com.kling.waic.component.exception.KlingOpenAPIException
+import com.kling.waic.component.exception.base.HumanOperationException
 import com.kling.waic.component.exception.base.WAICException
 import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
@@ -28,6 +29,14 @@ class GlobalExceptionHandler {
                     status = ex.resultStatus(),
                     message = ex.message ?: "",
                     klingOpenAPIResult = ex.result
+                )
+            }
+
+            if (ex is HumanOperationException) {
+                log.error("handle HumanOperationException, message: {}", ex.message)
+                return Result(
+                    status = ex.resultStatus(),
+                    message = ex.message ?: ""
                 )
             }
 
