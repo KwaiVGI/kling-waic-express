@@ -2,6 +2,7 @@ package com.kling.waic.component.handler
 
 import com.kling.waic.component.entity.ActivityConfigProps
 import com.kling.waic.component.entity.Locale
+import com.kling.waic.component.service.ImageTaskMode
 import com.kling.waic.component.utils.Constants
 import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.ImageUtils
@@ -33,6 +34,10 @@ abstract class ActivityHandler {
         logoTopLeftY: Int
     )
 
+    abstract fun getImageTaskMode(): ImageTaskMode
+
+    abstract fun getPrompts(): List<String>
+
     fun getAksk(): Pair<String, String> {
         val activity = ThreadContextUtils.getActivity()
         if (activity.isEmpty()) {
@@ -46,7 +51,9 @@ abstract class ActivityHandler {
 }
 
 @Component
-class DefaultActivityHandler: ActivityHandler() {
+class DefaultActivityHandler(
+    private val styleImagePrompts: List<String>,
+): ActivityHandler() {
 
     override fun activityName(): String {
         return Constants.DEFAULT_ACTIVITY
@@ -77,10 +84,21 @@ class DefaultActivityHandler: ActivityHandler() {
         val scaledLogoImage = logoImage.getScaledInstance(logoWidth, logoHeight, BufferedImage.SCALE_SMOOTH)
         g2d.drawImage(scaledLogoImage, logoTopLeftX, logoTopLeftY, null)
     }
+
+    override fun getImageTaskMode(): ImageTaskMode {
+        return ImageTaskMode.WITH_ORIGIN
+    }
+
+    override fun getPrompts(): List<String> {
+        val taskN = getImageTaskMode().taskN
+        return styleImagePrompts.shuffled().take(taskN)
+    }
 }
 
 @Component
-class XiaozhaoActivityHandler: ActivityHandler() {
+class XiaozhaoActivityHandler(
+    private val styleImagePromptsForXiaozhao: List<String>
+): ActivityHandler() {
 
     override fun activityName(): String {
         return "xiaozhao"
@@ -110,5 +128,23 @@ class XiaozhaoActivityHandler: ActivityHandler() {
         val logoHeight = (18 * scaleFactor).toInt()
         val scaledLogoImage = logoImage.getScaledInstance(logoWidth, logoHeight, BufferedImage.SCALE_SMOOTH)
         g2d.drawImage(scaledLogoImage, logoTopLeftX, logoTopLeftY, null)
+    }
+
+    override fun getImageTaskMode(): ImageTaskMode {
+        return ImageTaskMode.ALL_GENERATED_FIXED_CENTER
+    }
+
+    override fun getPrompts(): List<String> {
+        val taskN = getImageTaskMode().taskN
+
+        val centerPrompt = styleImagePromptsForXiaozhao.first()
+        val surroundingPrompts = styleImagePromptsForXiaozhao.drop(1)
+            .shuffled()
+            .take(taskN - 1)
+
+        val middleIndex = taskN / 2
+        return surroundingPrompts.toMutableList().apply {
+            add(middleIndex, centerPrompt)
+        }
     }
 }
