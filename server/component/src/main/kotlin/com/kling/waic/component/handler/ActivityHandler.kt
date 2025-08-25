@@ -7,6 +7,7 @@ import com.kling.waic.component.utils.Constants
 import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.ImageUtils
 import com.kling.waic.component.utils.ThreadContextUtils
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.awt.Color
@@ -20,6 +21,7 @@ abstract class ActivityHandler {
     private lateinit var waicOpenApiAccessKey: String
     @Value("\${WAIC_OPENAPI_SECRET_KEY}")
     private lateinit var waicOpenApiSecretKey: String
+    @Autowired
     private lateinit var activityConfigProps: ActivityConfigProps
 
     abstract fun activityName(): String
