@@ -61,7 +61,7 @@ class JedisAspect {
             val newArgs = args.copyOf()
             newArgs[0] = newRedisKey
 
-            log.info(
+            log.debug(
                 "Aspect on jedis method: $methodName take effect, " +
                         "redisKey: $redisKey, newRedisKey: $newRedisKey"
             )
@@ -89,7 +89,7 @@ class JedisAspect {
             newKeys
         }
 
-        log.info(
+        log.debug(
             "Aspect on jedis method: ${pjp.signature.name} take effect, " +
                     "keys: $keys, newKeys: $newKeys, argv: $argv"
         )

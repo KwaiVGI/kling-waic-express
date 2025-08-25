@@ -11,6 +11,7 @@ import com.kling.waic.component.external.model.*
 import com.kling.waic.component.helper.ImageProcessHelper
 import com.kling.waic.component.repository.LockRepository
 import com.kling.waic.component.repository.TaskRepository
+import com.kling.waic.component.selector.ActivityHandlerSelector
 import com.kling.waic.component.utils.ObjectMapperUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import kotlinx.coroutines.async
@@ -22,25 +23,26 @@ import org.springframework.stereotype.Service
 
 enum class ImageTaskMode(val taskN: Int) {
     ALL_GENERATED(9),
-    WITH_ORIGIN(8)
+    WITH_ORIGIN(8),
+    ALL_GENERATED_FIXED_CENTER(9)
 }
 
 @Service
 class ImageTaskService(
     private val klingOpenAPIClient: KlingOpenAPIClient,
-    private val styleImagePrompts: List<String>,
     private val imageProcessHelper: ImageProcessHelper,
-    @Value("\${IMAGE_TASK_MODE:WITH_ORIGIN}")
-    private val imageTaskMode: ImageTaskMode,
     private val taskRepository: TaskRepository,
     private val lockRepository: LockRepository,
     @Value("\${IMAGE_TASK_CONCURRENCY:90}")
-    private val imageTaskConcurrency: Int
+    private val imageTaskConcurrency: Int,
+    private val activityHandlerSelector: ActivityHandlerSelector
 ) : TaskService() {
 
     override suspend fun doCreateTask(requestImageUrl: String): List<OpenApiRecord> {
+        val activityHandler = activityHandlerSelector.selectActivityHandler()
+        val imageTaskMode = activityHandler.getImageTaskMode()
+        val prompts = activityHandler.getPrompts()
         val taskN = imageTaskMode.taskN
-        val randomPrompts = styleImagePrompts.shuffled().take(taskN)
 
         // 因为 executeWithLock 是同步方法，所以这里只能用 runBlocking 包住挂起逻辑
         val openApiRecords = lockRepository.executeWithLock(
@@ -50,7 +52,7 @@ class ImageTaskService(
                     // 在锁内检查并发限制，确保互斥访问
                     checkConcurrency(taskN)
 
-                    val deferredResults = randomPrompts.mapIndexed { index, prompt ->
+                    val deferredResults = prompts.mapIndexed { index, prompt ->
                         async {
                             val request = CreateImageTaskRequest(
                                 image = requestImageUrl,
@@ -133,20 +135,16 @@ class ImageTaskService(
         locale: Locale
     ): Pair<String, String> {
         log.info("Generating Sudoku image URL for task: $taskName")
-        return generateSudokuImageUrl(taskName, queryTaskContext.taskResponseMap, locale)
-    }
+        val taskResponseMap = queryTaskContext.taskResponseMap
 
-    private suspend fun generateSudokuImageUrl(
-        taskName: String,
-        taskResponseMap: Map<String, QueryImageTaskResponse>,
-        locale: Locale
-    ): Pair<String, String> {
         val imageUrls: MutableList<String> = taskResponseMap.values
             .flatMap { it.taskResult.images ?: emptyList() }
             .map { it.url.trim() }
             .filter { it.isNotEmpty() }
             .toMutableList()
 
+        val activityHandler = activityHandlerSelector.selectActivityHandler()
+        val imageTaskMode = activityHandler.getImageTaskMode()
         if (imageTaskMode == ImageTaskMode.WITH_ORIGIN) {
             // add origin image to the center of imageUrls.
             val task = taskRepository.getTask(taskName)

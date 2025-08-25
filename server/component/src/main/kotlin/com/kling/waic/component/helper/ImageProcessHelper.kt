@@ -5,14 +5,11 @@ import com.drew.metadata.exif.ExifIFD0Directory
 import com.kling.waic.component.entity.Locale
 import com.kling.waic.component.exception.ImageFormatNotSupportedException
 import com.kling.waic.component.selector.ActivityHandlerSelector
-import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.ImageUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
@@ -258,12 +255,9 @@ class ImageProcessHelper(
         // Logo position and size also scaled proportionally
         val logoTopLeftX = leftMargin
         val logoTopLeftY = topMargin + cellHeight * 3 + gap * 2 + (12 * scaleFactor).toInt()
-        val logoImage = FileUtils.convertFileAsImage("KlingAI-logo-$locale.png")
-        val logoWidth = (67 * scaleFactor).toInt()
-        val logoHeight = (18 * scaleFactor).toInt()
-        val scaledLogoImage = logoImage.getScaledInstance(logoWidth, logoHeight, BufferedImage.SCALE_SMOOTH)
-        g2d.drawImage(scaledLogoImage, logoTopLeftX, logoTopLeftY, null)
-        
+        activityHandlerSelector.selectActivityHandler()
+            .drawLogoInLeftCorner(locale, scaleFactor, g2d, logoTopLeftX, logoTopLeftY)
+
         // Text position and size also scaled proportionally
         val taskNameTopLeftX = leftMargin + (276 * scaleFactor).toInt()
         val taskNameTopLeftY = topMargin + cellHeight * 3 + gap * 2 + (26 * scaleFactor).toInt()
