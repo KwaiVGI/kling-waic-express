@@ -1,19 +1,19 @@
 <script lang="ts" setup>
-import { showToast } from "vant";
-import useCreation from "@/composables/useCreation";
-import type { CreationType } from "@/composables/useCreation";
-import { getTaskStatus, newTask, PrintingStatus } from "@/api/creation";
-import { fetchConfig } from "@/api/admin";
-import type { AdminConfig } from "@/api/admin";
+import { showToast } from 'vant'
+import useCreation from '@/composables/useCreation'
+import type { CreationType } from '@/composables/useCreation'
+import { getTaskStatus, newTask, PrintingStatus } from '@/api/creation'
+import { fetchConfig } from '@/api/admin'
+import type { AdminConfig } from '@/api/admin'
 import {
   STORAGE_ACTIVE_KEY,
   STORAGE_USER_TOKEN_KEY,
-} from "@/stores/mutation-type";
-import { useZoom } from "@/composables/useZoom";
-import { updateQueryParams } from "@/utils/url";
-import { waitWithAbort } from "@/utils/time";
-import { locale } from "@/utils/i18n";
-import type { Locale } from "@/utils/i18n";
+} from '@/stores/mutation-type'
+import { useZoom } from '@/composables/useZoom'
+import { updateQueryParams } from '@/utils/url'
+import { waitWithAbort } from '@/utils/time'
+import { locale } from '@/utils/i18n'
+import type { Locale } from '@/utils/i18n'
 import {
   bannerImageEn,
   bannerImageZh,
@@ -23,61 +23,81 @@ import {
   imageTipZh,
   logoEn,
   logoZh,
-} from "./const";
+} from './const'
 
-const route = useRoute();
-const { t } = useI18n();
+const route = useRoute()
+const { t } = useI18n()
 // 从路由参数获取类型
-const type = ref<string>((route.params.type as CreationType) || "image");
+const type = ref<string>((route.params.type as CreationType) || 'image')
 
 // 管理员配置
-const adminConfig = ref<AdminConfig | null>(null);
+const adminConfig = ref<AdminConfig | null>(null)
+
+// 活动主题配置
+const isXiaozhaoActivity = computed(() => route.query.activity === 'xiaozhao')
+
 const assets = computed(() => {
-  const isZh = locale.value === "zh-CN";
-  const bannerImage = isZh ? bannerImageZh : bannerImageEn;
-  const bannerVideo = isZh ? bannerVideoZh : bannerVideoEn;
-  return {
-    logo: isZh ? logoZh : logoEn,
-    banner: type.value === "image" ? bannerImage : bannerVideo,
-    imageTip: isZh ? imageTipZh : imageTipEn,
-  };
-});
+  const isZh = locale.value === 'zh-CN'
+
+  if (isXiaozhaoActivity.value) {
+    // 校招活动主题配置
+    const bannerImage = 'https://ali.a.yximgs.com/kos/nlav12119/LYXfjgtf_2025-08-25-22-36-33.png'
+    const bannerVideo = isZh ? bannerVideoZh : bannerVideoEn
+    return {
+      logo: logoZh, // 校招活动只使用中文logo
+      xiaozhaoLogo: 'https://tx.a.yximgs.com/kos/nlav12119/ffBJkwTW_2025-08-25-22-34-08.png',
+      banner: type.value === 'image' ? bannerImage : bannerVideo,
+      imageTip: isZh ? imageTipZh : imageTipEn,
+    }
+  }
+  else {
+    // 默认主题配置
+    const bannerImage = isZh ? bannerImageZh : bannerImageEn
+    const bannerVideo = isZh ? bannerVideoZh : bannerVideoEn
+    return {
+      logo: isZh ? logoZh : logoEn,
+      banner: type.value === 'image' ? bannerImage : bannerVideo,
+      imageTip: isZh ? imageTipZh : imageTipEn,
+    }
+  }
+})
 
 const screenTip = computed(() => {
-  return type.value === "image"
-    ? t("descriptions.imageScreenTip")
-    : t("descriptions.videoScreenTip");
-});
+  return type.value === 'image'
+    ? t('descriptions.imageScreenTip')
+    : t('descriptions.videoScreenTip')
+})
 
 // 打印状态文本
 const printStatusText = computed(() => {
-  if (!printStatus.value) return null;
+  if (!printStatus.value)
+    return null
 
   // 检查状态是否在有效的 PrintingStatus 枚举中
-  const validStatuses = Object.values(PrintingStatus);
+  const validStatuses = Object.values(PrintingStatus)
   if (!validStatuses.includes(printStatus.value as PrintingStatus)) {
-    return null;
+    return null
   }
 
   switch (printStatus.value) {
     case READY:
     case QUEUING:
-      return t("print.status.waiting", { count: printAheadCount.value || 0 });
+      return t('print.status.waiting', { count: printAheadCount.value || 0 })
     case PRINTING:
-      return t("print.status.printing");
+      return t('print.status.printing')
     case COMPLETED:
-      return t("print.status.completed");
+      return t('print.status.completed')
     case FAILED:
     case CANCELLED:
-      return t("print.status.failed");
+      return t('print.status.failed')
     default:
-      return null;
+      return null
   }
-});
+})
 
 // 暴露 PrintingStatus 给模板使用
-const { READY, QUEUING, PRINTING, COMPLETED, FAILED, CANCELLED } =
-  PrintingStatus;
+const { READY, QUEUING, PRINTING, COMPLETED, FAILED, CANCELLED }
+  = PrintingStatus
 
 // 使用组合函数
 const {
@@ -100,113 +120,120 @@ const {
   backToEdit,
   printImage,
   stopPrintStatusPolling,
-} = useCreation(type.value as "image" | "video");
+} = useCreation(type.value as 'image' | 'video')
 
-const currentImageNo = ref("");
-const sourceImageUrl = ref("");
+const currentImageNo = ref('')
+const sourceImageUrl = ref('')
 
 // 生成
 async function doGenerate(
   url: string,
   type: CreationType,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<string> {
   // 1. 创建新任务
   const { name } = await newTask({
     url,
-    type: type === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
-  });
+    type: type === 'image' ? 'STYLED_IMAGE' : 'VIDEO_EFFECT',
+  })
 
   // 2. 轮询任务状态
-  let status = "";
-  const maxAttempts = 1800; // 最大尝试次数，防止无限循环
-  const delay = 2000; // 每次轮询间隔2秒
+  let status = ''
+  const maxAttempts = 1800 // 最大尝试次数，防止无限循环
+  const delay = 2000 // 每次轮询间隔2秒
 
   // await wait(10 * 1000);
-  await waitWithAbort(10 * 1000, signal);
+  await waitWithAbort(10 * 1000, signal)
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    if (signal?.aborted)
+      throw new DOMException('Aborted', 'AbortError')
     // 获取任务状态
     const result = await getTaskStatus({
       name,
-      type: type === "image" ? "STYLED_IMAGE" : "VIDEO_EFFECT",
-      locale: locale.value === "en-US" ? "US" : "CN",
-    });
+      type: type === 'image' ? 'STYLED_IMAGE' : 'VIDEO_EFFECT',
+      locale: locale.value === 'en-US' ? 'US' : 'CN',
+    })
 
-    status = result.status;
+    status = result.status
 
-    if (status === "SUCCEED") {
-      const { url } = result.outputs || {};
-      const { image } = result.input || {};
+    if (status === 'SUCCEED') {
+      const { url } = result.outputs || {}
+      const { image } = result.input || {}
       if (url) {
-        currentImageNo.value = result.name;
-        sourceImageUrl.value = image;
-        return url; // 成功返回URL
+        currentImageNo.value = result.name
+        sourceImageUrl.value = image
+        return url // 成功返回URL
       }
-      throw new Error();
+      throw new Error()
     }
 
-    if (status === "FAILED") {
-      throw new Error();
+    if (status === 'FAILED') {
+      throw new Error()
     }
 
     // 如果未完成，等待一段时间再继续
-    await waitWithAbort(delay, signal);
+    await waitWithAbort(delay, signal)
   }
 
-  throw new Error();
+  throw new Error()
 }
 
-let controller: AbortController | null = null;
+let controller: AbortController | null = null
 
 function handleCancel() {
   if (controller) {
-    controller.abort();
+    controller.abort()
   }
 }
 
 // 处理生成
 async function handleGenerate() {
   if (isGenerating.value) {
-    return;
+    return
   }
   if (!uploadedImage.value) {
     showToast({
       // icon: "https://tx.a.yximgs.com/kos/nlav12119/bIzvPqKP_2025-07-21-19-58-29.png",
-      message: t("upload.placeholder"),
-      position: "bottom",
-    });
-    return;
+      message: t('upload.placeholder'),
+      position: 'bottom',
+    })
+    return
   }
   try {
-    controller = new AbortController();
-    await generate(doGenerate, controller.signal);
-  } catch (error) {
+    controller = new AbortController()
+    await generate(doGenerate, controller.signal)
+  }
+  catch (error) {
     const errorMap = {
-      1203: t("errors.api.serviceUnavailable"),
-      1300: t("errors.api.notEffective"),
-      1301: t("errors.api.invalidRequest"),
-      1302: t("errors.api.rateLimit"),
-      1303: t("errors.api.quotaExceeded"),
-      1304: t("errors.api.networkIssue"),
-      5000: t("errors.api.systemError"),
-      5001: t("errors.api.maintenance"),
-      5002: t("errors.api.busy"),
-    };
-    if (error.name === "AbortError") {
-      return;
-    } else if (error === 401) {
-      showToast(t("errors.generic.authFailed"));
-    } else if (error.message === "NO_HUMAN_DETECTED") {
-      showToast(t("upload.noFaceDetected"));
-    } else if (errorMap[error.message]) {
-      showToast(errorMap[error.message]);
-    } else if (error.message === "TOO_MANY_REQUESTS") {
-      showToast(t("errors.api.quotaExceeded"));
-    } else {
-      showToast(t("upload.generationFailed"));
+      1203: t('errors.api.serviceUnavailable'),
+      1300: t('errors.api.notEffective'),
+      1301: t('errors.api.invalidRequest'),
+      1302: t('errors.api.rateLimit'),
+      1303: t('errors.api.quotaExceeded'),
+      1304: t('errors.api.networkIssue'),
+      5000: t('errors.api.systemError'),
+      5001: t('errors.api.maintenance'),
+      5002: t('errors.api.busy'),
     }
-    return;
+    if (error.name === 'AbortError') {
+      return
+    }
+    else if (error === 401) {
+      showToast(t('errors.generic.authFailed'))
+    }
+    else if (error.message === 'NO_HUMAN_DETECTED') {
+      showToast(t('upload.noFaceDetected'))
+    }
+    else if (errorMap[error.message]) {
+      showToast(errorMap[error.message])
+    }
+    else if (error.message === 'TOO_MANY_REQUESTS') {
+      showToast(t('errors.api.quotaExceeded'))
+    }
+    else {
+      showToast(t('upload.generationFailed'))
+    }
+    return
   }
 
   // 将图片URL放到查询参数上
@@ -214,15 +241,16 @@ async function handleGenerate() {
     sourceUrl: sourceImageUrl.value,
     resultUrl: generatedResult.value,
     lang: locale.value,
-  });
+  })
 }
 
 // 处理保存
 function handleSave() {
-  if (type.value === "image") {
-    save("", "jpg");
-  } else {
-    save("", "mp4");
+  if (type.value === 'image') {
+    save('', 'jpg')
+  }
+  else {
+    save('', 'mp4')
   }
 }
 
@@ -231,22 +259,23 @@ function onLocaleChange(l: Locale) {
     {
       lang: l,
     },
-    "replace"
-  );
+    'replace',
+  )
 }
 
-const step1Ref = ref<HTMLElement | null>(null);
-const step2Ref = ref<HTMLElement | null>(null);
-const containerRef = ref<HTMLElement | null>(null);
-const step1Zoom = useZoom(step1Ref);
-const step2Zoom = useZoom(step2Ref);
+const step1Ref = ref<HTMLElement | null>(null)
+const step2Ref = ref<HTMLElement | null>(null)
+const containerRef = ref<HTMLElement | null>(null)
+const step1Zoom = useZoom(step1Ref)
+const step2Zoom = useZoom(step2Ref)
 
 // 获取管理员配置
 async function loadAdminConfig() {
   try {
-    adminConfig.value = await fetchConfig();
-  } catch (error) {
-    console.error("获取管理员配置失败:", error);
+    adminConfig.value = await fetchConfig()
+  }
+  catch (error) {
+    console.error('获取管理员配置失败:', error)
     // 如果获取失败，使用默认配置
     adminConfig.value = {
       allowPrint: true,
@@ -257,34 +286,35 @@ async function loadAdminConfig() {
       maxPrinterJobCount: 10,
       screenImageRatios: { first: 9, second: 16 },
       screenVideoRatios: { first: 9, second: 16 },
-    };
+    }
   }
 }
 onMounted(() => {
   if (route.query.token) {
-    localStorage.setItem(STORAGE_USER_TOKEN_KEY, route.query.token as string);
+    localStorage.setItem(STORAGE_USER_TOKEN_KEY, route.query.token as string)
   }
   if (route.query.activity) {
-    localStorage.setItem(STORAGE_ACTIVE_KEY, route.query.activity as string);
-  } else {
-    localStorage.setItem(STORAGE_ACTIVE_KEY, "xiaozhao");
+    localStorage.setItem(STORAGE_ACTIVE_KEY, route.query.activity as string)
   }
-  console.log({ userAgent: navigator.userAgent });
+  else {
+    localStorage.setItem(STORAGE_ACTIVE_KEY, 'xiaozhao')
+  }
+  console.log({ userAgent: navigator.userAgent })
   if (route.query.resultUrl) {
-    generatedResult.value = decodeURIComponent(route.query.resultUrl as string);
+    generatedResult.value = decodeURIComponent(route.query.resultUrl as string)
   }
   if (route.query.sourceUrl) {
-    uploadedImage.value = decodeURIComponent(route.query.sourceUrl as string);
-    sourceImageUrl.value = decodeURIComponent(route.query.sourceUrl as string);
+    uploadedImage.value = decodeURIComponent(route.query.sourceUrl as string)
+    sourceImageUrl.value = decodeURIComponent(route.query.sourceUrl as string)
   }
   // 加载管理员配置
-  loadAdminConfig();
-});
+  loadAdminConfig()
+})
 
 onUnmounted(() => {
   // 清理打印状态轮询
-  stopPrintStatusPolling();
-});
+  stopPrintStatusPolling()
+})
 </script>
 
 <template>
@@ -292,6 +322,7 @@ onUnmounted(() => {
     id="h5App"
     ref="containerRef"
     class="creation-container flex flex-col items-center relative !min-h-100vh"
+    :class="{ 'xiaozhao-theme': isXiaozhaoActivity }"
   >
     <div
       ref="step1Ref"
@@ -302,13 +333,24 @@ onUnmounted(() => {
         v-show="!generatedResult"
         class="mb-28px mt-28px flex flex-col w-full items-center relative"
       >
-        <img
-          class="mb-22px ml-20px h-32px w-120px self-start"
-          :src="assets.logo"
-          alt=""
-        />
-        <img class="h-130px w-414px" :src="assets.banner" alt="" />
+        <div class="mb-22px ml-20px flex gap-12px h-32px items-center self-start">
+          <!-- 校招活动显示额外的logo -->
+          <img
+            v-if="isXiaozhaoActivity && assets.xiaozhaoLogo"
+            class="h-32px"
+            :src="assets.xiaozhaoLogo"
+            alt="校招logo"
+          >
+          <img
+            class="h-32px w-120px"
+            :src="assets.logo"
+            alt=""
+          >
+        </div>
+        <img class="h-130px w-414px" :src="assets.banner" alt="">
+        <!-- 校招活动不显示语言切换按钮 -->
         <LangSwitcher
+          v-if="!isXiaozhaoActivity"
           class="right-20px top-0 absolute"
           @change="onLocaleChange"
         />
@@ -352,7 +394,7 @@ onUnmounted(() => {
           v-if="type === 'image' && adminConfig?.allowPrint !== false"
           class="h-124px w-360px bottom-0 left-0 absolute"
         >
-          <img class="h-full w-full" :src="assets.imageTip" alt="" />
+          <img class="h-full w-full" :src="assets.imageTip" alt="">
         </div>
       </div>
 
@@ -373,7 +415,7 @@ onUnmounted(() => {
             alt="上传的图片"
             class="h-full w-full relative z-10 object-contain object-center"
             @click="openPreview(uploadedImage)"
-          />
+          >
         </div>
         <div class="mt-16px flex gap-8px h-48px w-full justify-between">
           <button
@@ -443,7 +485,7 @@ onUnmounted(() => {
           :src="generatedResult"
           alt="生成的图片"
           class="rounded-8px h-full w-full shadow-sm object-cover object-center"
-        />
+        >
       </div>
       <div v-else class="rounded-8px h-604px w-340px relative">
         <VideoPlayer
@@ -462,10 +504,10 @@ onUnmounted(() => {
           printStatus === COMPLETED
             ? 'bg-green-100 text-green-700'
             : printStatus === FAILED || printStatus === CANCELLED
-            ? 'bg-red-100 text-red-700'
-            : printStatus === PRINTING
-            ? 'bg-blue-100 text-blue-700'
-            : 'bg-yellow-100 text-yellow-700',
+              ? 'bg-red-100 text-red-700'
+              : printStatus === PRINTING
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-yellow-100 text-yellow-700',
         ]"
         :style="{ width: type === 'image' ? '100%' : '340px' }"
       >
@@ -548,9 +590,29 @@ onUnmounted(() => {
   background-image: url(https://ali.a.yximgs.com/kos/nlav12119/JSsSVYUG_2025-07-15-20-17-58.png);
   background-size: cover;
 
-  font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
   -webkit-text-size-adjust: 100%; /* Safari/iOS 兼容 */
   text-size-adjust: 100%; /* 标准写法 */
+
+  // 校招活动主题样式
+  &.xiaozhao-theme {
+    background-image: url(https://tx.a.yximgs.com/kos/nlav12119/SNqERzGo_2025-08-25-22-38-23.png);
+
+    .generate-btn {
+      background: linear-gradient(99deg, #ff4906 0.35%, #fea623 100.35%);
+
+      .van-button__content {
+        .van-button__text {
+          color: #fff;
+        }
+      }
+    }
+
+    .warning-tip {
+      color: var(--color-text-5);
+    }
+  }
+
   // TODO: 行内的class不生效，所以
   .blur-bg {
     filter: blur(20px);
@@ -563,13 +625,8 @@ onUnmounted(() => {
     background: linear-gradient(147.61deg, #313a47 0%, #171a1f 100%);
   }
   .generate-btn {
-    font-family: "Alimama ShuHeiTi";
-    background: linear-gradient(
-      98.88deg,
-      #f7ffe0 0.35%,
-      #74ff52 50.35%,
-      #1bf6fd 100.35%
-    );
+    font-family: 'Alimama ShuHeiTi';
+    background: linear-gradient(98.88deg, #f7ffe0 0.35%, #74ff52 50.35%, #1bf6fd 100.35%);
     border: 4px solid black;
     .van-button__content {
       display: flex;

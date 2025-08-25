@@ -96,26 +96,31 @@ export default antfu({
 ## 已完成的配置
 
 ✅ **VSCode 设置** (`.vscode/settings.json`)
+
 - 禁用默认格式化器
 - 启用 ESLint 作为所有支持文件类型的格式化器
 - 配置保存时自动执行 ESLint 修复
 - 禁用 Prettier 扩展
 
 ✅ **ESLint 配置** (`eslint.config.ts`)
+
 - 优化 formatters 配置，避免与 Prettier 冲突
 - 添加明确的代码风格规则
 - 扩展忽略文件列表
 
 ✅ **Prettier 忽略** (`.prettierignore`)
+
 - 忽略所有文件，防止 Prettier 干扰
 
 ✅ **扩展推荐** (`.vscode/extensions.json`)
+
 - 推荐必要的 VSCode 扩展
 - 标记 Prettier 为不推荐扩展
 
 ## 测试结果
 
 经过测试，配置已经正常工作：
+
 - ESLint 自动修复功能正常
 - 代码风格统一（单引号、无分号、2空格缩进等）
 - 保存时自动格式化
