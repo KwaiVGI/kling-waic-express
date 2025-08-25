@@ -1,3 +1,18 @@
+<script setup lang="ts">
+import ImageComponent from './image.vue'
+import VideoComponent from './video.vue'
+import PrintComponent from './print.vue'
+import ConfigComponent from './config.vue'
+import LogoutButton from '@/components/LogoutButton.vue'
+
+const tabs = [
+  { value: 'image', label: '图片', component: ImageComponent },
+  { value: 'video', label: '视频', component: VideoComponent },
+  { value: 'print', label: '打印队列', component: PrintComponent },
+  { value: 'config', label: '系统配置', component: ConfigComponent },
+]
+</script>
+
 <template>
   <div class="control-view">
     <LogoutButton />
@@ -9,25 +24,10 @@
     </div>
 
     <div class="control-panel">
-      <Tab :tabs="tabs" defaultActive="image" />
+      <Tab :tabs="tabs" default-active="image" />
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import ImageComponent from "./image.vue";
-import VideoComponent from "./video.vue";
-import PrintComponent from "./print.vue";
-import ConfigComponent from "./config.vue";
-import LogoutButton from "@/components/LogoutButton.vue";
-
-const tabs = [
-  { value: "image", label: "图片", component: ImageComponent },
-  { value: "video", label: "视频", component: VideoComponent },
-  { value: "print", label: "打印队列", component: PrintComponent },
-  { value: "config", label: "系统配置", component: ConfigComponent },
-];
-</script>
 
 <style scoped>
 .control-view {

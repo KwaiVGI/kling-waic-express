@@ -14,7 +14,7 @@ export function createViteVConsole(mode: string) {
     },
     // https://github.com/vadxq/vite-plugin-vconsole/issues/21
     dynamicConfig: {
-      theme: `document.documentElement.classList.contains('dark') ? 'dark' : 'light'`,
+      theme: 'document.documentElement.classList.contains(\'dark\') ? \'dark\' : \'light\'',
     },
     eventListener: `
       const targetElement = document.querySelector('html'); // 择要监听的元素

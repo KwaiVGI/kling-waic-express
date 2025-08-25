@@ -4,9 +4,9 @@
  */
 
 export interface AspectRatioResponse {
-  ratio: [number, number];
-  success: boolean;
-  message?: string;
+  ratio: [number, number]
+  success: boolean
+  message?: string
 }
 
 class AspectRatioService {
@@ -22,11 +22,12 @@ class AspectRatioService {
       // return data.ratio;
 
       // Mock实现
-      return this.mockGetAspectRatio();
-    } catch (error) {
-      console.error("获取宽高比失败:", error);
+      return this.mockGetAspectRatio()
+    }
+    catch (error) {
+      console.error('获取宽高比失败:', error)
       // 返回默认值
-      return [9, 16];
+      return [9, 16]
     }
   }
 
@@ -44,18 +45,18 @@ class AspectRatioService {
           [3, 4], // 竖屏 3:4
           [1, 1], // 正方形 1:1
           [21, 9], // 超宽屏 21:9
-        ];
+        ]
 
         // 支持通过URL参数指定容器宽高比，方便测试
-        const urlParams = new URLSearchParams(window.location.search);
-        const ratioParam = urlParams.get("containerRatio") || urlParams.get("ratio");
+        const urlParams = new URLSearchParams(window.location.search)
+        const ratioParam = urlParams.get('containerRatio') || urlParams.get('ratio')
 
         if (ratioParam) {
-          const [w, h] = ratioParam.split(":").map(Number);
+          const [w, h] = ratioParam.split(':').map(Number)
           if (w && h && w > 0 && h > 0) {
-            console.log(`使用URL参数指定的容器宽高比: ${w}:${h}`);
-            resolve([w, h]);
-            return;
+            console.log(`使用URL参数指定的容器宽高比: ${w}:${h}`)
+            resolve([w, h])
+            return
           }
         }
 
@@ -64,9 +65,9 @@ class AspectRatioService {
         // resolve(containerRatioOptions[randomIndex]);
 
         // 默认返回 9:16
-        resolve([9, 16]);
-      }, 100); // 模拟网络延迟
-    });
+        resolve([9, 16])
+      }, 100) // 模拟网络延迟
+    })
   }
 
   /**
@@ -76,13 +77,14 @@ class AspectRatioService {
   async setAspectRatio(ratio: [number, number]): Promise<boolean> {
     try {
       // TODO: 实现设置宽高比的API调用
-      console.log("设置宽高比:", ratio);
-      return true;
-    } catch (error) {
-      console.error("设置宽高比失败:", error);
-      return false;
+      console.log('设置宽高比:', ratio)
+      return true
+    }
+    catch (error) {
+      console.error('设置宽高比失败:', error)
+      return false
     }
   }
 }
 
-export const aspectRatioService = new AspectRatioService();
+export const aspectRatioService = new AspectRatioService()

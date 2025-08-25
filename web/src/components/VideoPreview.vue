@@ -1,3 +1,203 @@
+<script setup lang="ts">
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+
+// 定义视频类型接口
+interface VideoItem {
+  id?: string
+  name?: string
+  no?: string
+  url?: string
+  poster?: string
+}
+
+// Props 定义
+interface Props {
+  visible: boolean
+  videos: VideoItem[]
+  currentIndex: number
+}
+
+// Emits 定义
+interface Emits {
+  (e: 'update:visible', value: boolean): void
+  (e: 'update:currentIndex', value: number): void
+  (e: 'close'): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  visible: false,
+  videos: () => [],
+  currentIndex: 0,
+})
+
+const emit = defineEmits<Emits>()
+
+// 视频元素引用
+const videoElement = ref<HTMLVideoElement>()
+// 缩略图容器引用
+const thumbnailContainer = ref<HTMLElement>()
+
+// 当前预览的视频
+const currentVideo = computed(() => {
+  return props.videos[props.currentIndex]
+})
+
+// 关闭预览
+function handleClose() {
+  // 暂停当前视频
+  if (videoElement.value) {
+    videoElement.value.pause()
+  }
+  emit('update:visible', false)
+  emit('close')
+}
+
+// 处理画布点击事件（点击空白区域关闭）
+function handleCanvasClick(event: MouseEvent) {
+  // 只有当点击的是画布本身（而不是其子元素）时才关闭
+  if (event.target === event.currentTarget) {
+    handleClose()
+  }
+}
+
+// 上一个视频
+function previousVideo() {
+  if (props.currentIndex > 0) {
+    emit('update:currentIndex', props.currentIndex - 1)
+  }
+}
+
+// 下一个视频
+function nextVideo() {
+  if (props.currentIndex < props.videos.length - 1) {
+    emit('update:currentIndex', props.currentIndex + 1)
+  }
+}
+
+// 跳转到指定视频
+function jumpToVideo(index: number) {
+  emit('update:currentIndex', index)
+}
+
+// 视频加载完成后自动播放
+function onVideoLoad() {
+  if (videoElement.value && props.visible) {
+    videoElement.value.play().catch((error) => {
+      console.log('自动播放失败:', error)
+    })
+  }
+}
+
+// 自动播放当前视频
+async function autoPlayCurrentVideo() {
+  await nextTick()
+  if (videoElement.value && props.visible) {
+    try {
+      await videoElement.value.play()
+    }
+    catch (error) {
+      console.log('自动播放失败:', error)
+    }
+  }
+}
+
+// 滚动到当前缩略图
+async function scrollToCurrentThumbnail() {
+  await nextTick()
+  if (thumbnailContainer.value) {
+    const activeItem = thumbnailContainer.value.querySelector(
+      '.video-viewer-thumbnail.active',
+    ) as HTMLElement
+    if (activeItem) {
+      activeItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      })
+    }
+  }
+}
+
+// 键盘事件处理
+function handleKeydown(event: KeyboardEvent) {
+  if (!props.visible)
+    return
+
+  switch (event.key) {
+    case 'Escape':
+      handleClose()
+      break
+    case 'ArrowLeft':
+      previousVideo()
+      break
+    case 'ArrowRight':
+      nextVideo()
+      break
+    case ' ': // 空格键暂停/播放
+      event.preventDefault()
+      if (videoElement.value) {
+        if (videoElement.value.paused) {
+          videoElement.value.play()
+        }
+        else {
+          videoElement.value.pause()
+        }
+      }
+      break
+  }
+}
+
+// 监听 visible 变化，控制页面滚动和自动播放
+watch(
+  () => props.visible,
+  (newVisible) => {
+    if (newVisible) {
+      document.body.style.overflow = 'hidden'
+      scrollToCurrentThumbnail()
+      // 延迟一下确保视频元素已经渲染
+      setTimeout(() => {
+        autoPlayCurrentVideo()
+      }, 100)
+    }
+    else {
+      document.body.style.overflow = ''
+      // 关闭时暂停视频
+      if (videoElement.value) {
+        videoElement.value.pause()
+      }
+    }
+  },
+)
+
+// 监听当前索引变化，滚动到对应缩略图并自动播放新视频
+watch(
+  () => props.currentIndex,
+  () => {
+    // 暂停之前的视频
+    if (videoElement.value) {
+      videoElement.value.pause()
+    }
+    scrollToCurrentThumbnail()
+    // 延迟一下确保新视频已经加载
+    setTimeout(() => {
+      autoPlayCurrentVideo()
+    }, 100)
+  },
+)
+
+// 组件挂载时添加键盘事件监听
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+// 组件卸载时清理事件监听
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+  // 确保恢复页面滚动
+  document.body.style.overflow = ''
+})
+</script>
+
 <template>
   <!-- 视频预览模态框 -->
   <Teleport to="body">
@@ -107,202 +307,6 @@
     </div>
   </Teleport>
 </template>
-
-<script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch, ref, nextTick } from "vue";
-
-// 定义视频类型接口
-interface VideoItem {
-  id?: string;
-  name?: string;
-  no?: string;
-  url?: string;
-  poster?: string;
-}
-
-// Props 定义
-interface Props {
-  visible: boolean;
-  videos: VideoItem[];
-  currentIndex: number;
-}
-
-// Emits 定义
-interface Emits {
-  (e: "update:visible", value: boolean): void;
-  (e: "update:currentIndex", value: number): void;
-  (e: "close"): void;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  visible: false,
-  videos: () => [],
-  currentIndex: 0,
-});
-
-const emit = defineEmits<Emits>();
-
-// 视频元素引用
-const videoElement = ref<HTMLVideoElement>();
-// 缩略图容器引用
-const thumbnailContainer = ref<HTMLElement>();
-
-// 当前预览的视频
-const currentVideo = computed(() => {
-  return props.videos[props.currentIndex];
-});
-
-// 关闭预览
-const handleClose = () => {
-  // 暂停当前视频
-  if (videoElement.value) {
-    videoElement.value.pause();
-  }
-  emit("update:visible", false);
-  emit("close");
-};
-
-// 处理画布点击事件（点击空白区域关闭）
-const handleCanvasClick = (event: MouseEvent) => {
-  // 只有当点击的是画布本身（而不是其子元素）时才关闭
-  if (event.target === event.currentTarget) {
-    handleClose();
-  }
-};
-
-// 上一个视频
-const previousVideo = () => {
-  if (props.currentIndex > 0) {
-    emit("update:currentIndex", props.currentIndex - 1);
-  }
-};
-
-// 下一个视频
-const nextVideo = () => {
-  if (props.currentIndex < props.videos.length - 1) {
-    emit("update:currentIndex", props.currentIndex + 1);
-  }
-};
-
-// 跳转到指定视频
-const jumpToVideo = (index: number) => {
-  emit("update:currentIndex", index);
-};
-
-// 视频加载完成后自动播放
-const onVideoLoad = () => {
-  if (videoElement.value && props.visible) {
-    videoElement.value.play().catch((error) => {
-      console.log("自动播放失败:", error);
-    });
-  }
-};
-
-// 自动播放当前视频
-const autoPlayCurrentVideo = async () => {
-  await nextTick();
-  if (videoElement.value && props.visible) {
-    try {
-      await videoElement.value.play();
-    } catch (error) {
-      console.log("自动播放失败:", error);
-    }
-  }
-};
-
-// 滚动到当前缩略图
-const scrollToCurrentThumbnail = async () => {
-  await nextTick();
-  if (thumbnailContainer.value) {
-    const activeItem = thumbnailContainer.value.querySelector(
-      ".video-viewer-thumbnail.active"
-    ) as HTMLElement;
-    if (activeItem) {
-      activeItem.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      });
-    }
-  }
-};
-
-// 键盘事件处理
-const handleKeydown = (event: KeyboardEvent) => {
-  if (!props.visible) return;
-
-  switch (event.key) {
-    case "Escape":
-      handleClose();
-      break;
-    case "ArrowLeft":
-      previousVideo();
-      break;
-    case "ArrowRight":
-      nextVideo();
-      break;
-    case " ": // 空格键暂停/播放
-      event.preventDefault();
-      if (videoElement.value) {
-        if (videoElement.value.paused) {
-          videoElement.value.play();
-        } else {
-          videoElement.value.pause();
-        }
-      }
-      break;
-  }
-};
-
-// 监听 visible 变化，控制页面滚动和自动播放
-watch(
-  () => props.visible,
-  (newVisible) => {
-    if (newVisible) {
-      document.body.style.overflow = "hidden";
-      scrollToCurrentThumbnail();
-      // 延迟一下确保视频元素已经渲染
-      setTimeout(() => {
-        autoPlayCurrentVideo();
-      }, 100);
-    } else {
-      document.body.style.overflow = "";
-      // 关闭时暂停视频
-      if (videoElement.value) {
-        videoElement.value.pause();
-      }
-    }
-  }
-);
-
-// 监听当前索引变化，滚动到对应缩略图并自动播放新视频
-watch(
-  () => props.currentIndex,
-  () => {
-    // 暂停之前的视频
-    if (videoElement.value) {
-      videoElement.value.pause();
-    }
-    scrollToCurrentThumbnail();
-    // 延迟一下确保新视频已经加载
-    setTimeout(() => {
-      autoPlayCurrentVideo();
-    }, 100);
-  }
-);
-
-// 组件挂载时添加键盘事件监听
-onMounted(() => {
-  document.addEventListener("keydown", handleKeydown);
-});
-
-// 组件卸载时清理事件监听
-onUnmounted(() => {
-  document.removeEventListener("keydown", handleKeydown);
-  // 确保恢复页面滚动
-  document.body.style.overflow = "";
-});
-</script>
 
 <style scoped>
 /* Viewer.js 风格的视频预览器 */

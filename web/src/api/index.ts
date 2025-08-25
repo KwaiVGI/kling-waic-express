@@ -1,12 +1,12 @@
-import request from "@/utils/request";
-import type { TaskType } from "./type";
+import request from '@/utils/request'
+import type { TaskType } from './type'
 
 export async function queryProse(): Promise<any> {
-  return request("/prose");
+  return request('/prose')
 }
 
 export async function getLatestToken(
-  type: TaskType
+  type: TaskType,
 ): Promise<{ value: string }> {
-  return request(`/api/tokens/${type}/latest`);
+  return request(`/api/tokens/${type}/latest`)
 }

@@ -1,3 +1,29 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+
+// 定义单个 Tab 的类型
+interface TabItem {
+  value: string // 唯一标识（如 'image', 'video'）
+  label: string // 显示名称（如 '图片', '视频'）
+  component?: any // 动态组件（可选）
+}
+
+// Props 定义
+const props = defineProps<{
+  tabs: TabItem[] // Tab 列表
+  defaultActive?: string // 默认选中的 Tab
+}>()
+
+// 当前选中的 Tab
+const activeTab = ref(props.defaultActive || props.tabs[0]?.value)
+
+// 计算当前激活的组件（方案1）
+const activeComponent = computed(() => {
+  const tab = props.tabs.find(t => t.value === activeTab.value)
+  return tab?.component || null
+})
+</script>
+
 <template>
   <div class="tab-container">
     <!-- Tab 按钮 -->
@@ -5,8 +31,8 @@
       <button
         v-for="tab in tabs"
         :key="tab.value"
-        @click="activeTab = tab.value"
         :class="{ active: activeTab === tab.value }"
+        @click="activeTab = tab.value"
       >
         {{ tab.label }}
       </button>
@@ -18,36 +44,10 @@
       <component :is="activeComponent" v-if="activeComponent" />
 
       <!-- 方案2：插槽（适合简单内容） -->
-      <slot :name="activeTab"></slot>
+      <slot :name="activeTab" />
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed } from "vue";
-
-// 定义单个 Tab 的类型
-interface TabItem {
-  value: string; // 唯一标识（如 'image', 'video'）
-  label: string; // 显示名称（如 '图片', '视频'）
-  component?: any; // 动态组件（可选）
-}
-
-// Props 定义
-const props = defineProps<{
-  tabs: TabItem[]; // Tab 列表
-  defaultActive?: string; // 默认选中的 Tab
-}>();
-
-// 当前选中的 Tab
-const activeTab = ref(props.defaultActive || props.tabs[0]?.value);
-
-// 计算当前激活的组件（方案1）
-const activeComponent = computed(() => {
-  const tab = props.tabs.find((t) => t.value === activeTab.value);
-  return tab?.component || null;
-});
-</script>
 
 <style scoped>
 .tab-container {

@@ -3,15 +3,15 @@ import type { TaskType } from './types' // 假设有单独的类型定义
 
 // 定义相关类型（根据实际业务调整）
 interface Task {
-  id: string;
-  name: string;
-  type: TaskType;
+  id: string
+  name: string
+  type: TaskType
   // ...其他字段
 }
 
 interface TaskOutput {
-  id: string;
-  content: string;
+  id: string
+  content: string
   // ...其他字段
 }
 
@@ -25,8 +25,8 @@ const CastingAPI = {
   getNextTaskOutputs: (type: TaskType, num: number): Promise<TaskOutput[]> => {
     return request({
       url: `/castings/${type}/${num}`,
-      method: 'GET'
-    });
+      method: 'GET',
+    })
   },
 
   /**
@@ -37,8 +37,8 @@ const CastingAPI = {
   getTaskList: (type: TaskType, page: number): Promise<Task[]> => {
     return request({
       url: `/castings/${type}/list/${page}`,
-      method: 'GET'
-    });
+      method: 'GET',
+    })
   },
 
   /**
@@ -51,8 +51,8 @@ const CastingAPI = {
     return request({
       url: `/castings/${type}/promote`,
       method: 'POST',
-      data: taskName // 直接传递字符串
-    });
+      data: taskName, // 直接传递字符串
+    })
   },
 
   /**
@@ -62,8 +62,8 @@ const CastingAPI = {
   pinTask: (type: TaskType): Promise<boolean> => {
     return request({
       url: `/castings/${type}/pin`,
-      method: 'POST'
-    });
+      method: 'POST',
+    })
   },
 
   /**
@@ -73,9 +73,9 @@ const CastingAPI = {
   unpinTask: (type: TaskType): Promise<boolean> => {
     return request({
       url: `/castings/${type}/unpin`,
-      method: 'POST'
-    });
-  }
-};
+      method: 'POST',
+    })
+  },
+}
 
-export default CastingAPI;
+export default CastingAPI

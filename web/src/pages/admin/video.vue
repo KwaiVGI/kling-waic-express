@@ -1,15 +1,147 @@
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { castingService } from '@/api/castingService'
+import type { CastingImage } from '@/api/castingService'
+
+import { confirmDelete } from '@/utils/confirm'
+import { showToast } from 'vant'
+import VideoPreview from '@/components/VideoPreview.vue'
+
+const route = useRoute()
+// 数据状态
+const images = ref<CastingImage[]>([])
+const loading = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(24)
+const totalPages = ref(1)
+const totalImages = ref(0)
+const searchQuery = ref('')
+const pinnedImageId = ref<string | null>(null)
+const promotedImageId = ref<string | null>(null)
+const currentType = 'VIDEO_EFFECT'
+
+// 预览相关状态
+const previewVisible = ref(false)
+const previewIndex = ref(0)
+
+// 计算可见的分页按钮
+const visiblePages = computed(() => {
+  const pages = []
+  const maxVisible = 5
+  let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
+  let end = Math.min(totalPages.value, start + maxVisible - 1)
+
+  if (end - start < maxVisible - 1) {
+    start = Math.max(1, end - maxVisible + 1)
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+
+  return pages
+})
+
+// 加载图片
+async function loadImages() {
+  loading.value = true
+  try {
+    const result = await castingService.getCastingList({
+      keyword: searchQuery.value,
+      type: currentType,
+      page: currentPage.value,
+      limit: pageSize.value,
+    })
+    images.value = result.items.map(img => ({
+      ...img,
+      isPinned: img.id === pinnedImageId.value,
+      isPromoted: img.id === promotedImageId.value,
+    }))
+    totalPages.value = Math.ceil(result.total / pageSize.value)
+    totalImages.value = result.total
+  }
+  catch (error) {
+    console.error('加载图片失败:', error)
+    showToast(`加载图片失败，请重试${error}`)
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+// 搜索图片
+function searchImages() {
+  currentPage.value = 1
+  loadImages()
+}
+
+// 跳转到指定页
+function goToPage(page: number) {
+  if (page < 1 || page > totalPages.value)
+    return
+  currentPage.value = page
+  loadImages()
+}
+
+// 删除
+async function deleteImage(imageId: string) {
+  try {
+    const confirmed = await confirmDelete({
+      title: '删除确认',
+      message: '确定要删除吗？删除后不会在大屏幕上显示。',
+    })
+    if (!confirmed)
+      return
+    await castingService.deleteImage(currentType, imageId)
+    loadImages()
+  }
+  catch (error) {
+    console.error('删除失败:', error)
+  }
+}
+
+// 打开预览
+function openPreview(index: number) {
+  previewIndex.value = index
+  previewVisible.value = true
+}
+
+// 关闭预览
+function closePreview() {
+  previewVisible.value = false
+}
+
+// 初始化加载图片
+onMounted(() => {
+  if (route.query.token) {
+    // Token handling removed
+  }
+  loadImages()
+})
+
+// 监听搜索词变化
+watch(searchQuery, (newVal) => {
+  if (newVal === '') {
+    loadImages()
+  }
+})
+</script>
+
 <template>
   <div class="control-panel">
     <div class="top-controls">
       <div class="search-container">
         <input
-          type="text"
           v-model="searchQuery"
+          type="text"
           placeholder="输入视频ID搜索..."
-          @keyup.enter="searchImages"
           class="search-input"
-        />
-        <button @click="searchImages" class="search-button">搜索</button>
+          @keyup.enter="searchImages"
+        >
+        <button class="search-button" @click="searchImages">
+          搜索
+        </button>
       </div>
     </div>
 
@@ -34,22 +166,22 @@
         >
           <div class="image-container" @click="openPreview(idx)">
             <video
-              class="w-full h-full"
+              class="h-full w-full"
               :src="image.url"
               :poster="image.poster"
               preload="metadata"
               muted
               style="pointer-events: none;"
-            ></video>
+            />
             <span class="image-id">{{ image.name }}</span>
 
             <div class="item-actions">
               <button
-                @click.stop="deleteImage(image.id)"
                 :disabled="
                   image.id === pinnedImageId || image.id === promotedImageId
                 "
                 class="action-button delete"
+                @click.stop="deleteImage(image.id)"
               >
                 删除
               </button>
@@ -61,8 +193,8 @@
       <div v-if="totalPages > 1" class="pagination-controls">
         <button
           :disabled="currentPage <= 1"
-          @click="goToPage(currentPage - 1)"
           class="pagination-button prev"
+          @click="goToPage(currentPage - 1)"
         >
           上一页
         </button>
@@ -72,8 +204,8 @@
             v-for="page in visiblePages"
             :key="page"
             :class="{ active: page === currentPage }"
-            @click="goToPage(page)"
             class="page-button"
+            @click="goToPage(page)"
           >
             {{ page }}
           </button>
@@ -81,8 +213,8 @@
 
         <button
           :disabled="currentPage >= totalPages"
-          @click="goToPage(currentPage + 1)"
           class="pagination-button next"
+          @click="goToPage(currentPage + 1)"
         >
           下一页
         </button>
@@ -92,136 +224,12 @@
     <!-- 视频预览组件 -->
     <VideoPreview
       v-model:visible="previewVisible"
-      v-model:currentIndex="previewIndex"
+      v-model:current-index="previewIndex"
       :videos="images"
       @close="closePreview"
     />
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
-import { castingService, type CastingImage } from "@/api/castingService";
-
-import { confirmDelete } from "@/utils/confirm";
-import { showToast } from "vant";
-import VideoPreview from "@/components/VideoPreview.vue";
-
-const route = useRoute();
-// 数据状态
-const images = ref<CastingImage[]>([]);
-const loading = ref(false);
-const currentPage = ref(1);
-const pageSize = ref(24);
-const totalPages = ref(1);
-const totalImages = ref(0);
-const searchQuery = ref("");
-const pinnedImageId = ref<string | null>(null);
-const promotedImageId = ref<string | null>(null);
-const currentType = "VIDEO_EFFECT";
-
-// 预览相关状态
-const previewVisible = ref(false);
-const previewIndex = ref(0);
-
-// 计算可见的分页按钮
-const visiblePages = computed(() => {
-  const pages = [];
-  const maxVisible = 5;
-  let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2));
-  let end = Math.min(totalPages.value, start + maxVisible - 1);
-
-  if (end - start < maxVisible - 1) {
-    start = Math.max(1, end - maxVisible + 1);
-  }
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
-  }
-
-  return pages;
-});
-
-// 加载图片
-const loadImages = async () => {
-  loading.value = true;
-  try {
-    const result = await castingService.getCastingList({
-      keyword: searchQuery.value,
-      type: currentType,
-      page: currentPage.value,
-      limit: pageSize.value,
-    });
-    images.value = result.items.map((img) => ({
-      ...img,
-      isPinned: img.id === pinnedImageId.value,
-      isPromoted: img.id === promotedImageId.value,
-    }));
-    totalPages.value = Math.ceil(result.total / pageSize.value);
-    totalImages.value = result.total;
-  } catch (error) {
-    console.error("加载图片失败:", error);
-    showToast("加载图片失败，请重试" + error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-// 搜索图片
-const searchImages = () => {
-  currentPage.value = 1;
-  loadImages();
-};
-
-// 跳转到指定页
-const goToPage = (page: number) => {
-  if (page < 1 || page > totalPages.value) return;
-  currentPage.value = page;
-  loadImages();
-};
-
-// 删除
-const deleteImage = async (imageId: string) => {
-  try {
-    const confirmed = await confirmDelete({
-      title: "删除确认",
-      message: "确定要删除吗？删除后不会在大屏幕上显示。",
-    });
-    if (!confirmed) return;
-    await castingService.deleteImage(currentType, imageId);
-    loadImages();
-  } catch (error) {
-    console.error("删除失败:", error);
-  }
-};
-
-// 打开预览
-const openPreview = (index: number) => {
-  previewIndex.value = index;
-  previewVisible.value = true;
-};
-
-// 关闭预览
-const closePreview = () => {
-  previewVisible.value = false;
-};
-
-// 初始化加载图片
-onMounted(() => {
-  if (route.query.token) {
-    // Token handling removed
-  }
-  loadImages();
-});
-
-// 监听搜索词变化
-watch(searchQuery, (newVal) => {
-  if (newVal === "") {
-    loadImages();
-  }
-});
-</script>
 
 <style scoped>
 .control-panel {
@@ -396,7 +404,9 @@ watch(searchQuery, (newVal) => {
   overflow: hidden;
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
   background-color: #eee;
 }
 

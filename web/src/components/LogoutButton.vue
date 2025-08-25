@@ -1,3 +1,95 @@
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { STORAGE_ACTIVE_KEY, STORAGE_TOKEN_KEY } from '@/stores/mutation-type'
+
+interface Props {
+  transparent?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  transparent: false,
+})
+
+const showDropdown = ref(false)
+const isHovered = ref(false)
+const currentActivity = ref('')
+let hideTimeout: number | null = null
+
+function handleMouseEnter() {
+  if (props.transparent) {
+    isHovered.value = true
+    // 清除隐藏定时器
+    if (hideTimeout) {
+      clearTimeout(hideTimeout)
+      hideTimeout = null
+    }
+  }
+}
+
+function handleMouseLeave() {
+  if (props.transparent) {
+    // 延迟隐藏，给用户时间移动到下拉菜单
+    hideTimeout = setTimeout(() => {
+      isHovered.value = false
+      if (!showDropdown.value) {
+        // 只有在下拉菜单没有显示时才隐藏按钮
+        isHovered.value = false
+      }
+    }, 200) as unknown as number
+  }
+}
+
+function handleDropdownMouseEnter() {
+  // 鼠标进入下拉菜单时清除隐藏定时器
+  if (hideTimeout) {
+    clearTimeout(hideTimeout)
+    hideTimeout = null
+  }
+}
+
+function handleDropdownMouseLeave() {
+  if (props.transparent) {
+    // 鼠标离开下拉菜单时延迟隐藏
+    hideTimeout = setTimeout(() => {
+      isHovered.value = false
+      showDropdown.value = false
+    }, 200) as unknown as number
+  }
+}
+
+function toggleDropdown() {
+  showDropdown.value = !showDropdown.value
+}
+
+function logout() {
+  localStorage.removeItem(STORAGE_TOKEN_KEY)
+  localStorage.removeItem(STORAGE_ACTIVE_KEY)
+  window.location.reload()
+}
+
+onMounted(() => {
+  currentActivity.value = localStorage.getItem(STORAGE_ACTIVE_KEY) || ''
+
+  // 点击外部关闭下拉菜单
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement
+    if (!target.closest('.logout-dropdown')) {
+      showDropdown.value = false
+      if (props.transparent) {
+        isHovered.value = false
+      }
+    }
+  })
+})
+
+onUnmounted(() => {
+  // 清理定时器
+  if (hideTimeout) {
+    clearTimeout(hideTimeout)
+  }
+})
+</script>
+
 <template>
   <div
     class="logout-container"
@@ -8,15 +100,15 @@
     <div class="logout-dropdown" :class="{ show: showDropdown }">
       <button
         class="logout-trigger"
-        @click="toggleDropdown"
         :class="{ visible: !transparent || isHovered }"
+        @click="toggleDropdown"
       >
         {{ currentActivity || '未知活动' }}
       </button>
 
       <div
-        class="dropdown-menu"
         v-show="showDropdown"
+        class="dropdown-menu"
         @mouseenter="handleDropdownMouseEnter"
         @mouseleave="handleDropdownMouseLeave"
       >
@@ -25,107 +117,13 @@
           <span class="activity-name">{{ currentActivity || '未知活动' }}</span>
         </div>
         <button class="dropdown-item logout" @click="logout">
-          <div class="i-carbon-logout"></div>
+          <div class="i-carbon-logout" />
           退出登录
         </button>
       </div>
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { STORAGE_TOKEN_KEY, STORAGE_ACTIVE_KEY } from "@/stores/mutation-type";
-
-interface Props {
-  transparent?: boolean;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  transparent: false,
-});
-
-const showDropdown = ref(false);
-const isHovered = ref(false);
-const currentActivity = ref("");
-let hideTimeout: number | null = null;
-
-
-
-const handleMouseEnter = () => {
-  if (props.transparent) {
-    isHovered.value = true;
-    // 清除隐藏定时器
-    if (hideTimeout) {
-      clearTimeout(hideTimeout);
-      hideTimeout = null;
-    }
-  }
-};
-
-const handleMouseLeave = () => {
-  if (props.transparent) {
-    // 延迟隐藏，给用户时间移动到下拉菜单
-    hideTimeout = setTimeout(() => {
-      isHovered.value = false;
-      if (!showDropdown.value) {
-        // 只有在下拉菜单没有显示时才隐藏按钮
-        isHovered.value = false;
-      }
-    }, 200) as unknown as number;
-  }
-};
-
-const handleDropdownMouseEnter = () => {
-  // 鼠标进入下拉菜单时清除隐藏定时器
-  if (hideTimeout) {
-    clearTimeout(hideTimeout);
-    hideTimeout = null;
-  }
-};
-
-const handleDropdownMouseLeave = () => {
-  if (props.transparent) {
-    // 鼠标离开下拉菜单时延迟隐藏
-    hideTimeout = setTimeout(() => {
-      isHovered.value = false;
-      showDropdown.value = false;
-    }, 200) as unknown as number;
-  }
-};
-
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value;
-};
-
-const logout = () => {
-  localStorage.removeItem(STORAGE_TOKEN_KEY);
-  localStorage.removeItem(STORAGE_ACTIVE_KEY);
-  window.location.reload();
-};
-
-onMounted(() => {
-  currentActivity.value = localStorage.getItem(STORAGE_ACTIVE_KEY) || "";
-
-  // 点击外部关闭下拉菜单
-  document.addEventListener("click", (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest(".logout-dropdown")) {
-      showDropdown.value = false;
-      if (props.transparent) {
-        isHovered.value = false;
-      }
-    }
-  });
-});
-
-onUnmounted(() => {
-  // 清理定时器
-  if (hideTimeout) {
-    clearTimeout(hideTimeout);
-  }
-});
-</script>
 
 <style scoped>
 .logout-container {

@@ -1,33 +1,39 @@
+<script lang="ts" setup>
+import LogoutButton from '@/components/LogoutButton.vue'
+</script>
+
 <template>
   <div
-    class="creation-index flex flex-col items-center justify-center min-h-100vh bg-gray-50"
+    class="creation-index bg-gray-50 flex flex-col min-h-100vh items-center justify-center"
   >
     <LogoutButton :transparent="true" />
-    <h1 class="text-24px font-bold text-blue mb-8">选择创作类型</h1>
+    <h1 class="text-24px text-blue font-bold mb-8">
+      选择创作类型
+    </h1>
 
-    <div class="creation-types grid grid-cols-2 gap-20px w-80% max-w-400px">
+    <div class="creation-types gap-20px grid grid-cols-2 max-w-400px w-80%">
       <router-link
         to="/screen/image"
-        class="creation-card bg-white rounded-16px shadow-md p-25px text-center transition-all active:scale-98"
+        class="creation-card p-25px text-center rounded-16px bg-white shadow-md transition-all active:scale-98"
       >
         <van-icon name="photograph" size="60" color="#1989fa" />
-        <h2 class="text-18px font-bold mt-15px">图片创作</h2>
+        <h2 class="text-18px font-bold mt-15px">
+          图片创作
+        </h2>
       </router-link>
 
       <router-link
         to="/screen/video"
-        class="creation-card bg-white rounded-16px shadow-md p-25px text-center transition-all active:scale-98"
+        class="creation-card p-25px text-center rounded-16px bg-white shadow-md transition-all active:scale-98"
       >
         <van-icon name="video-o" size="60" color="#1989fa" />
-        <h2 class="text-18px font-bold mt-15px">视频创作</h2>
+        <h2 class="text-18px font-bold mt-15px">
+          视频创作
+        </h2>
       </router-link>
     </div>
   </div>
 </template>
-
-<script lang="ts" setup>
-import LogoutButton from "@/components/LogoutButton.vue";
-</script>
 
 <style scoped>
 .creation-index {

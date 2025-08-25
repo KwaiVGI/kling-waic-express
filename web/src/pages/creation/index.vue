@@ -1,6 +1,8 @@
+<script lang="ts" setup></script>
+
 <template>
   <div
-    class="creation-index flex flex-col items-center justify-center min-h-100vh bg-gray-50"
+    class="creation-index bg-gray-50 flex flex-col min-h-100vh items-center justify-center"
   >
     <!-- <h1 class="text-24px font-bold text-blue mb-8">选择创作类型</h1>
 
@@ -32,8 +34,6 @@
     </p> -->
   </div>
 </template>
-
-<script lang="ts" setup></script>
 
 <style scoped>
 .creation-index {

@@ -1,41 +1,141 @@
+<script setup lang="ts">
+import { getPined } from '@/api/admin'
+import { STORAGE_ACTIVE_KEY, STORAGE_TOKEN_KEY } from '@/stores/mutation-type'
+import { onMounted, ref } from 'vue'
+
+const emit = defineEmits(['success'])
+
+// 本地存储的密码键名
+// 接口请求模拟
+async function checkPassword(pwd: string, activity: string): Promise<boolean> {
+  try {
+    await getPined(
+      { type: 'STYLED_IMAGE' },
+      { headers: { Authorization: `Token ${pwd}`, Activity: activity } },
+    )
+    return true
+  }
+  catch (error) {
+    return false
+  }
+}
+
+// 响应式数据
+const password = ref('')
+const selectedActivity = ref('')
+const showModal = ref(false)
+const errorMessage = ref('')
+const showPassword = ref(false)
+const passwordInput = ref(null)
+const activityInput = ref(null)
+
+// 检查本地存储的密码和活动
+onMounted(async () => {
+  const savedPassword = localStorage.getItem(STORAGE_TOKEN_KEY)
+  const savedActivity = localStorage.getItem(STORAGE_ACTIVE_KEY)
+  if (savedPassword) {
+    password.value = savedPassword
+  }
+  if (savedActivity) {
+    selectedActivity.value = savedActivity
+  }
+
+  if (password.value && selectedActivity.value) {
+    const r = await checkPassword(password.value, selectedActivity.value)
+    showModal.value = !r
+  }
+  else {
+    showModal.value = true
+  }
+})
+
+// 切换密码可见性
+function togglePasswordVisibility() {
+  showPassword.value = !showPassword.value
+  if (passwordInput.value) {
+    passwordInput.value.type = showPassword.value ? 'text' : 'password'
+  }
+}
+
+// 处理登录逻辑
+async function handleLogin() {
+  if (!selectedActivity.value.trim()) {
+    errorMessage.value = '请输入活动名称'
+    return
+  }
+
+  if (!password.value.trim()) {
+    errorMessage.value = '密码不能为空'
+    return
+  }
+
+  try {
+    const isValid = await checkPassword(password.value, selectedActivity.value)
+
+    if (isValid) {
+      // 密码和活动都正确
+      localStorage.setItem(STORAGE_TOKEN_KEY, password.value)
+      localStorage.setItem(STORAGE_ACTIVE_KEY, selectedActivity.value)
+      showModal.value = false
+      errorMessage.value = ''
+      window.location.reload()
+      // 这里可以执行后续业务逻辑
+      emit('success')
+    }
+    else {
+      errorMessage.value = '密码错误或活动选择错误，请重新输入'
+      // 清空本地存储的旧密码和活动（如果有）
+      localStorage.removeItem(STORAGE_TOKEN_KEY)
+      localStorage.removeItem(STORAGE_ACTIVE_KEY)
+    }
+  }
+  catch (error) {
+    errorMessage.value = '验证失败，请重试'
+    console.error('密码验证异常:', error)
+  }
+}
+</script>
+
 <template>
-  <div class="ds-modal-mask" v-if="showModal">
+  <div v-if="showModal" class="ds-modal-mask">
     <div class="password-box">
-      <div class="i-carbon-locked lock-icon"></div>
+      <div class="lock-icon i-carbon-locked" />
       <h2>需要授权访问</h2>
-      <p class="info-text">请输入活动名称和访问密码以查看受保护内容</p>
+      <p class="info-text">
+        请输入活动名称和访问密码以查看受保护内容
+      </p>
 
       <div class="activity-input">
         <div class="input-wrapper">
           <input
-            type="text"
-            v-model="selectedActivity"
-            placeholder="请输入活动名称"
             ref="activityInput"
+            v-model="selectedActivity"
+            type="text"
+            placeholder="请输入活动名称"
             :class="{ shake: errorMessage }"
-          />
-          <div class="i-carbon-star-filled activity-icon"></div>
+          >
+          <div class="activity-icon i-carbon-star-filled" />
         </div>
       </div>
 
       <div class="password-input">
         <div class="input-wrapper">
           <input
-            type="password"
-            v-model="password"
-            placeholder="输入访问密码"
             ref="passwordInput"
-            @keyup.enter="handleLogin"
+            v-model="password"
+            type="password"
+            placeholder="输入访问密码"
             :class="{ shake: errorMessage }"
-          />
+            @keyup.enter="handleLogin"
+          >
           <button class="toggle-password" @click="togglePasswordVisibility">
-            <div :class="showPassword ? 'i-carbon-view-off' : 'i-carbon-view'"></div>
+            <div :class="showPassword ? 'i-carbon-view-off' : 'i-carbon-view'" />
           </button>
         </div>
       </div>
 
       <button class="login-btn" @click="handleLogin">
-        <div class="i-carbon-unlocked"></div> 验证并进入
+        <div class="i-carbon-unlocked" /> 验证并进入
       </button>
 
       <div
@@ -47,105 +147,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { getPined } from "@/api/admin";
-import { STORAGE_TOKEN_KEY, STORAGE_ACTIVE_KEY } from "@/stores/mutation-type";
-import { ref, onMounted } from "vue";
-const emit = defineEmits(["success"]);
-
-
-
-// 本地存储的密码键名
-// 接口请求模拟
-const checkPassword = async (pwd: string, activity: string): Promise<boolean> => {
-  try {
-    await getPined(
-      { type: "STYLED_IMAGE" },
-      { headers: { Authorization: "Token " + pwd, Activity: activity } }
-    );
-    return true;
-  } catch (error) {
-    return false;
-  }
-};
-
-// 响应式数据
-const password = ref("");
-const selectedActivity = ref("");
-const showModal = ref(false);
-const errorMessage = ref("");
-const showPassword = ref(false);
-const passwordInput = ref(null);
-const activityInput = ref(null);
-
-// 检查本地存储的密码和活动
-onMounted(async () => {
-  const savedPassword = localStorage.getItem(STORAGE_TOKEN_KEY);
-  const savedActivity = localStorage.getItem(STORAGE_ACTIVE_KEY);
-  if (savedPassword) {
-    password.value = savedPassword;
-  }
-  if (savedActivity) {
-    selectedActivity.value = savedActivity;
-  }
-  
-  if (password.value && selectedActivity.value) {
-    const r = await checkPassword(password.value, selectedActivity.value);
-    showModal.value = !r;
-  } else {
-    showModal.value = true;
-  }
-
-  
-});
-
-
-
-// 切换密码可见性
-const togglePasswordVisibility = () => {
-  showPassword.value = !showPassword.value;
-  if (passwordInput.value) {
-    passwordInput.value.type = showPassword.value ? "text" : "password";
-  }
-};
-
-// 处理登录逻辑
-const handleLogin = async () => {
-  if (!selectedActivity.value.trim()) {
-    errorMessage.value = "请输入活动名称";
-    return;
-  }
-  
-  if (!password.value.trim()) {
-    errorMessage.value = "密码不能为空";
-    return;
-  }
-
-  try {
-    const isValid = await checkPassword(password.value, selectedActivity.value);
-
-    if (isValid) {
-      // 密码和活动都正确
-      localStorage.setItem(STORAGE_TOKEN_KEY, password.value);
-      localStorage.setItem(STORAGE_ACTIVE_KEY, selectedActivity.value);
-      showModal.value = false;
-      errorMessage.value = "";
-      window.location.reload();
-      // 这里可以执行后续业务逻辑
-      emit("success");
-    } else {
-      errorMessage.value = "密码错误或活动选择错误，请重新输入";
-      // 清空本地存储的旧密码和活动（如果有）
-      localStorage.removeItem(STORAGE_TOKEN_KEY);
-      localStorage.removeItem(STORAGE_ACTIVE_KEY);
-    }
-  } catch (error) {
-    errorMessage.value = "验证失败，请重试";
-    console.error("密码验证异常:", error);
-  }
-};
-</script>
 
 <style lang="less">
 .ds-modal-mask {
@@ -296,9 +297,16 @@ const handleLogin = async () => {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 .login-btn {

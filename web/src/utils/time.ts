@@ -2,31 +2,31 @@ export function waitWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     // 如果已经取消，立即拒绝
     if (signal?.aborted) {
-      reject(new DOMException("Aborted", "AbortError"));
-      return;
+      reject(new DOMException('Aborted', 'AbortError'))
+      return
     }
 
     const timer = setTimeout(() => {
-      resolve();
+      resolve()
       // 清理事件监听
       if (signal) {
-        signal.removeEventListener("abort", handleAbort);
+        signal.removeEventListener('abort', handleAbort)
       }
-    }, ms);
+    }, ms)
 
     // 取消事件处理函数
     const handleAbort = () => {
-      clearTimeout(timer);
-      reject(new DOMException("Aborted", "AbortError"));
-    };
+      clearTimeout(timer)
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
 
     // 监听取消信号
     if (signal) {
-      signal.addEventListener("abort", handleAbort);
+      signal.addEventListener('abort', handleAbort)
     }
-  });
+  })
 }
 
 export async function wait(delay: number) {
-  return new Promise((resolve) => setTimeout(resolve, delay));
+  return new Promise(resolve => setTimeout(resolve, delay))
 }

@@ -1,5 +1,5 @@
-import { appName } from "@/constants";
+import { appName } from '@/constants'
 
 export default function setPageTitle(title?: string): void {
-  window.document.title = title ? `${title}` : appName;
+  window.document.title = title ? `${title}` : appName
 }

@@ -1,18 +1,90 @@
+<script setup lang="ts">
+import { onMounted, ref, watch } from 'vue'
+import { castingService } from '@/api/castingService'
+import type { CastingImage } from '@/api/castingService'
+
+import { showToast } from 'vant'
+import { useRoute } from 'vue-router'
+import ImagePreview from '@/components/ImagePreview.vue'
+
+const route = useRoute()
+// 数据状态
+const images = ref<CastingImage[]>([])
+const loading = ref(false)
+const searchQuery = ref('')
+const pinnedImageId = ref<string | null>(null)
+const promotedImageId = ref<string | null>(null)
+
+// 图片预览相关状态
+const showPreview = ref(false)
+const currentPreviewIndex = ref(0)
+
+// 加载图片
+async function loadImages() {
+  loading.value = true
+  try {
+    const result = await castingService.getPrintList(searchQuery.value)
+    images.value = result
+  }
+  catch (error) {
+    console.error('加载图片失败:', error)
+    showToast(`加载图片失败，请重试${error}`)
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+// 搜索图片
+function searchImages() {
+  loadImages()
+}
+
+// 图片预览相关方法
+function openImagePreview(image: CastingImage, index: number) {
+  currentPreviewIndex.value = index
+  showPreview.value = true
+}
+
+function closeImagePreview() {
+  showPreview.value = false
+}
+
+// 初始化加载图片
+onMounted(() => {
+  if (route.query.token) {
+    // Token handling removed
+  }
+  loadImages()
+})
+
+// 监听搜索词变化
+watch(searchQuery, (newVal) => {
+  if (newVal === '') {
+    loadImages()
+  }
+})
+</script>
+
 <template>
   <div class="control-panel">
     <div class="top-controls">
       <div class="search-container">
         <input
-          type="text"
           v-model="searchQuery"
+          type="text"
           placeholder="输入图片ID搜索..."
-          @keyup.enter="searchImages"
           class="search-input"
-        />
-        <button @click="searchImages" class="search-button">搜索</button>
+          @keyup.enter="searchImages"
+        >
+        <button class="search-button" @click="searchImages">
+          搜索
+        </button>
       </div>
     </div>
-    <p class="text-12px">当前的打印队列：{{ images.length }}</p>
+    <p class="text-12px">
+      当前的打印队列：{{ images.length }}
+    </p>
     <div class="image-gallery">
       <div v-if="loading" class="loading-message">
         <span class="loading-text">加载中...</span>
@@ -33,7 +105,7 @@
           }"
         >
           <div class="image-container" @click="openImagePreview(image, images.indexOf(image))">
-            <img class="w-full h-full" :src="image.url" />
+            <img class="h-full w-full" :src="image.url">
             <span class="image-id">{{ image.no }}</span>
           </div>
         </div>
@@ -43,77 +115,12 @@
     <!-- 图片预览组件 -->
     <ImagePreview
       v-model:visible="showPreview"
-      v-model:currentIndex="currentPreviewIndex"
+      v-model:current-index="currentPreviewIndex"
       :images="images"
       @close="closeImagePreview"
     />
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
-import { castingService, type CastingImage } from "@/api/castingService";
-
-import { showToast } from "vant";
-import { useRoute } from "vue-router";
-import ImagePreview from "@/components/ImagePreview.vue";
-
-const route = useRoute();
-// 数据状态
-const images = ref<CastingImage[]>([]);
-const loading = ref(false);
-const searchQuery = ref("");
-const pinnedImageId = ref<string | null>(null);
-const promotedImageId = ref<string | null>(null);
-
-// 图片预览相关状态
-const showPreview = ref(false);
-const currentPreviewIndex = ref(0);
-
-// 加载图片
-const loadImages = async () => {
-  loading.value = true;
-  try {
-    const result = await castingService.getPrintList(searchQuery.value);
-    images.value = result;
-  } catch (error) {
-    console.error("加载图片失败:", error);
-    showToast("加载图片失败，请重试" + error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-// 搜索图片
-const searchImages = () => {
-  loadImages();
-};
-
-// 图片预览相关方法
-const openImagePreview = (image: CastingImage, index: number) => {
-  currentPreviewIndex.value = index;
-  showPreview.value = true;
-};
-
-const closeImagePreview = () => {
-  showPreview.value = false;
-};
-
-// 初始化加载图片
-onMounted(() => {
-  if (route.query.token) {
-    // Token handling removed
-  }
-  loadImages();
-});
-
-// 监听搜索词变化
-watch(searchQuery, (newVal) => {
-  if (newVal === "") {
-    loadImages();
-  }
-});
-</script>
 
 <style scoped>
 .control-panel {
@@ -288,7 +295,9 @@ watch(searchQuery, (newVal) => {
   overflow: hidden;
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
   background-color: #eee;
 }
 

@@ -1,285 +1,10 @@
-<template>
-  <div
-    ref="containerRef"
-    id="h5App"
-    class="creation-container !min-h-100vh relative flex flex-col items-center"
-  >
-    <div
-      ref="step1Ref"
-      :style="{ zoom: step1Zoom }"
-      class="step-1 w-full flex flex-col items-center pb-28px"
-    >
-      <div
-        v-show="!generatedResult"
-        class="w-full mt-28px flex flex-col items-center mb-28px relative"
-      >
-        <img
-          class="w-120px h-32px mb-22px ml-20px self-start"
-          :src="assets.logo"
-          alt=""
-        />
-        <img class="w-414px h-130px" :src="assets.banner" alt="" />
-        <LangSwitcher
-          class="absolute right-20px top-0"
-          @change="onLocaleChange"
-        />
-      </div>
-      <!-- 上传区域 -->
-      <div
-        v-show="(!uploadedImage && !generatedResult) || uploading"
-        class="w-360px h-360px box-border upload-bg-white rounded-24px p-20px text-center relative"
-      >
-        <van-uploader
-          ref="uploaderRef"
-          v-model="fileList"
-          :after-read="handleUpload"
-          :max-count="1"
-          reupload
-          :preview-image="false"
-          accept="image/*"
-        >
-          <div
-            class="upload-area rounded-12px w-320px flex flex-col items-center justify-center"
-            :class="type === 'image' ? 'h-254px' : 'h-320px'"
-          >
-            <div
-              class="uploading w-full h-full flex flex-col items-center justify-center gap-12px"
-              v-if="uploading"
-            >
-              <van-loading type="circular" color="#0B8A1B" />
-              <div class="text-14px upload-text-white">
-                {{ $t("upload.uploading") }}
-              </div>
-            </div>
-            <template v-else>
-              <IconSvg name="add-image" :size="32" />
-              <p class="mt-10px text-14px upload-text-white">
-                {{ $t("actions.uploadPhoto") }}
-              </p>
-            </template>
-          </div>
-        </van-uploader>
-        <div
-          v-if="type === 'image' && adminConfig?.allowPrint !== false"
-          class="absolute bottom-0 left-0 w-360px h-124px"
-        >
-          <img class="w-full h-full" :src="assets.imageTip" alt="" />
-        </div>
-      </div>
-
-      <!-- 图片预览区域 -->
-      <div
-        v-if="uploadedImage && !generatedResult && !uploading"
-        class="w-360px h-360px box-border upload-bg-white rounded-24px p-20px text-center relative"
-      >
-        <div
-          class="w-320px h-254px overflow-hidden rounded-12px flex items-center justify-center relative"
-        >
-          <div
-            class="blur-bg blur-20px absolute left-0 top-0 w-full h-full bg-cover bg-center select"
-            :style="{ backgroundImage: `url(${uploadedImage})` }"
-          ></div>
-          <img
-            :src="uploadedImage"
-            alt="上传的图片"
-            @click="openPreview(uploadedImage)"
-            class="h-full w-full object-contain object-center relative z-10"
-          />
-        </div>
-        <div class="w-full h-48px flex justify-between gap-8px mt-16px">
-          <button
-            :disabled="isGenerating"
-            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px leading-1 text-black btn-bg disabled:text-#B0B4B8ff"
-            @click="handleReplace()"
-          >
-            <IconSvg
-              name="replace"
-              :color="isGenerating ? '#B0B4B8' : 'black'"
-            />
-            <span> {{ $t("actions.replace") }} </span>
-          </button>
-          <button
-            :disabled="isGenerating"
-            class="h-full flex-1 rounded-8px flex items-center justify-center gap-6px leading-1 color-black btn-bg disabled:text-#B0B4B8ff"
-            @click="handleDelete"
-          >
-            <IconSvg
-              name="delete"
-              :color="isGenerating ? '#B0B4B8' : 'black'"
-            />
-            <span> {{ $t("actions.delete") }} </span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 生成按钮区域 -->
-      <div
-        v-if="!generatedResult"
-        class="generate-section mt-48px w-full text-center"
-      >
-        <van-button
-          round
-          type="primary"
-          @click="handleGenerate"
-          :loading="isGenerating"
-          :loading-text="$t('status.processing')"
-          class="generate-btn !w-320px !h-56px !text-20px font-bold !text-black"
-        >
-          {{ $t("actions.generateNow") }}
-        </van-button>
-        <div
-          class="warning-tip mt-30px text-12px text-#5E6266ff flex flex-col items-center justify-center gap-8px"
-        >
-          <span>{{ $t("descriptions.aiDisclaimer") }}</span>
-          <span>{{ screenTip }}</span>
-        </div>
-      </div>
-    </div>
-    <!-- 生成的结果区域 -->
-    <div
-      v-show="generatedResult"
-      class="result-section-bg absolute left-0 top-0 right-0 bottom-0"
-    ></div>
-    <div
-      v-if="generatedResult"
-      ref="step2Ref"
-      :style="{ zoom: step2Zoom }"
-      class="result-section w-full box-border px-18px py-40px flex flex-col items-center relative z-10 animate-slideUp"
-    >
-      <div
-        v-if="type === 'image' && adminConfig?.allowPrint !== false"
-        class="w-380px h-570px rounded-8px relative"
-      >
-        <img
-          :src="generatedResult"
-          alt="生成的图片"
-          class="w-full h-full object-cover object-center rounded-8px shadow-sm"
-        />
-      </div>
-      <div v-else class="w-340px h-604px rounded-8px relative">
-        <VideoPlayer
-          :src="generatedResult"
-          :poster="uploadedImage"
-          autoplay
-          class="w-full h-full object-cover overflow-hidden object-center rounded-8px shadow-sm"
-        ></VideoPlayer>
-      </div>
-
-      <!-- 打印状态显示 -->
-      <div
-        v-if="type === 'image' && printStatusText"
-        class="print-status-display mt-16px mb-8px px-16px py-8px rounded-8px text-center text-14px font-medium"
-        :class="[
-          printStatus === COMPLETED
-            ? 'bg-green-100 text-green-700'
-            : printStatus === FAILED || printStatus === CANCELLED
-            ? 'bg-red-100 text-red-700'
-            : printStatus === PRINTING
-            ? 'bg-blue-100 text-blue-700'
-            : 'bg-yellow-100 text-yellow-700',
-        ]"
-        :style="{ width: type === 'image' ? '100%' : '340px' }"
-      >
-        <div class="flex items-center justify-center gap-8px">
-          <van-loading
-            v-if="
-              printStatus === READY ||
-              printStatus === QUEUING ||
-              printStatus === PRINTING
-            "
-            type="circular"
-            size="16px"
-            :color="printStatus === PRINTING ? '#1976d2' : '#f57c00'"
-          />
-          <IconSvg
-            v-else-if="printStatus === COMPLETED"
-            name="success"
-            :size="16"
-            color="#388e3c"
-          />
-          <IconSvg
-            v-else-if="printStatus === FAILED || printStatus === CANCELLED"
-            name="inform"
-            :size="16"
-            color="#d32f2f"
-          />
-          <span>{{ printStatusText }}</span>
-        </div>
-      </div>
-
-      <div
-        class="result-actions h-48px flex gap-8px mt-24px"
-        :class="type === 'image' ? 'w-full' : 'w-340px'"
-      >
-        <!-- <van-button
-          type="default"
-          @click="backToEdit"
-          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
-        >
-          {{ $t("actions.back") }}
-        </van-button> -->
-        <van-button
-          v-if="type === 'image' && adminConfig?.allowPrint !== false"
-          icon="print"
-          type="default"
-          @click="printImage(currentImageNo)"
-          :loading="isPrinting"
-          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
-        >
-          {{ $t("actions.print") }}
-        </van-button>
-
-        <van-button
-          type="default"
-          @click="handleSave"
-          :loading="isSaving"
-          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
-        >
-          {{ $t("actions.save") }}
-        </van-button>
-      </div>
-      <div
-        class="warning-tip mt-30px text-12px text-#5E6266ff flex flex-col items-center justify-center gap-8px"
-      >
-        <span>{{ $t("descriptions.aiDisclaimer") }}</span>
-        <span>{{ screenTip }}</span>
-      </div>
-    </div>
-    <van-popup
-      v-model:show="isGenerating"
-      :close-on-click-overlay="false"
-      style="--van-popup-background: transparent"
-    >
-      <div
-        class="flex flex-col justify-center items-center loading-bg-white rounded-16px p-24px gap-12px backdrop-blur-24px"
-      >
-        <van-loading type="circular" color="#0B8A1B" />
-        <div
-          v-if="type === 'image' && adminConfig?.allowPrint !== false"
-          class="text-14px text-black"
-        >
-          {{ $t("status.processing") }}
-        </div>
-        <div v-else class="text-14px text-black">
-          <span v-html="$t('status.generating', { time: 3 })"></span>
-        </div>
-        <van-button
-          type="default"
-          @click="handleCancel"
-          class="!mt-10px px-16px h-36px text-16px font-500 !rounded-8px !border-none !text-14px !bg-#09090A0A"
-        >
-          {{ $t("actions.cancel") }}
-        </van-button>
-      </div>
-    </van-popup>
-  </div>
-</template>
-
 <script lang="ts" setup>
 import { showToast } from "vant";
-import useCreation, { type CreationType } from "@/composables/useCreation";
+import useCreation from "@/composables/useCreation";
+import type { CreationType } from "@/composables/useCreation";
 import { getTaskStatus, newTask, PrintingStatus } from "@/api/creation";
-import { fetchConfig, type AdminConfig } from "@/api/admin";
+import { fetchConfig } from "@/api/admin";
+import type { AdminConfig } from "@/api/admin";
 import {
   STORAGE_ACTIVE_KEY,
   STORAGE_USER_TOKEN_KEY,
@@ -287,16 +12,17 @@ import {
 import { useZoom } from "@/composables/useZoom";
 import { updateQueryParams } from "@/utils/url";
 import { waitWithAbort } from "@/utils/time";
-import { locale, type Locale } from "@/utils/i18n";
+import { locale } from "@/utils/i18n";
+import type { Locale } from "@/utils/i18n";
 import {
   bannerImageEn,
   bannerImageZh,
   bannerVideoEn,
   bannerVideoZh,
-  logoEn,
-  logoZh,
   imageTipEn,
   imageTipZh,
+  logoEn,
+  logoZh,
 } from "./const";
 
 const route = useRoute();
@@ -380,11 +106,11 @@ const currentImageNo = ref("");
 const sourceImageUrl = ref("");
 
 // 生成
-const doGenerate = async (
+async function doGenerate(
   url: string,
   type: CreationType,
   signal?: AbortSignal
-): Promise<string> => {
+): Promise<string> {
   // 1. 创建新任务
   const { name } = await newTask({
     url,
@@ -429,18 +155,18 @@ const doGenerate = async (
   }
 
   throw new Error();
-};
+}
 
 let controller: AbortController | null = null;
 
-const handleCancel = () => {
+function handleCancel() {
   if (controller) {
     controller.abort();
   }
-};
+}
 
 // 处理生成
-const handleGenerate = async () => {
+async function handleGenerate() {
   if (isGenerating.value) {
     return;
   }
@@ -489,25 +215,25 @@ const handleGenerate = async () => {
     resultUrl: generatedResult.value,
     lang: locale.value,
   });
-};
+}
 
 // 处理保存
-const handleSave = () => {
+function handleSave() {
   if (type.value === "image") {
     save("", "jpg");
   } else {
     save("", "mp4");
   }
-};
+}
 
-const onLocaleChange = (l: Locale) => {
+function onLocaleChange(l: Locale) {
   updateQueryParams(
     {
       lang: l,
     },
     "replace"
   );
-};
+}
 
 const step1Ref = ref<HTMLElement | null>(null);
 const step2Ref = ref<HTMLElement | null>(null);
@@ -516,7 +242,7 @@ const step1Zoom = useZoom(step1Ref);
 const step2Zoom = useZoom(step2Ref);
 
 // 获取管理员配置
-const loadAdminConfig = async () => {
+async function loadAdminConfig() {
   try {
     adminConfig.value = await fetchConfig();
   } catch (error) {
@@ -533,7 +259,7 @@ const loadAdminConfig = async () => {
       screenVideoRatios: { first: 9, second: 16 },
     };
   }
-};
+}
 onMounted(() => {
   if (route.query.token) {
     localStorage.setItem(STORAGE_USER_TOKEN_KEY, route.query.token as string);
@@ -560,6 +286,261 @@ onUnmounted(() => {
   stopPrintStatusPolling();
 });
 </script>
+
+<template>
+  <div
+    id="h5App"
+    ref="containerRef"
+    class="creation-container flex flex-col items-center relative !min-h-100vh"
+  >
+    <div
+      ref="step1Ref"
+      :style="{ zoom: step1Zoom }"
+      class="step-1 pb-28px flex flex-col w-full items-center"
+    >
+      <div
+        v-show="!generatedResult"
+        class="mb-28px mt-28px flex flex-col w-full items-center relative"
+      >
+        <img
+          class="mb-22px ml-20px h-32px w-120px self-start"
+          :src="assets.logo"
+          alt=""
+        />
+        <img class="h-130px w-414px" :src="assets.banner" alt="" />
+        <LangSwitcher
+          class="right-20px top-0 absolute"
+          @change="onLocaleChange"
+        />
+      </div>
+      <!-- 上传区域 -->
+      <div
+        v-show="(!uploadedImage && !generatedResult) || uploading"
+        class="upload-bg-white p-20px text-center rounded-24px h-360px w-360px box-border relative"
+      >
+        <van-uploader
+          ref="uploaderRef"
+          v-model="fileList"
+          :after-read="handleUpload"
+          :max-count="1"
+          reupload
+          :preview-image="false"
+          accept="image/*"
+        >
+          <div
+            class="upload-area rounded-12px flex flex-col w-320px items-center justify-center"
+            :class="type === 'image' ? 'h-254px' : 'h-320px'"
+          >
+            <div
+              v-if="uploading"
+              class="uploading flex flex-col gap-12px h-full w-full items-center justify-center"
+            >
+              <van-loading type="circular" color="#0B8A1B" />
+              <div class="upload-text-white text-14px">
+                {{ $t("upload.uploading") }}
+              </div>
+            </div>
+            <template v-else>
+              <IconSvg name="add-image" :size="32" />
+              <p class="upload-text-white text-14px mt-10px">
+                {{ $t("actions.uploadPhoto") }}
+              </p>
+            </template>
+          </div>
+        </van-uploader>
+        <div
+          v-if="type === 'image' && adminConfig?.allowPrint !== false"
+          class="h-124px w-360px bottom-0 left-0 absolute"
+        >
+          <img class="h-full w-full" :src="assets.imageTip" alt="" />
+        </div>
+      </div>
+
+      <!-- 图片预览区域 -->
+      <div
+        v-if="uploadedImage && !generatedResult && !uploading"
+        class="upload-bg-white p-20px text-center rounded-24px h-360px w-360px box-border relative"
+      >
+        <div
+          class="rounded-12px flex h-254px w-320px items-center justify-center relative overflow-hidden"
+        >
+          <div
+            class="select blur-bg h-full w-full left-0 top-0 absolute bg-cover bg-center blur-20px"
+            :style="{ backgroundImage: `url(${uploadedImage})` }"
+          />
+          <img
+            :src="uploadedImage"
+            alt="上传的图片"
+            class="h-full w-full relative z-10 object-contain object-center"
+            @click="openPreview(uploadedImage)"
+          />
+        </div>
+        <div class="mt-16px flex gap-8px h-48px w-full justify-between">
+          <button
+            :disabled="isGenerating"
+            class="btn-bg text-black leading-1 rounded-8px flex flex-1 gap-6px h-full items-center justify-center disabled:text-#B0B4B8ff"
+            @click="handleReplace()"
+          >
+            <IconSvg
+              name="replace"
+              :color="isGenerating ? '#B0B4B8' : 'black'"
+            />
+            <span> {{ $t("actions.replace") }} </span>
+          </button>
+          <button
+            :disabled="isGenerating"
+            class="btn-bg color-black leading-1 rounded-8px flex flex-1 gap-6px h-full items-center justify-center disabled:text-#B0B4B8ff"
+            @click="handleDelete"
+          >
+            <IconSvg
+              name="delete"
+              :color="isGenerating ? '#B0B4B8' : 'black'"
+            />
+            <span> {{ $t("actions.delete") }} </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 生成按钮区域 -->
+      <div
+        v-if="!generatedResult"
+        class="generate-section mt-48px text-center w-full"
+      >
+        <van-button
+          round
+          type="primary"
+          :loading="isGenerating"
+          :loading-text="$t('status.processing')"
+          class="generate-btn font-bold !text-20px !text-black !h-56px !w-320px"
+          @click="handleGenerate"
+        >
+          {{ $t("actions.generateNow") }}
+        </van-button>
+        <div
+          class="warning-tip text-12px text-#5E6266ff mt-30px flex flex-col gap-8px items-center justify-center"
+        >
+          <span>{{ $t("descriptions.aiDisclaimer") }}</span>
+          <span>{{ screenTip }}</span>
+        </div>
+      </div>
+    </div>
+    <!-- 生成的结果区域 -->
+    <div
+      v-show="generatedResult"
+      class="result-section-bg bottom-0 left-0 right-0 top-0 absolute"
+    />
+    <div
+      v-if="generatedResult"
+      ref="step2Ref"
+      :style="{ zoom: step2Zoom }"
+      class="result-section animate-slideUp px-18px py-40px flex flex-col w-full items-center box-border relative z-10"
+    >
+      <div
+        v-if="type === 'image' && adminConfig?.allowPrint !== false"
+        class="rounded-8px h-570px w-380px relative"
+      >
+        <img
+          :src="generatedResult"
+          alt="生成的图片"
+          class="rounded-8px h-full w-full shadow-sm object-cover object-center"
+        />
+      </div>
+      <div v-else class="rounded-8px h-604px w-340px relative">
+        <VideoPlayer
+          :src="generatedResult"
+          :poster="uploadedImage"
+          autoplay
+          class="rounded-8px h-full w-full shadow-sm overflow-hidden object-cover object-center"
+        />
+      </div>
+
+      <!-- 打印状态显示 -->
+      <div
+        v-if="type === 'image' && printStatusText"
+        class="print-status-display text-14px font-medium mb-8px mt-16px px-16px py-8px text-center rounded-8px"
+        :class="[
+          printStatus === COMPLETED
+            ? 'bg-green-100 text-green-700'
+            : printStatus === FAILED || printStatus === CANCELLED
+            ? 'bg-red-100 text-red-700'
+            : printStatus === PRINTING
+            ? 'bg-blue-100 text-blue-700'
+            : 'bg-yellow-100 text-yellow-700',
+        ]"
+        :style="{ width: type === 'image' ? '100%' : '340px' }"
+      >
+        <div class="flex gap-8px items-center justify-center">
+          <span>{{ printStatusText }}</span>
+        </div>
+      </div>
+
+      <div
+        class="result-actions mt-24px flex gap-8px h-48px"
+        :class="type === 'image' ? 'w-full' : 'w-340px'"
+      >
+        <!-- <van-button
+          type="default"
+          @click="backToEdit"
+          class="action-btn flex-1 h-full text-16px font-500 !rounded-8px !border-none shadow-sm !text-14px"
+        >
+          {{ $t("actions.back") }}
+        </van-button> -->
+        <van-button
+          v-if="type === 'image' && adminConfig?.allowPrint !== false"
+          icon="print"
+          type="default"
+          :loading="isPrinting"
+          class="action-btn text-16px font-500 flex-1 h-full shadow-sm !text-14px !rounded-8px !border-none"
+          @click="printImage(currentImageNo)"
+        >
+          {{ $t("actions.print") }}
+        </van-button>
+
+        <van-button
+          type="default"
+          :loading="isSaving"
+          class="action-btn text-16px font-500 flex-1 h-full shadow-sm !text-14px !rounded-8px !border-none"
+          @click="handleSave"
+        >
+          {{ $t("actions.save") }}
+        </van-button>
+      </div>
+      <div
+        class="warning-tip text-12px text-#5E6266ff mt-30px flex flex-col gap-8px items-center justify-center"
+      >
+        <span>{{ $t("descriptions.aiDisclaimer") }}</span>
+        <span>{{ screenTip }}</span>
+      </div>
+    </div>
+    <van-popup
+      v-model:show="isGenerating"
+      :close-on-click-overlay="false"
+      style="--van-popup-background: transparent"
+    >
+      <div
+        class="loading-bg-white p-24px rounded-16px flex flex-col gap-12px items-center justify-center backdrop-blur-24px"
+      >
+        <van-loading type="circular" color="#0B8A1B" />
+        <div
+          v-if="type === 'image' && adminConfig?.allowPrint !== false"
+          class="text-14px text-black"
+        >
+          {{ $t("status.processing") }}
+        </div>
+        <div v-else class="text-14px text-black">
+          <span v-html="$t('status.generating', { time: 3 })" />
+        </div>
+        <van-button
+          type="default"
+          class="text-16px font-500 px-16px h-36px !text-14px !mt-10px !rounded-8px !border-none !bg-#09090A0A"
+          @click="handleCancel"
+        >
+          {{ $t("actions.cancel") }}
+        </van-button>
+      </div>
+    </van-popup>
+  </div>
+</template>
 
 <style lang="less">
 .creation-container {

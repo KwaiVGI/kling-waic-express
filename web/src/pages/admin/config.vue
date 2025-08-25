@@ -1,31 +1,83 @@
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { fetchConfig, saveConfig } from '@/api/admin'
+import type { AdminConfig } from '@/api/admin'
+import { showToast } from 'vant'
+
+// 配置相关状态
+const config = ref<AdminConfig | null>(null)
+const loading = ref(false)
+const saving = ref(false)
+
+// 加载配置
+async function loadConfig() {
+  loading.value = true
+  try {
+    config.value = await fetchConfig()
+    showToast('配置加载成功')
+  }
+  catch (error) {
+    console.error('加载配置失败:', error)
+    showToast('加载配置失败，请稍后重试')
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+// 保存配置
+async function handleSaveConfig() {
+  if (!config.value)
+    return
+
+  saving.value = true
+  try {
+    await saveConfig(config.value)
+    showToast('配置保存成功')
+  }
+  catch (error) {
+    console.error('保存配置失败:', error)
+    showToast('保存配置失败，请稍后重试')
+  }
+  finally {
+    saving.value = false
+  }
+}
+
+// 页面加载时自动获取配置
+onMounted(() => {
+  loadConfig()
+})
+</script>
+
 <template>
   <div class="config-container">
     <div class="config-header">
       <h2>系统配置</h2>
       <div class="config-actions">
         <button
-          class="btn btn-secondary"
-          @click="loadConfig"
+          class="btn-secondary btn"
           :disabled="loading"
+          @click="loadConfig"
         >
           {{ loading ? "加载中..." : "刷新配置" }}
         </button>
         <button
-          class="btn btn-primary"
-          @click="handleSaveConfig"
+          class="btn-primary btn"
           :disabled="saving"
+          @click="handleSaveConfig"
         >
           {{ saving ? "保存中..." : "保存配置" }}
         </button>
       </div>
     </div>
 
-    <div class="config-content" v-if="config">
+    <div v-if="config" class="config-content">
       <div class="config-grid">
         <div class="config-item">
           <div class="switch-item">
             <span class="switch-label">允许打印</span>
-            <van-switch 
+            <van-switch
               v-model="config.allowPrint"
               size="20px"
               active-color="#4361ee"
@@ -36,7 +88,7 @@
         <div class="config-item">
           <div class="switch-item">
             <span class="switch-label">图片服务在线</span>
-            <van-switch 
+            <van-switch
               v-model="config.imageServiceOnline"
               size="20px"
               active-color="#4361ee"
@@ -47,7 +99,7 @@
         <div class="config-item">
           <div class="switch-item">
             <span class="switch-label">视频服务在线</span>
-            <van-switch 
+            <van-switch
               v-model="config.videoServiceOnline"
               size="20px"
               active-color="#4361ee"
@@ -59,11 +111,11 @@
           <div class="input-item">
             <span class="input-label">图片Token过期时间(秒)</span>
             <input
-              type="number"
               v-model.number="config.imageTokenExpireInSeconds"
+              type="number"
               class="config-input-inline"
               min="1"
-            />
+            >
           </div>
         </div>
 
@@ -71,11 +123,11 @@
           <div class="input-item">
             <span class="input-label">视频Token过期时间(秒)</span>
             <input
-              type="number"
               v-model.number="config.videoTokenExpireInSeconds"
+              type="number"
               class="config-input-inline"
               min="1"
-            />
+            >
           </div>
         </div>
 
@@ -83,11 +135,11 @@
           <div class="input-item">
             <span class="input-label">打印机最大任务数</span>
             <input
-              type="number"
               v-model.number="config.maxPrinterJobCount"
+              type="number"
               class="config-input-inline"
               min="1"
-            />
+            >
           </div>
         </div>
 
@@ -96,18 +148,18 @@
             <span class="input-label">图片大屏宽高比</span>
             <div class="ratio-input">
               <input
-                type="number"
                 v-model.number="config.screenImageRatios.first"
+                type="number"
                 class="config-input-small"
                 min="1"
-              />
+              >
               <span>:</span>
               <input
-                type="number"
                 v-model.number="config.screenImageRatios.second"
+                type="number"
                 class="config-input-small"
                 min="1"
-              />
+              >
             </div>
           </div>
         </div>
@@ -117,18 +169,18 @@
             <span class="input-label">视频大屏宽高比</span>
             <div class="ratio-input">
               <input
-                type="number"
                 v-model.number="config.screenVideoRatios.first"
+                type="number"
                 class="config-input-small"
                 min="1"
-              />
+              >
               <span>:</span>
               <input
-                type="number"
                 v-model.number="config.screenVideoRatios.second"
+                type="number"
                 class="config-input-small"
                 min="1"
-              />
+              >
             </div>
           </div>
         </div>
@@ -140,52 +192,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { fetchConfig, saveConfig, type AdminConfig } from "@/api/admin";
-import { showToast } from "vant";
-
-// 配置相关状态
-const config = ref<AdminConfig | null>(null);
-const loading = ref(false);
-const saving = ref(false);
-
-// 加载配置
-const loadConfig = async () => {
-  loading.value = true;
-  try {
-    config.value = await fetchConfig();
-    showToast("配置加载成功");
-  } catch (error) {
-    console.error("加载配置失败:", error);
-    showToast("加载配置失败，请稍后重试");
-  } finally {
-    loading.value = false;
-  }
-};
-
-// 保存配置
-const handleSaveConfig = async () => {
-  if (!config.value) return;
-
-  saving.value = true;
-  try {
-    await saveConfig(config.value);
-    showToast("配置保存成功");
-  } catch (error) {
-    console.error("保存配置失败:", error);
-    showToast("保存配置失败，请稍后重试");
-  } finally {
-    saving.value = false;
-  }
-};
-
-// 页面加载时自动获取配置
-onMounted(() => {
-  loadConfig();
-});
-</script>
 
 <style scoped>
 .config-container {

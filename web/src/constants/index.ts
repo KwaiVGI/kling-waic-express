@@ -1,2 +1,2 @@
-export const appName = "";
-export const appDescription = "";
+export const appName = ''
+export const appDescription = ''

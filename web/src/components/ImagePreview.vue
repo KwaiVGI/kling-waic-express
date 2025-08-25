@@ -1,3 +1,151 @@
+<script setup lang="ts">
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+
+// 定义图片类型接口
+interface ImageItem {
+  id?: string
+  name?: string
+  no?: string
+  url?: string
+  thumbnailUrl?: string
+}
+
+// Props 定义
+interface Props {
+  visible: boolean
+  images: ImageItem[]
+  currentIndex: number
+}
+
+// Emits 定义
+interface Emits {
+  (e: 'update:visible', value: boolean): void
+  (e: 'update:currentIndex', value: number): void
+  (e: 'close'): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  visible: false,
+  images: () => [],
+  currentIndex: 0,
+})
+
+const emit = defineEmits<Emits>()
+
+// 缩略图容器引用
+const thumbnailContainer = ref<HTMLElement>()
+
+// 当前预览的图片
+const currentImage = computed(() => {
+  return props.images[props.currentIndex]
+})
+
+// 关闭预览
+function handleClose() {
+  emit('update:visible', false)
+  emit('close')
+}
+
+// 处理画布点击事件（点击空白区域关闭）
+function handleCanvasClick(event: MouseEvent) {
+  // 只有当点击的是画布本身（而不是其子元素）时才关闭
+  if (event.target === event.currentTarget) {
+    handleClose()
+  }
+}
+
+// 上一张图片
+function previousImage() {
+  if (props.currentIndex > 0) {
+    emit('update:currentIndex', props.currentIndex - 1)
+  }
+}
+
+// 下一张图片
+function nextImage() {
+  if (props.currentIndex < props.images.length - 1) {
+    emit('update:currentIndex', props.currentIndex + 1)
+  }
+}
+
+// 跳转到指定图片
+function jumpToImage(index: number) {
+  emit('update:currentIndex', index)
+}
+
+// 图片加载完成
+function onImageLoad() {
+  // 可以在这里添加图片加载完成后的逻辑
+}
+
+// 滚动到当前缩略图
+async function scrollToCurrentThumbnail() {
+  await nextTick()
+  if (thumbnailContainer.value) {
+    const activeItem = thumbnailContainer.value.querySelector('.viewer-thumbnail.active') as HTMLElement
+    if (activeItem) {
+      activeItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      })
+    }
+  }
+}
+
+// 键盘事件处理
+function handleKeydown(event: KeyboardEvent) {
+  if (!props.visible)
+    return
+
+  switch (event.key) {
+    case 'Escape':
+      handleClose()
+      break
+    case 'ArrowLeft':
+      previousImage()
+      break
+    case 'ArrowRight':
+      nextImage()
+      break
+  }
+}
+
+// 监听 visible 变化，控制页面滚动
+watch(
+  () => props.visible,
+  (newVisible) => {
+    if (newVisible) {
+      document.body.style.overflow = 'hidden'
+      scrollToCurrentThumbnail()
+    }
+    else {
+      document.body.style.overflow = ''
+    }
+  },
+)
+
+// 监听当前索引变化，滚动到对应缩略图
+watch(
+  () => props.currentIndex,
+  () => {
+    scrollToCurrentThumbnail()
+  },
+)
+
+// 组件挂载时添加键盘事件监听
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+// 组件卸载时清理事件监听
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+  // 确保恢复页面滚动
+  document.body.style.overflow = ''
+})
+</script>
+
 <template>
   <!-- 图片预览模态框 -->
   <Teleport to="body">
@@ -12,7 +160,7 @@
         </div>
         <button class="viewer-close" @click="handleClose">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
         </button>
       </div>
@@ -26,7 +174,7 @@
           @click.stop="previousImage"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
 
@@ -36,7 +184,7 @@
           @click.stop="nextImage"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
 
@@ -48,7 +196,7 @@
             class="viewer-image"
             @load="onImageLoad"
             @click.stop
-          />
+          >
         </div>
       </div>
 
@@ -66,159 +214,13 @@
               :src="image.thumbnailUrl || image.url"
               :alt="image.name || image.no"
               class="viewer-thumbnail-image"
-            />
+            >
           </div>
         </div>
       </div>
     </div>
   </Teleport>
 </template>
-
-<script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch, ref, nextTick } from "vue";
-
-// 定义图片类型接口
-interface ImageItem {
-  id?: string;
-  name?: string;
-  no?: string;
-  url?: string;
-  thumbnailUrl?: string;
-}
-
-// Props 定义
-interface Props {
-  visible: boolean;
-  images: ImageItem[];
-  currentIndex: number;
-}
-
-// Emits 定义
-interface Emits {
-  (e: "update:visible", value: boolean): void;
-  (e: "update:currentIndex", value: number): void;
-  (e: "close"): void;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  visible: false,
-  images: () => [],
-  currentIndex: 0,
-});
-
-const emit = defineEmits<Emits>();
-
-// 缩略图容器引用
-const thumbnailContainer = ref<HTMLElement>();
-
-// 当前预览的图片
-const currentImage = computed(() => {
-  return props.images[props.currentIndex];
-});
-
-// 关闭预览
-const handleClose = () => {
-  emit("update:visible", false);
-  emit("close");
-};
-
-// 处理画布点击事件（点击空白区域关闭）
-const handleCanvasClick = (event: MouseEvent) => {
-  // 只有当点击的是画布本身（而不是其子元素）时才关闭
-  if (event.target === event.currentTarget) {
-    handleClose();
-  }
-};
-
-// 上一张图片
-const previousImage = () => {
-  if (props.currentIndex > 0) {
-    emit("update:currentIndex", props.currentIndex - 1);
-  }
-};
-
-// 下一张图片
-const nextImage = () => {
-  if (props.currentIndex < props.images.length - 1) {
-    emit("update:currentIndex", props.currentIndex + 1);
-  }
-};
-
-// 跳转到指定图片
-const jumpToImage = (index: number) => {
-  emit("update:currentIndex", index);
-};
-
-// 图片加载完成
-const onImageLoad = () => {
-  // 可以在这里添加图片加载完成后的逻辑
-};
-
-// 滚动到当前缩略图
-const scrollToCurrentThumbnail = async () => {
-  await nextTick();
-  if (thumbnailContainer.value) {
-    const activeItem = thumbnailContainer.value.querySelector('.viewer-thumbnail.active') as HTMLElement;
-    if (activeItem) {
-      activeItem.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      });
-    }
-  }
-};
-
-// 键盘事件处理
-const handleKeydown = (event: KeyboardEvent) => {
-  if (!props.visible) return;
-
-  switch (event.key) {
-    case "Escape":
-      handleClose();
-      break;
-    case "ArrowLeft":
-      previousImage();
-      break;
-    case "ArrowRight":
-      nextImage();
-      break;
-  }
-};
-
-// 监听 visible 变化，控制页面滚动
-watch(
-  () => props.visible,
-  (newVisible) => {
-    if (newVisible) {
-      document.body.style.overflow = "hidden";
-      scrollToCurrentThumbnail();
-    } else {
-      document.body.style.overflow = "";
-    }
-  }
-);
-
-// 监听当前索引变化，滚动到对应缩略图
-watch(
-  () => props.currentIndex,
-  () => {
-    scrollToCurrentThumbnail();
-  }
-);
-
-// 组件挂载时添加键盘事件监听
-onMounted(() => {
-  document.addEventListener("keydown", handleKeydown);
-});
-
-// 组件卸载时清理事件监听
-onUnmounted(() => {
-  document.removeEventListener("keydown", handleKeydown);
-  // 确保恢复页面滚动
-  document.body.style.overflow = "";
-});
-</script>
 
 <style scoped>
 /* Viewer.js 风格的图片预览器 */
@@ -237,8 +239,12 @@ onUnmounted(() => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* 工具栏 */

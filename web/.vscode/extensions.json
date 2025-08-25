@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "Vue.volar",
+    "antfu.unocss",
+    "antfu.goto-alias",
+    "antfu.iconify",
+    "antfu.file-nesting",
+    "lokalise.i18n-ally",
+    "blueglassblock.better-json5"
+  ],
+  "unwantedRecommendations": [
+    "esbenp.prettier-vscode",
+    "octref.vetur"
+  ]
+}

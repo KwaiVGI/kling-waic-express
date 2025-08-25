@@ -6,32 +6,32 @@ import { computed } from 'vue'
 const props = defineProps({
   prefix: {
     type: String,
-    default: 'icon'
+    default: 'icon',
   },
   /**
    * 图标的名字 驼峰命名会自动转为横杠连接
-   * */
+   */
   name: {
     type: String,
-    default: ''
+    default: '',
   },
   /**
    * name/url 二选一，远程的优先
    * name: 本地的ICON
    * url: 远程的ICON
-   *  */
+   */
   url: {
     type: String,
-    default: ''
+    default: '',
   },
   size: {
     type: [Number, String, Array],
-    default: 16
+    default: 16,
   },
   color: {
     type: String,
-    default: 'currentColor'
-  }
+    default: 'currentColor',
+  },
 })
 function camelToKebab(str: string) {
   return str
@@ -50,7 +50,8 @@ const getStyle = computed((): CSSProperties => {
   if (Array.isArray(size)) {
     w = `${size[0] as number}`
     h = `${size[1] as number}`
-  } else {
+  }
+  else {
     w = `${size}`
     h = `${size}`
   }
@@ -59,15 +60,17 @@ const getStyle = computed((): CSSProperties => {
   return {
     width: w,
     height: h,
-    color: !props.color || props.color === 'currentColor' ? undefined : props.color
+    color: !props.color || props.color === 'currentColor' ? undefined : props.color,
   }
 })
 </script>
+
 <template>
   <svg :class="[prefixCls, $attrs.class]" :style="getStyle" aria-hidden="true">
     <use :xlink:href="url || symbolId" class="svg-icon" />
   </svg>
 </template>
+
 <style lang="scss" scoped>
 .svg-icon {
   display: inline-block;

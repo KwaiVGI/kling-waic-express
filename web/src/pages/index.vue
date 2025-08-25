@@ -1,3 +1,5 @@
+<script setup lang="ts"></script>
+
 <template>
   <div class="ds-container">
     <!-- <div
@@ -14,12 +16,10 @@
       </div>
     </div> -->
     <h2 class="text-center">
-      欢迎来展台现场零距离体验生成式AI魅力，7月26日-29日，锁定上海世博展览馆H1-B821！<br />期待与您相遇！
+      欢迎来展台现场零距离体验生成式AI魅力，7月26日-29日，锁定上海世博展览馆H1-B821！<br>期待与您相遇！
     </h2>
   </div>
 </template>
-
-<script setup lang="ts"></script>
 
 <style scoped>
 .ds-container {

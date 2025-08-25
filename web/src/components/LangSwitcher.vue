@@ -1,24 +1,24 @@
+<script setup lang="ts">
+import { locale } from '@/utils/i18n'
+
+const emit = defineEmits(['change'])
+function switchLanguage() {
+  const newLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
+  locale.value = newLocale
+  emit('change', newLocale)
+}
+</script>
+
 <template>
-  <button @click="switchLanguage" class="language-btn">
+  <button class="language-btn" @click="switchLanguage">
     <span>{{ $t("language.switch") }}</span>
     <img
-      class="w-16px h-16px"
+      class="h-16px w-16px"
       src="https://ali.a.yximgs.com/kos/nlav12119/SPLdxJSr_2025-07-22-11-52-18.png"
       alt=""
-    />
+    >
   </button>
 </template>
-
-<script setup lang="ts">
-import { locale } from "@/utils/i18n";
-
-const emit = defineEmits(["change"]);
-const switchLanguage = () => {
-  const newLocale = locale.value === "zh-CN" ? "en-US" : "zh-CN";
-  locale.value = newLocale;
-  emit("change", newLocale);
-};
-</script>
 
 <style scoped>
 .language-btn {
