@@ -43,7 +43,13 @@
   "print": {
     "noContent": "No content to print.",
     "taskSent": "Print request sent. Please queue up to collect.",
-    "duplicateWarning": "Please print only once."
+    "duplicateWarning": "Please print only once.",
+    "status": {
+      "waiting": "People ahead in queue: {count}",
+      "printing": "Printing in progress, please queue up to collect",
+      "completed": "Print completed, please queue up to collect",
+      "failed": "Print failed, please contact on-site staff"
+    }
   },
   "errors": {
     "generic": {

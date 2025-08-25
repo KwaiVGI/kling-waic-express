@@ -1,6 +1,6 @@
-import { ref, computed } from "vue";
+import { ref, computed, onUnmounted } from "vue";
 import { showToast } from "vant";
-import { printImageTask, uploadFile } from "@/api/creation";
+import { printImageTask, uploadFile, getPrintingStatus, PrintingStatus } from "@/api/creation";
 import { saveAs } from "file-saver";
 import { updateQueryParams } from "@/utils/url";
 
@@ -26,6 +26,9 @@ export default function useCreation(creationType: CreationType) {
   const isGenerating = ref(false);
   const isSaving = ref(false);
   const isPrinting = ref(false);
+  const printStatus = ref<string | null>(null);
+  const printAheadCount = ref<number | null>(null);
+  const printStatusPolling = ref<NodeJS.Timeout | null>(null);
 
   // 计算模糊背景样式
   const blurStyle = computed(() => {
@@ -203,6 +206,50 @@ export default function useCreation(creationType: CreationType) {
     );
   };
 
+  // 停止打印状态轮询
+  const stopPrintStatusPolling = () => {
+    if (printStatusPolling.value) {
+      clearInterval(printStatusPolling.value);
+      printStatusPolling.value = null;
+    }
+  };
+
+  // 开始打印状态轮询
+  const startPrintStatusPolling = (name: string) => {
+    stopPrintStatusPolling();
+    
+    const pollStatus = async () => {
+      try {
+        const result = await getPrintingStatus(name);
+        printStatus.value = result.status;
+        printAheadCount.value = result.aheadCount;
+        
+        // 检查状态是否在预期的 PrintingStatus 枚举中
+        const validStatuses = Object.values(PrintingStatus);
+        if (!validStatuses.includes(result.status as PrintingStatus)) {
+          console.warn('未知的打印状态:', result.status);
+          stopPrintStatusPolling();
+          return;
+        }
+        
+        // 如果打印完成、失败或取消，停止轮询
+        if ([PrintingStatus.COMPLETED, PrintingStatus.FAILED, PrintingStatus.CANCELLED].includes(result.status as PrintingStatus)) {
+          stopPrintStatusPolling();
+        }
+      } catch (error) {
+        console.error('获取打印状态失败:', error);
+        // 如果获取状态失败，停止轮询
+        stopPrintStatusPolling();
+      }
+    };
+    
+    // 立即执行一次
+    pollStatus();
+    
+    // 每2秒轮询一次
+    printStatusPolling.value = setInterval(pollStatus, 2000);
+  };
+
   // 打印图片（仅图片类型）
   const printImage = async (name: string) => {
     if (!generatedResult.value || creationType !== "image") {
@@ -217,6 +264,9 @@ export default function useCreation(creationType: CreationType) {
         message: t("print.taskSent"),
         duration: 3500,
       });
+      
+      // 开始轮询打印状态
+      startPrintStatusPolling(name);
     } catch (error) {
       if (error.message === "DUPLICATE_PRINT") {
         showToast(t("print.duplicateWarning"));
@@ -227,6 +277,11 @@ export default function useCreation(creationType: CreationType) {
       isPrinting.value = false;
     }
   };
+
+  // 组件卸载时清理轮询
+  onUnmounted(() => {
+    stopPrintStatusPolling();
+  });
 
   return {
     uploaderRef,
@@ -240,6 +295,8 @@ export default function useCreation(creationType: CreationType) {
     isGenerating,
     isSaving,
     isPrinting,
+    printStatus,
+    printAheadCount,
     showPreview,
     previewItems,
     previewIndex,
@@ -254,5 +311,6 @@ export default function useCreation(creationType: CreationType) {
     save,
     backToEdit,
     printImage,
+    stopPrintStatusPolling,
   };
 }

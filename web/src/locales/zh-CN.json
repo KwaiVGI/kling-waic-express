@@ -43,7 +43,13 @@
   "print": {
     "noContent": "没有可打印的内容",
     "taskSent": "已发送打印任务，请排队领取",
-    "duplicateWarning": "请不要重复打印哈"
+    "duplicateWarning": "请不要重复打印哈",
+    "status": {
+      "waiting": "打印前面等待人数：{count}",
+      "printing": "正在打印中，请排队领取",
+      "completed": "打印完成，请排队领取",
+      "failed": "打印失败，请联系现场工作人员"
+    }
   },
   "errors": {
     "generic": {

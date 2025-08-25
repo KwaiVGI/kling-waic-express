@@ -162,6 +162,44 @@
         ></VideoPlayer>
       </div>
 
+      <!-- 打印状态显示 -->
+      <div
+        v-if="type === 'image' && printStatusText"
+        class="print-status-display mt-16px mb-8px px-16px py-8px rounded-8px text-center text-14px font-medium"
+        :class="[
+          printStatus === COMPLETED
+            ? 'bg-green-100 text-green-700'
+            : printStatus === FAILED || printStatus === CANCELLED
+            ? 'bg-red-100 text-red-700'
+            : printStatus === PRINTING
+            ? 'bg-blue-100 text-blue-700'
+            : 'bg-yellow-100 text-yellow-700',
+        ]"
+        :style="{ width: type === 'image' ? '100%' : '340px' }"
+      >
+        <div class="flex items-center justify-center gap-8px">
+          <van-loading 
+            v-if="printStatus === READY || printStatus === QUEUING || printStatus === PRINTING"
+            type="circular" 
+            size="16px"
+            :color="printStatus === PRINTING ? '#1976d2' : '#f57c00'"
+          />
+          <IconSvg 
+            v-else-if="printStatus === COMPLETED"
+            name="success" 
+            :size="16" 
+            color="#388e3c"
+          />
+          <IconSvg 
+            v-else-if="printStatus === FAILED || printStatus === CANCELLED"
+            name="inform" 
+            :size="16" 
+            color="#d32f2f"
+          />
+          <span>{{ printStatusText }}</span>
+        </div>
+      </div>
+
       <div
         class="result-actions h-48px flex gap-8px mt-24px"
         :class="type === 'image' ? 'w-full' : 'w-340px'"
@@ -230,7 +268,7 @@
 <script lang="ts" setup>
 import { showToast } from "vant";
 import useCreation, { type CreationType } from "@/composables/useCreation";
-import { getTaskStatus, newTask } from "@/api/creation";
+import { getTaskStatus, newTask, PrintingStatus } from "@/api/creation";
 import { STORAGE_USER_TOKEN_KEY } from "@/stores/mutation-type";
 import { useZoom } from "@/composables/useZoom";
 import { updateQueryParams } from "@/utils/url";
@@ -269,6 +307,35 @@ const screenTip = computed(() => {
     : t("descriptions.videoScreenTip");
 });
 
+// 打印状态文本
+const printStatusText = computed(() => {
+  if (!printStatus.value) return null;
+  
+  // 检查状态是否在有效的 PrintingStatus 枚举中
+  const validStatuses = Object.values(PrintingStatus);
+  if (!validStatuses.includes(printStatus.value as PrintingStatus)) {
+    return null;
+  }
+
+  switch (printStatus.value) {
+    case READY:
+    case QUEUING:
+      return t("print.status.waiting", { count: printAheadCount.value || 0 });
+    case PRINTING:
+      return t("print.status.printing");
+    case COMPLETED:
+      return t("print.status.completed");
+    case FAILED:
+    case CANCELLED:
+      return t("print.status.failed");
+    default:
+      return null;
+  }
+});
+
+// 暴露 PrintingStatus 给模板使用
+const { READY, QUEUING, PRINTING, COMPLETED, FAILED, CANCELLED } = PrintingStatus;
+
 // 使用组合函数
 const {
   uploaderRef,
@@ -278,6 +345,8 @@ const {
   isGenerating,
   isSaving,
   isPrinting,
+  printStatus,
+  printAheadCount,
   handleUpload,
   uploading,
   openPreview,
@@ -287,6 +356,7 @@ const {
   save,
   backToEdit,
   printImage,
+  stopPrintStatusPolling,
 } = useCreation(type.value as "image" | "video");
 
 const currentImageNo = ref("");
@@ -441,6 +511,11 @@ onMounted(() => {
     sourceImageUrl.value = decodeURIComponent(route.query.sourceUrl as string);
   }
 });
+
+onUnmounted(() => {
+  // 清理打印状态轮询
+  stopPrintStatusPolling();
+});
 </script>
 
 <style lang="less">
@@ -487,6 +562,33 @@ onMounted(() => {
   .result-section-bg {
     background: rgba(255, 255, 255, 0.64);
     backdrop-filter: blur(20px);
+  }
+
+  .print-status-display {
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    &.bg-green-100 {
+      background: rgba(76, 175, 80, 0.1);
+      border-color: rgba(76, 175, 80, 0.3);
+    }
+
+    &.bg-red-100 {
+      background: rgba(244, 67, 54, 0.1);
+      border-color: rgba(244, 67, 54, 0.3);
+    }
+
+    &.bg-blue-100 {
+      background: rgba(33, 150, 243, 0.1);
+      border-color: rgba(33, 150, 243, 0.3);
+    }
+
+    &.bg-yellow-100 {
+      background: rgba(255, 193, 7, 0.1);
+      border-color: rgba(255, 193, 7, 0.3);
+    }
   }
 }
 

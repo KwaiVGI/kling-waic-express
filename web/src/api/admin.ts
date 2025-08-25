@@ -112,3 +112,22 @@ export async function printImageFromConsole({
 }): Promise<{ status: TaskStatus; outputs: TaskOutput }> {
   return request.post(`/api/tasks/${type}/${name}/printFromConsole`);
 }
+
+export interface AdminConfig {
+  allowPrint: boolean; // 是否允许打印
+  imageServiceOnline: boolean; // 图片服务是否在线
+  videoServiceOnline: boolean; // 视频服务是否在线
+  imageTokenExpireInSeconds: number; // 图片服务token过期时间
+  videoTokenExpireInSeconds: number; // 视频服务token过期时间
+  maxPrinterJobCount: number; // 打印机最大打印任务数
+  screenImageRatios: [number, number]; // 图片大屏宽高比例
+  screenVideoRatios: [number, number]; // 视频大屏宽高比例
+}
+
+export async function fetchConfig(): Promise<AdminConfig> {
+  return request.get("/api/admin/config/fetch");
+}
+
+export async function saveConfig(params: AdminConfig): Promise<string> {
+  return request.post("/api/admin/config/save", params);
+}
