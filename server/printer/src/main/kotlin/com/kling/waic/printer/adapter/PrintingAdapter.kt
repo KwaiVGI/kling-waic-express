@@ -112,7 +112,7 @@ class PrintAdapter(
         // 2. 合成一张大图（横向拼接）
         val combined = BufferedImage(
             img1.width + img2.width,
-            img1.height,
+            maxOf(img1.height, img2.height),
             BufferedImage.TYPE_INT_RGB
         )
         val g = combined.createGraphics()
@@ -131,7 +131,7 @@ class PrintAdapter(
         val doc: Doc = SimpleDoc(inputStream, flavor, docAttrs)
 
         val attrs = HashPrintRequestAttributeSet()
-        attrs.add(OrientationRequested.LANDSCAPE)
+        attrs.add(OrientationRequested.PORTRAIT)
         attrs.add(MediaPrintableArea(0f, 0f, 8f, 6f, MediaPrintableArea.INCH))
         attrs.add(JobName("Two:${printings[0].name}-${printings[1].name}", Locale.getDefault()))
 
