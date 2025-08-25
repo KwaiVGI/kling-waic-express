@@ -87,13 +87,12 @@ class PrintAdapter(
             return
         }
 
-//        printings.forEach { printOne(it) }
-//        val printings = printingDataClient.fetchPrinting(2)
-        if (printings.size == 2) {
-            printTwoAsOne(printings)
-        } else if (printings.size == 1) {
-            printOne(printings[0])
-        }
+        printings.forEach { printOne(it) }
+//        if (printings.size == 2) {
+//            printTwoAsOne(printings)
+//        } else if (printings.size == 1) {
+//            printOne(printings[0])
+//        }
     }
 
     /**
@@ -143,7 +142,6 @@ class PrintAdapter(
     }
 
     private fun printOne(printing: Printing) {
-        val taskName = printing.task.name
         val imageUrl = printing.task.outputs!!.url
 
         URL(imageUrl).openStream()
