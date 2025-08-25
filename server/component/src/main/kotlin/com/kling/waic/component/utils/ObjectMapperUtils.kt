@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule
 import com.kling.waic.component.exception.JsonProcessingException
 import java.io.IOException
@@ -22,6 +23,7 @@ class ObjectMapperUtils {
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .registerModule(ParameterNamesModule())
             .registerModule(JavaTimeModule())
+            .registerModule(KotlinModule.Builder().build())
 
         fun toJSON(obj: Any?): String? {
             if (obj == null) {
