@@ -138,10 +138,9 @@ class XiaozhaoActivityHandler(
     }
 
     override fun getPrompts(): List<String> {
-        log.info("prompts for xiaozhao: ${styleImagePromptsForXiaozhao}")
+        log.debug("prompts for xiaozhao: ${styleImagePromptsForXiaozhao}")
 
         val taskN = getImageTaskMode().taskN
-
         val centerPrompt = styleImagePromptsForXiaozhao.first()
         val surroundingPrompts = styleImagePromptsForXiaozhao.drop(1)
             .shuffled()
