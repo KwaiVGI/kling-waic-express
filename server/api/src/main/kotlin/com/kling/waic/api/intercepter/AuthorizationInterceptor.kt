@@ -40,8 +40,12 @@ class AuthorizationInterceptor(
             )
             return true
         }
-        val annotation = handler.getMethodAnnotation(Authorization::class.java) ?: return true
 
+        // Check token
+        val activity = request.getHeader("Activity") ?: ""
+        ThreadContextUtils.putActivity(activity)
+
+        val annotation = handler.getMethodAnnotation(Authorization::class.java) ?: return true
         log.debug("Authorization required for: {}, type: {}", request.requestURI, annotation.type)
 
         val authHeader = request.getHeader("Authorization")
@@ -51,21 +55,7 @@ class AuthorizationInterceptor(
             return false
         }
 
-        // Check token
-        val activity = request.getHeader("Activity") ?: ""
         val token = authHeader.substring(6) // Remove "Token " prefix
-
-        // todo: remove this mock codes
-//        val activity = "xiaozhao"
-//        val token = if (annotation.type == AuthorizationType.MANAGEMENT) {
-//            "KlingXIAOZHAO666"
-//        } else {
-//            authHeader.substring(6)
-//        }
-
-        // Set activity in ThreadContext BEFORE validation so JedisAspect can use it
-        ThreadContextUtils.putActivity(activity)
-
         if (!validateToken(activity, token, annotation.type)) {
             log.warn(
                 "Authorization failed - invalid token: $token with type: ${annotation.type} " +

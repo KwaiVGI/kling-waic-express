@@ -4,10 +4,18 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.kling.waic.component.selector.ActivityHandlerSelector
 import com.kling.waic.component.utils.Slf4j.Companion.log
+import com.kling.waic.component.utils.ThreadContextUtils
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+
+data class JWTWrapper (
+    val jwt: String,
+    val expireAtMillis: Long
+)
 
 @Component
 class JWTHelper(
@@ -18,33 +26,26 @@ class JWTHelper(
     private val activityHandlerSelector: ActivityHandlerSelector
 ) {
 
-    @Volatile
-    private var latestJWT: String? = null
-
-    @Volatile
-    private var expireAtMillis: Long? = null
+    private val latestJWTMap: ConcurrentMap<String, JWTWrapper> = ConcurrentHashMap()
 
     fun getLatest(): String {
         val now = Instant.now().toEpochMilli()
+        val activity = ThreadContextUtils.getActivity()
 
-        if (latestJWT != null
-            && expireAtMillis != null
-            && expireAtMillis!! > now + SAFETY_MARGIN_MS
-        ) {
-            return latestJWT!!
+        val jWTWrapper = latestJWTMap[activity]
+        if (jWTWrapper != null && jWTWrapper.expireAtMillis > now + SAFETY_MARGIN_MS) {
+            return jWTWrapper.jwt
         }
 
         synchronized(this) {
             val refreshedNow = Instant.now().toEpochMilli()
-            if (latestJWT == null
-                || expireAtMillis == null
-                || expireAtMillis!! <= refreshedNow + SAFETY_MARGIN_MS
+            if (latestJWTMap[activity] == null
+                || latestJWTMap[activity]!!.expireAtMillis <= refreshedNow + SAFETY_MARGIN_MS
             ) {
                 val (newJwt, newExpireAt) = generateJWT()
-                latestJWT = newJwt
-                expireAtMillis = newExpireAt
+                latestJWTMap[activity] = JWTWrapper(newJwt, newExpireAt)
             }
-            return latestJWT!!
+            return latestJWTMap[activity]!!.jwt
         }
     }
 

@@ -71,29 +71,17 @@ open class ServiceConfig(
 
     @Bean
     open fun styleImagePrompts(): List<String> {
-        return FileUtils.readTextFromResources("style-image-prompts.txt")
-            .split("\n")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .toList()
+        return FileUtils.readTextFromResourcesAsList("style-image-prompts.txt")
     }
 
     @Bean
     open fun styleImagePromptsForXiaozhao(): List<String> {
-        return FileUtils.readTextFromResources("style-image-prompts-xiaozhao.txt")
-            .split("\n")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .toList()
+        return FileUtils.readTextFromResourcesAsList("style-image-prompts-xiaozhao.txt")
     }
 
     @Bean
     open fun videoSpecialEffects(): List<String> {
-        return FileUtils.readTextFromResources("video-special-effects.txt")
-            .split("\n")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .toList()
+        return FileUtils.readTextFromResourcesAsList("video-special-effects.txt")
     }
 
     @Bean

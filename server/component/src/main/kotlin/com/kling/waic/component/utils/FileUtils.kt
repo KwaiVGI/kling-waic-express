@@ -18,6 +18,15 @@ class FileUtils {
                 ?: throw IllegalArgumentException("File not found: $filePath")
         }
 
+        fun readTextFromResourcesAsList(filePath: String): List<String> {
+            return readTextFromResources(filePath)
+                .split("\n")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .filter { !it.startsWith("#") }
+                .toList()
+        }
+
         fun getFileFromResources(filePath: String): File {
             val resource = this::class.java.classLoader.getResource(filePath)
                 ?: throw IllegalArgumentException("File not found: $filePath")

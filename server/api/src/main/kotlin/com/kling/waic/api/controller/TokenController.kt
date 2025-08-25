@@ -7,7 +7,6 @@ import com.kling.waic.component.entity.TaskType
 import com.kling.waic.component.entity.Token
 import com.kling.waic.component.helper.AdminConfigHelper
 import com.kling.waic.component.helper.TokenHelper
-import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,15 +19,6 @@ class TokenController @Autowired constructor (
     private val tokenHelper: TokenHelper,
     private val adminConfigHelper: AdminConfigHelper
 ) {
-
-    @Deprecated("Using getLatestTypeToken instead")
-    @GetMapping("latest")
-    @Authorization(AuthorizationType.MANAGEMENT)
-    fun getLatestToken(): Result<Token> {
-        log.warn("getLatestToken is deprecated, please use getLatestTypeToken instead!!!")
-        val adminConfig = adminConfigHelper.getAdminConfig()
-        return Result(tokenHelper.getLatest(TaskType.VIDEO_EFFECT, adminConfig))
-    }
 
     @GetMapping("{type}/latest")
     @Authorization(AuthorizationType.MANAGEMENT)
