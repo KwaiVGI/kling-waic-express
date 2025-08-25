@@ -1,22 +1,43 @@
 package com.kling.waic.component.handler
 
+import com.kling.waic.component.entity.ActivityConfigProps
 import com.kling.waic.component.utils.Constants
 import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.ImageUtils
+import com.kling.waic.component.utils.ThreadContextUtils
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
+import java.lang.IllegalStateException
 
-interface ActivityHandler {
+abstract class ActivityHandler {
 
-    fun activityName(): String
+    @Value("\${WAIC_OPENAPI_ACCESS_KEY}")
+    private lateinit var waicOpenApiAccessKey: String
+    @Value("\${WAIC_OPENAPI_SECRET_KEY}")
+    private lateinit var waicOpenApiSecretKey: String
+    private lateinit var activityConfigProps: ActivityConfigProps
 
-    fun getCanvas(totalWidth: Int, totalHeight: Int): Pair<BufferedImage, Graphics2D>
+    abstract fun activityName(): String
+
+    abstract fun getCanvas(totalWidth: Int, totalHeight: Int): Pair<BufferedImage, Graphics2D>
+
+    fun getAksk(): Pair<String, String> {
+        val activity = ThreadContextUtils.getActivity()
+        if (activity.isEmpty()) {
+            return Pair(waicOpenApiAccessKey, waicOpenApiSecretKey)
+        }
+
+        val activityConfig = activityConfigProps.map[activity]
+            ?: throw IllegalStateException("Activity config not found: $activity")
+        return Pair(activityConfig.accessKey, activityConfig.secretKey)
+    }
 }
 
 @Component
-class DefaultActivityHandler: ActivityHandler {
+class DefaultActivityHandler: ActivityHandler() {
 
     override fun activityName(): String {
         return Constants.DEFAULT_ACTIVITY
@@ -36,7 +57,7 @@ class DefaultActivityHandler: ActivityHandler {
 }
 
 @Component
-class XiaozhaoActivityHandler: ActivityHandler {
+class XiaozhaoActivityHandler: ActivityHandler() {
 
     override fun activityName(): String {
         return "xiaozhao"

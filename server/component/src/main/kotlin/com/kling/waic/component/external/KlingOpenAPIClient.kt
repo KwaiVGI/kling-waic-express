@@ -62,7 +62,6 @@ class KlingOpenAPIClient(
         }
     }
 
-
     @Throws(IOException::class)
     suspend fun createImageTask(createImageTaskRequest: CreateImageTaskRequest):
             KlingOpenAPIResult<CreateImageTaskResponse> {

@@ -2,7 +2,7 @@ package com.kling.waic.api.intercepter
 
 import com.kling.waic.component.auth.Authorization
 import com.kling.waic.component.auth.AuthorizationType
-import com.kling.waic.component.entity.TokenMapConfig
+import com.kling.waic.component.entity.ActivityConfigProps
 import com.kling.waic.component.helper.TokenHelper
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.component.utils.ThreadContextUtils
@@ -18,7 +18,7 @@ class AuthorizationInterceptor(
     @Value("\${WAIC_MANAGEMENT_TOKEN}")
     private val waicManagementToken: String,
     private val tokenHelper: TokenHelper,
-    private val tokenMapConfig: TokenMapConfig
+    private val activityConfigProps: ActivityConfigProps
 ) : HandlerInterceptor {
 
     override fun preHandle(
@@ -89,7 +89,7 @@ class AuthorizationInterceptor(
                 val manageToken = if (activity.isEmpty()) {
                     waicManagementToken
                 } else {
-                    tokenMapConfig.map[activity]
+                    activityConfigProps.map[activity]
                 }
                 token == manageToken
             }
@@ -103,7 +103,7 @@ class AuthorizationInterceptor(
         if (activity == "nextCodeLuaScript") {
             return false
         }
-        if (!tokenMapConfig.map.containsKey(activity)) {
+        if (!activityConfigProps.map.containsKey(activity)) {
             return false
         }
         return true
