@@ -10,23 +10,26 @@ import org.springframework.stereotype.Component
 import redis.clients.jedis.commands.JedisCommands
 import java.time.Instant
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 @Component
 class TokenHelper(
     private val jedis: JedisCommands,
 ) {
-    @Volatile
-    private var latestToken: Token? = null
+    private val tokenMap: ConcurrentMap<String, Token> = ConcurrentHashMap()
 
     fun getLatest(type : TaskType, adminConfig: AdminConfig): Token {
         val now = Instant.now()
-        val current = latestToken
+        val activity = ThreadContextUtils.getActivity()
+
+        val current = tokenMap[activity]
         if (current != null && current.refreshTime > now) {
             return current
         }
 
         synchronized(this) {
-            val previous = latestToken
+            val previous = tokenMap[activity]
             val nowInLock = Instant.now()
 
             if (previous == null || previous.refreshTime <= nowInLock) {
@@ -38,7 +41,7 @@ class TokenHelper(
                     nowInLock.plusSeconds(adminConfig.imageTokenExpireInSeconds),
                     activity = ThreadContextUtils.getActivity()
                 )
-                latestToken = newToken
+                tokenMap[activity] = newToken
                 val tokenExpireInSeconds = when (type) {
                     TaskType.STYLED_IMAGE -> adminConfig.imageTokenExpireInSeconds
                     TaskType.VIDEO_EFFECT -> adminConfig.videoTokenExpireInSeconds
@@ -49,7 +52,7 @@ class TokenHelper(
                 log.debug("Generated and saved new token: id={}, type={}, name={}",
                     newToken.id, type, newToken.value)
             }
-            return latestToken!!
+            return tokenMap[activity]!!
         }
     }
 
