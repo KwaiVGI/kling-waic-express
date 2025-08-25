@@ -57,7 +57,6 @@ class PrintingController(
     }
 
     @GetMapping("{name}")
-    @Authorization(AuthorizationType.MANAGEMENT)
     fun getPrinting(@PathVariable name: String): Result<Printing> {
         val printing = printingRepository.getPrinting(name)
         return Result(printing)
