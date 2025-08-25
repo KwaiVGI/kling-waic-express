@@ -1,22 +1,23 @@
 package com.kling.waic.printer.adapter
 
 import com.kling.waic.component.entity.Printing
+import com.kling.waic.component.utils.PhotoUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.printer.client.PrintingDataClient
 import com.kling.waic.printer.listener.PrintJobCallback
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.awt.image.BufferedImage
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import java.io.File
 import java.net.URL
 import java.util.*
-import javax.imageio.ImageIO
 import javax.print.*
 import javax.print.attribute.HashDocAttributeSet
 import javax.print.attribute.HashPrintRequestAttributeSet
-import javax.print.attribute.standard.*
+import javax.print.attribute.standard.JobName
+import javax.print.attribute.standard.MediaPrintableArea
+import javax.print.attribute.standard.OrientationRequested
+import javax.print.attribute.standard.PrinterIsAcceptingJobs
 
 @Component
 class PrintAdapter(
@@ -80,65 +81,14 @@ class PrintAdapter(
             return
         }
 
-        val printings = printingDataClient.fetchPrinting(2)
+        val printings = printingDataClient.fetchPrinting(6)
         if (printings.isEmpty()) {
             log.debug("Printing queue is empty, or queuedJobCount is too large" +
                     ", skip printing job.")
             return
         }
 
-        printings.forEach { printOne(it) }
-//        if (printings.size == 2) {
-//            printTwoAsOne(printings)
-//        } else if (printings.size == 1) {
-//            printOne(printings[0])
-//        }
-    }
-
-    /**
-     * 打印两张照片（6x4） -> 合成一张 6x8
-     */
-    fun printTwoAsOne(printings: List<Printing>) {
-        if (printings.size < 2) {
-            log.warn("Not enough printings to merge 2 into 1, skipping...")
-            return
-        }
-
-        // 1. 下载两张图片
-        val img1: BufferedImage = ImageIO.read(URL(printings[0].task.outputs!!.url))
-        val img2: BufferedImage = ImageIO.read(URL(printings[1].task.outputs!!.url))
-
-        // 2. 合成一张大图（横向拼接）
-        val combined = BufferedImage(
-            img1.width + img2.width,
-            maxOf(img1.height, img2.height),
-            BufferedImage.TYPE_INT_RGB
-        )
-        val g = combined.createGraphics()
-        g.drawImage(img1, 0, 0, null)
-        g.drawImage(img2, img1.width, 0, null)
-        g.dispose()
-
-        // 3. 转换成 InputStream
-        val baos = ByteArrayOutputStream()
-        ImageIO.write(combined, "jpg", baos)
-        val inputStream = ByteArrayInputStream(baos.toByteArray())
-
-        // 4. 打印
-        val flavor = DocFlavor.INPUT_STREAM.JPEG
-        val docAttrs = HashDocAttributeSet()
-        val doc: Doc = SimpleDoc(inputStream, flavor, docAttrs)
-
-        val attrs = HashPrintRequestAttributeSet()
-        attrs.add(OrientationRequested.PORTRAIT)
-        attrs.add(MediaPrintableArea(0f, 0f, 8f, 6f, MediaPrintableArea.INCH))
-        attrs.add(JobName("Two:${printings[0].name}-${printings[1].name}", Locale.getDefault()))
-
-        val job = printer.createPrintJob()
-        job.addPrintJobListener(printJobCallback)
-        job.print(doc, attrs)
-
-        log.info("Submitted 2 photos as one 6x8 print job.")
+        printBatchAsPDF(printings)
     }
 
     private fun printOne(printing: Printing) {
@@ -171,5 +121,60 @@ class PrintAdapter(
         val queuedJobCount = fetchQueuedJobCount()
         val result = printingDataClient.setPrinterQueuedJobCount(queuedJobCount)
         log.info("Set Printer queuedJobCount: $queuedJobCount, result: $result")
+    }
+
+    fun printBatchAsPDF(
+        printings: List<Printing>
+    ) {
+        log.info("Starting PDF generation for ${printings.size} photos")
+
+        val tempPdfPath = PhotoUtils.generateTempPdfPath(printings)
+        log.info("Temporary PDF path: $tempPdfPath")
+
+        val pdfPath = PhotoUtils.generateBatchAsOnePdf(
+            printings = printings,
+            outputPath = tempPdfPath
+        )
+
+        printPdfFile(pdfPath, printings)
+        cleanupTempFile(pdfPath)
+    }
+
+    private fun printPdfFile(pdfPath: String, printings: List<Printing>) {
+        val file = File(pdfPath)
+        if (!file.exists()) {
+            throw IllegalArgumentException("PDF file does not exist: $pdfPath")
+        }
+
+        val flavor = DocFlavor.INPUT_STREAM.PDF
+        val docAttrs = HashDocAttributeSet()
+
+        file.inputStream().use { pdfStream ->
+            val doc: Doc = SimpleDoc(pdfStream, flavor, docAttrs)
+
+            val attrs = HashPrintRequestAttributeSet()
+            attrs.add(OrientationRequested.PORTRAIT)
+            attrs.add(MediaPrintableArea(0f, 0f, 6f, 4f, MediaPrintableArea.INCH))
+
+            val jointName = printings.joinToString("-") { it.name }
+            val jobName = "Batch:$jointName"
+            attrs.add(JobName(jobName, Locale.getDefault()))
+
+            val job = printer.createPrintJob()
+            job.addPrintJobListener(printJobCallback)
+            job.print(doc, attrs)
+        }
+    }
+
+    private fun cleanupTempFile(filePath: String) {
+        val file = File(filePath)
+        if (file.exists()) {
+            val deleted = file.delete()
+            if (deleted) {
+                log.info("Temporary file deleted: $filePath")
+            } else {
+                log.warn("Failed to delete temporary file: $filePath")
+            }
+        }
     }
 }

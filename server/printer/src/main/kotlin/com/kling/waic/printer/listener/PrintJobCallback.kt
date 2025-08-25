@@ -41,11 +41,11 @@ class PrintJobCallback(
     private fun updatePrintingStatus(pje: PrintJobEvent, status: PrintingStatus) {
         val printingName = getPrintingName(pje)
 
-        if (printingName.startsWith("Two:")) {
-            val twoPrintingNames: String = printingName.substring("Two:".length)
-            val names = twoPrintingNames.split("-")
-            names.forEach { printingName ->
-                updatePrintingStatusForOne(printingName, status)
+        if (printingName.startsWith("Batch:")) {
+            val twoPrintingNames: String = printingName.substring("Batch:".length)
+            val printingNames = twoPrintingNames.split("-")
+            printingNames.forEach {
+                updatePrintingStatusForOne(it, status)
             }
         } else {
             updatePrintingStatusForOne(printingName, status)
