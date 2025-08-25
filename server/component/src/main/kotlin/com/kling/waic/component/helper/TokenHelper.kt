@@ -46,7 +46,7 @@ class TokenHelper(
                 jedis.setex(newToken.value,
                     tokenExpireInSeconds,
                     ObjectMapperUtils.Companion.toJSON(newToken))
-                log.info("Generated and saved new token: id={}, type={}, name={}",
+                log.debug("Generated and saved new token: id={}, type={}, name={}",
                     newToken.id, type, newToken.value)
             }
             return latestToken!!
