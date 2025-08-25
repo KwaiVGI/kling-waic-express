@@ -1,6 +1,7 @@
 package com.kling.waic.component.handler
 
 import com.kling.waic.component.entity.ActivityConfigProps
+import com.kling.waic.component.entity.Locale
 import com.kling.waic.component.utils.Constants
 import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.ImageUtils
@@ -23,6 +24,14 @@ abstract class ActivityHandler {
     abstract fun activityName(): String
 
     abstract fun getCanvas(totalWidth: Int, totalHeight: Int): Pair<BufferedImage, Graphics2D>
+
+    abstract fun drawLogoInLeftCorner(
+        locale: Locale,
+        scaleFactor: Double,
+        g2d: Graphics2D,
+        logoTopLeftX: Int,
+        logoTopLeftY: Int
+    )
 
     fun getAksk(): Pair<String, String> {
         val activity = ThreadContextUtils.getActivity()
@@ -54,6 +63,20 @@ class DefaultActivityHandler: ActivityHandler() {
         g2d.fillRect(0, 0, totalWidth, totalHeight)
         return Pair(canvas, g2d)
     }
+
+    override fun drawLogoInLeftCorner(
+        locale: Locale,
+        scaleFactor: Double,
+        g2d: Graphics2D,
+        logoTopLeftX: Int,
+        logoTopLeftY: Int
+    ) {
+        val logoImage = FileUtils.convertFileAsImage("KlingAI-logo-$locale.png")
+        val logoWidth = (67.5 * scaleFactor).toInt()
+        val logoHeight = (18 * scaleFactor).toInt()
+        val scaledLogoImage = logoImage.getScaledInstance(logoWidth, logoHeight, BufferedImage.SCALE_SMOOTH)
+        g2d.drawImage(scaledLogoImage, logoTopLeftX, logoTopLeftY, null)
+    }
 }
 
 @Component
@@ -73,5 +96,19 @@ class XiaozhaoActivityHandler: ActivityHandler() {
             ImageUtils.resizeAndCropToRatio(wallpaperImage, totalWidth, totalHeight)
         val g2d: Graphics2D = canvas.createGraphics()
         return Pair(canvas, g2d)
+    }
+
+    override fun drawLogoInLeftCorner(
+        locale: Locale,
+        scaleFactor: Double,
+        g2d: Graphics2D,
+        logoTopLeftX: Int,
+        logoTopLeftY: Int
+    ) {
+        val logoImage = FileUtils.convertFileAsImage("Kuaishou-Kling-logo-CN.png")
+        val logoWidth = (200.4375 * scaleFactor).toInt()
+        val logoHeight = (18 * scaleFactor).toInt()
+        val scaledLogoImage = logoImage.getScaledInstance(logoWidth, logoHeight, BufferedImage.SCALE_SMOOTH)
+        g2d.drawImage(scaledLogoImage, logoTopLeftX, logoTopLeftY, null)
     }
 }
