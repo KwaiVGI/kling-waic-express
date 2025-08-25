@@ -100,8 +100,7 @@ class DefaultActivityHandler(
 
 @Component
 class XiaozhaoActivityHandler(
-    private val styleImagePromptsForXiaozhao: List<String>,
-    private val styleImagePrompts: List<String>,
+    private val styleImagePromptsForXiaozhao: List<String>
 ): ActivityHandler() {
 
     override fun activityName(): String {
@@ -139,10 +138,7 @@ class XiaozhaoActivityHandler(
     }
 
     override fun getPrompts(): List<String> {
-
-        log.info("prompts: ${styleImagePrompts}")
         log.info("prompts for xiaozhao: ${styleImagePromptsForXiaozhao}")
-
 
         val taskN = getImageTaskMode().taskN
 

@@ -30,10 +30,7 @@ enum class ImageTaskMode(val taskN: Int) {
 @Service
 class ImageTaskService(
     private val klingOpenAPIClient: KlingOpenAPIClient,
-    private val styleImagePrompts: List<String>,
     private val imageProcessHelper: ImageProcessHelper,
-    @Value("\${IMAGE_TASK_MODE:WITH_ORIGIN}")
-    private val imageTaskMode: ImageTaskMode,
     private val taskRepository: TaskRepository,
     private val lockRepository: LockRepository,
     @Value("\${IMAGE_TASK_CONCURRENCY:90}")
@@ -146,6 +143,8 @@ class ImageTaskService(
             .filter { it.isNotEmpty() }
             .toMutableList()
 
+        val activityHandler = activityHandlerSelector.selectActivityHandler()
+        val imageTaskMode = activityHandler.getImageTaskMode()
         if (imageTaskMode == ImageTaskMode.WITH_ORIGIN) {
             // add origin image to the center of imageUrls.
             val task = taskRepository.getTask(taskName)
