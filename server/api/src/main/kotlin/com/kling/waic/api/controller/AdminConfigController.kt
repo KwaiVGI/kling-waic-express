@@ -14,7 +14,6 @@ class AdminConfigController(
 ) {
 
     @GetMapping("fetch")
-    @Authorization(AuthorizationType.MANAGEMENT)
     fun fetch(): Result<AdminConfig> {
         val adminConfig = adminConfigHelper.getAdminConfig()
         return Result(adminConfig)
