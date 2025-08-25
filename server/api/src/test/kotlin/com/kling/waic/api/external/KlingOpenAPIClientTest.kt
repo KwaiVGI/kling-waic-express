@@ -29,7 +29,9 @@ class KlingOpenAPIClientTest : SpringBaseTest() {
         )
         val createImageTaskRequest = CreateImageTaskRequest(
             image = imageBase64,
-            prompt = styleImagePrompts.random()
+//            prompt = "变成可图创意像素风1风格，色调清新自然，细节丰富"
+//            prompt = "变成超扁平风格，高级感"
+            prompt = "将图片转换成乐高风格"
         )
 
         CoroutineUtils.runSuspend {
