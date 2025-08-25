@@ -6,6 +6,7 @@ import com.kling.waic.component.service.ImageTaskMode
 import com.kling.waic.component.utils.Constants
 import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.ImageUtils
+import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.component.utils.ThreadContextUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -99,7 +100,8 @@ class DefaultActivityHandler(
 
 @Component
 class XiaozhaoActivityHandler(
-    private val styleImagePromptsForXiaozhao: List<String>
+    private val styleImagePromptsForXiaozhao: List<String>,
+    private val styleImagePrompts: List<String>,
 ): ActivityHandler() {
 
     override fun activityName(): String {
@@ -137,6 +139,11 @@ class XiaozhaoActivityHandler(
     }
 
     override fun getPrompts(): List<String> {
+
+        log.info("prompts: ${styleImagePrompts}")
+        log.info("prompts for xiaozhao: ${styleImagePromptsForXiaozhao}")
+
+
         val taskN = getImageTaskMode().taskN
 
         val centerPrompt = styleImagePromptsForXiaozhao.first()
