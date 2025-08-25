@@ -89,7 +89,7 @@ class AuthorizationInterceptor(
                 val manageToken = if (activity.isEmpty()) {
                     waicManagementToken
                 } else {
-                    activityConfigProps.map[activity]
+                    activityConfigProps.map[activity]!!.token
                 }
                 token == manageToken
             }
