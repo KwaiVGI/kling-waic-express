@@ -88,9 +88,9 @@ class PrintAdapter(
         }
 
         val printings = printingDataClient.fetchPrinting(printingBatchSize)
+        log.info("fetchPrinting from queue, printingBatchSize: $printingBatchSize, " +
+                "printings.size: ${printings.size}")
         if (printings.isEmpty()) {
-            log.debug("Printing queue is empty, or queuedJobCount is too large" +
-                    ", skip printing job.")
             return
         }
 
