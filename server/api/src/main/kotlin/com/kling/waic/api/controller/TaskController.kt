@@ -32,15 +32,11 @@ class TaskController (
     @Authorization(AuthorizationType.CREATE_TASK)
     fun uploadImage(@PathVariable type: TaskType,
                     @RequestParam("file") file: MultipartFile): Result<String> {
-        log.info("Upload image of type: $type, file.name: ${file.name}, " +
-                "file.originalFilename: ${file.originalFilename}, " +
-                "file.contentType: ${file.contentType}, " +
-                "file.size: ${file.size}"
-            )
-
         val url = taskServiceSelector.selectTaskService(type).uploadImage(type, file)
-
-        log.debug("Uploaded image of type: {}, file: {}, url: {}", type, file.name, url)
+        log.info("Upload image of type: $type, " +
+                "file.contentType: ${file.contentType}, " +
+                "file.size: ${file.size}, url: $url"
+        )
         return Result(url)
     }
 

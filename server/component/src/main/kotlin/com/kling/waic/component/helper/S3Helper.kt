@@ -64,7 +64,7 @@ class S3Helper(
 
         val response = s3Client.putObject(putRequest, requestBody)
         val fileUrl = "https://cdn-${bucket}-aws-cn-staging.klingai.com/$newKey"
-        log.info("File uploaded to S3, bucket: $bucket, key: $newKey, fileUrl: $fileUrl, response: $response")
+        log.debug("File uploaded to S3, bucket: $bucket, key: $newKey, fileUrl: $fileUrl, response: $response")
         return fileUrl
     }
 
