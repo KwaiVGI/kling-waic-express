@@ -49,7 +49,7 @@ class KlingOpenAPIClient(
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                log.info("getCurrentConcurrency responseBody: {}", responseBody)
+                log.debug("getCurrentConcurrency responseBody: {}", responseBody)
 
                 return responseBody
                     ?.let { KlingOpenAPIResult.ok<Long>(it) }
@@ -81,12 +81,12 @@ class KlingOpenAPIClient(
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
                 if (createImageTaskRequest.image.startsWith("http")) {
-                    log.info(
+                    log.debug(
                         "Create OpenAPI image task with image url: ${createImageTaskRequest.image}, " +
                                 "prompt: ${createImageTaskRequest.prompt}, responseBody: $responseBody"
                     )
                 } else {
-                    log.info(
+                    log.debug(
                         "Create OpenAPI image task with base64 image data size: " +
                                 "${createImageTaskRequest.image.length}, " +
                                 "prompt: ${createImageTaskRequest.prompt}, responseBody: $responseBody"
@@ -155,12 +155,12 @@ class KlingOpenAPIClient(
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
                 if (createVideoTaskRequest.input.image.startsWith("http")) {
-                    log.info(
+                    log.debug(
                         "Create OpenAPI video task with image url: ${createVideoTaskRequest.input.image}, " +
                                 "responseBody: $responseBody"
                     )
                 } else {
-                    log.info(
+                    log.debug(
                         "Create OpenAPI video task with base64 image data size: " +
                                 "${createVideoTaskRequest.input.image.length}, " +
                                 "responseBody: $responseBody"
@@ -195,7 +195,7 @@ class KlingOpenAPIClient(
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                log.info("queryVideoTask responseBody: {}", responseBody)
+                log.debug("queryVideoTask responseBody: {}", responseBody)
 
                 return responseBody
                     ?.let { KlingOpenAPIResult.ok<QueryVideoTaskResponse>(it) }

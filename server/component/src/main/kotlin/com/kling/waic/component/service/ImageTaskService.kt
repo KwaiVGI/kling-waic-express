@@ -214,7 +214,7 @@ class ImageTaskService(
         )
         val response = klingOpenAPIClient.getCurrentConcurrency(getCurrentConcurrencyRequest)
         val currentConcurrency = response.data!!
-        log.debug("Current concurrency for ${TaskType.STYLED_IMAGE}: ${currentConcurrency}")
+        log.info("Current concurrency for ${TaskType.STYLED_IMAGE}: ${currentConcurrency}")
 
         val availableConcurrency = imageTaskConcurrency - currentConcurrency
         if (availableConcurrency < taskN) {

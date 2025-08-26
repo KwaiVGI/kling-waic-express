@@ -56,7 +56,7 @@ class JWTHelper(
         val notBeforeAt = currentMillis + notBeforeInSeconds * THOUSAND
 
         val aksk = activityHandlerSelector.selectActivityHandler().getAksk()
-        log.info("AccessKey to use: ${aksk.first}")
+        log.debug("AccessKey to use: ${aksk.first}")
         val algorithm = Algorithm.HMAC256(aksk.second)
         val jwt = JWT.create()
             .withIssuer(aksk.first)

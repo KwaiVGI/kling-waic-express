@@ -34,7 +34,7 @@ class VideoTaskService(
         if (result.code != 0) {
             throw KlingOpenAPIException(result)
         }
-        log.debug("Create Video Task with effectScene: $effectScene, taskId: ${result.data?.taskId ?: "null"}")
+        log.info("Create Video Task with effectScene: $effectScene, taskId: ${result.data?.taskId}")
         return listOf(OpenApiRecord(
             taskId = result.data!!.taskId,
             inputImage = requestImageUrl
