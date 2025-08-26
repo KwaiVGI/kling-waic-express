@@ -88,7 +88,7 @@ class PrintAdapter(
         }
 
         val printings = printingDataClient.fetchPrinting(printingBatchSize)
-        log.info("fetchPrinting from queue, printingBatchSize: $printingBatchSize, " +
+        log.info("FetchPrinting from queue, batchSize: $printingBatchSize, " +
                 "printings.size: ${printings.size}")
         if (printings.isEmpty()) {
             return
@@ -135,10 +135,10 @@ class PrintAdapter(
     fun printBatchAsPDF(
         printings: List<Printing>
     ) {
-        log.info("Starting PDF generation for ${printings.size} photos")
+        log.debug("Starting PDF generation for ${printings.size} photos")
 
         val tempPdfPath = PhotoUtils.generateTempPdfPath(printings)
-        log.info("Temporary PDF path: $tempPdfPath")
+        log.debug("Temporary PDF path: $tempPdfPath")
 
         val pdfPath = PhotoUtils.generateBatchAsOnePdf(
             printings = printings,
@@ -180,7 +180,7 @@ class PrintAdapter(
         if (file.exists()) {
             val deleted = file.delete()
             if (deleted) {
-                log.info("Temporary file deleted: $filePath")
+                log.debug("Temporary file deleted: $filePath")
             } else {
                 log.warn("Failed to delete temporary file: $filePath")
             }
