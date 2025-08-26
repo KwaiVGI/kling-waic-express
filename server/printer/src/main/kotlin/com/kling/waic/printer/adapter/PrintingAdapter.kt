@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component
 import java.io.File
 import java.net.URL
 import java.util.*
+import java.util.concurrent.Executors
 import javax.print.*
 import javax.print.attribute.HashDocAttributeSet
 import javax.print.attribute.HashPrintRequestAttributeSet
@@ -28,9 +29,19 @@ class PrintAdapter(
     private val printingMode: PrintingMode,
     @param:Value("\${PRINTER_PRINTING_BATCH_SIZE:2}")
     private val printingBatchSize: Int,
+    @param:Value("\${PRINTER_EXECUTOR_SIZE:10}")
+    private val printerExecutorSize: Int,
+    @param:Value("\${PRINTER_EXTRA_SCALE_FACTOR:1.00}")
+    private val extraScaleFactor: Float,
+    @param:Value("\${DRAW_IMAGE_X:0.0}")
+    private val drawImageX: Float,
+    @param:Value("\${DRAW_IMAGE_Y:0.0}")
+    private val drawImageY: Float,
     private val printingDataClient: PrintingDataClient,
     private val printJobCallback: PrintJobCallback
 ) {
+    private val executor = Executors.newFixedThreadPool(printerExecutorSize)
+
     private lateinit var printers: List<PrintService>
 
     @PostConstruct
@@ -55,7 +66,7 @@ class PrintAdapter(
     }
 
     fun tryFetchAndPrint() {
-        printers.forEach { printer ->
+        printers.shuffled().forEach { printer ->
             doFetchAndPrintForOnePrinter(printer)
         }
     }
@@ -75,8 +86,16 @@ class PrintAdapter(
         }
 
         when (printingMode) {
-            PrintingMode.EACH_ONE -> printings.forEach { printOne(printer, it) }
+            PrintingMode.EACH_ONE -> printByEachOne(printer, printings)
             PrintingMode.PDF_BATCH -> printBatchAsPDF(printer, printings)
+        }
+    }
+
+    private fun printByEachOne(printer: PrintService, printings: List<Printing>) {
+        for (printing in printings) {
+            executor.submit {
+                printOne(printer, printing)
+            }
         }
     }
 
@@ -123,7 +142,10 @@ class PrintAdapter(
 
         val pdfPath = PhotoUtils.generateBatchAsOnePdf(
             printings = printings,
-            outputPath = tempPdfPath
+            outputPath = tempPdfPath,
+            extraScaleFactor = extraScaleFactor,
+            drawImageX = drawImageX,
+            drawImageY = drawImageY
         )
 
         printPdfFile(printer, pdfPath, printings)
