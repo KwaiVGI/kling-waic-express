@@ -63,7 +63,7 @@ object PhotoUtils {
         val height = originalImage.height
         val isPortrait = height > width
         
-        log.info("Original image: ${width}x${height}, isPortrait: $isPortrait")
+        log.debug("Original image: ${width}x${height}, isPortrait: $isPortrait")
         return if (isPortrait) {
             log.info("Rotating portrait image 90 degrees clockwise")
             rotate90(originalImage)

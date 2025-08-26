@@ -3,3 +3,5 @@ spring:
     name: kling-waic-express-server-printer
   config:
     import: classpath:application-env.properties
+  main:
+    web-application-type: none
