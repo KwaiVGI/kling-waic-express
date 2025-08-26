@@ -85,7 +85,7 @@ class PrintingRepository(
                 log.warn("Printing value not found for name: $printingName, skipping")
                 return@repeat
             }
-            log.info("Get printing value from Redis: $printingName, value: $value")
+            log.debug("Get printing value from Redis: $printingName, value: $value")
 
             val printing = ObjectMapperUtils.fromJSON(value, Printing::class.java)
             if (printing == null) {
@@ -103,7 +103,7 @@ class PrintingRepository(
             }
 
             jedis.set(printingName, newValue)
-            log.info("Update printing status in Redis: ${printing.name}, value: $newValue")
+            log.info("Update printing status in Redis: ${printingName}, status: ${newPrinting.status}")
 
             // 只有成功处理的 printing 才会被添加到列表中
             printings.add(newPrinting)
@@ -128,7 +128,7 @@ class PrintingRepository(
         val newValue = ObjectMapperUtils.toJSON(newPrinting)
         jedis.set(name, newValue)
 
-        log.info("Updated printing: $name, newValue: $newValue")
+        log.info("Update printing status: $name, status: $status")
         return newPrinting
     }
 

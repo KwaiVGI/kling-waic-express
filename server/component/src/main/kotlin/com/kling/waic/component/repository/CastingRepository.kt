@@ -33,7 +33,7 @@ class CastingRepository(
 
         val value = ObjectMapperUtils.toJSON(casting)
         jedis.set(castingName, value)
-        log.info("Set casting to Redis, castingName: {}, value: {}", castingName, value)
+        log.debug("Set casting to Redis, castingName: {}, value: {}", castingName, value)
 
         val castingQueue = "${castingQueuePrefix}${task.type}"
         jedis.zadd(castingQueue, score, castingName)

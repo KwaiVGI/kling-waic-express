@@ -60,7 +60,7 @@ abstract class TaskService {
         val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
 
         val requestImage = if (cropImageWithOpenCV.toBoolean() && imageCropHelper != null) {
-            log.info("OpenCV face cropping is enabled, processing image with face detection")
+            log.debug("OpenCV face cropping is enabled, processing image with face detection")
             val cropRatio = getCropRatio(type)
             imageCropHelper!!.cropFaceToAspectRatio(inputImage, taskName, cropRatio)
         } else {
@@ -109,7 +109,8 @@ abstract class TaskService {
             updateTime = Instant.now(),
         )
 
-        taskRepository.setTask(task)
+        val result = taskRepository.setTask(task)
+        log.info("Create task in taskRepository: ${task.name}, status: ${task.status}, result: $result")
         return task
     }
 
@@ -144,12 +145,13 @@ abstract class TaskService {
                     response.taskResult.images[0].url
             }
         }
-        taskRepository.setTask(newTask)
+        val result = taskRepository.setTask(newTask)
+        log.info("Update task status in taskRepository: ${newTask.name}, status: ${newTask.status}, result: $result")
         if (overallStatus != TaskStatus.SUCCEED) {
             return newTask
         }
-        log.info("Task succeed, name: {}, elapsedTimeInSeconds: {}", name, newTask.elapsedTimeInSeconds)
 
+        log.info("Task succeed, name: ${newTask.name}, elapsedTimeInSeconds: ${newTask.elapsedTimeInSeconds}")
         newTask.openApiResultMap.forEach { (taskId, record) ->
             log.info("OpenApiResult record ${taskId}: ${ObjectMapperUtils.toJSON(record)}")
         }
@@ -163,10 +165,11 @@ abstract class TaskService {
             ),
             updateTime = Instant.now()
         )
-        taskRepository.setTask(finalTask)
+        val result2 = taskRepository.setTask(finalTask)
+        log.info("Update task outputs in taskRepository: ${newTask.name}, status: ${newTask.status}, result: $result2")
 
         val casting = castingRepository.addToCastingQueue(finalTask)
-        log.info("Added task ${finalTask.name} to casting queue, casting: $casting")
+        log.debug("Added task ${finalTask.name} to casting queue, casting: $casting")
         return finalTask
     }
 

@@ -123,7 +123,7 @@ class KlingOpenAPIClient(
         try {
             okHttpClient.newCall(request).execute().use { resp ->
                 val responseBody = resp.body?.string()
-                log.info("queryImageTask responseBody: {}", responseBody)
+                log.debug("queryImageTask responseBody: {}", responseBody)
 
                 return responseBody
                     ?.let { KlingOpenAPIResult.ok<QueryImageTaskResponse>(it) }
