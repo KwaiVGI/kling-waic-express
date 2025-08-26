@@ -74,6 +74,7 @@ abstract class TaskService {
             "request-images/$requestFilename",
             requestImage, "jpg"
         )
+        log.info("Upload image for request, requestImageUrl: $requestImageUrl")
         return requestImageUrl
     }
 

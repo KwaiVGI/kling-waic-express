@@ -24,7 +24,7 @@ class PrintingRepository(
             val existingPrinting = jedis.get(printingName)
             if (existingPrinting != null) {
                 throw DuplicatePrintException(
-                    "Printing Task already exist for name: $printingName, value: $existingPrinting"
+                    "Printing Task already exist for name: $printingName"
                 )
             }
         }

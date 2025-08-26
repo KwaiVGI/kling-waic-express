@@ -173,9 +173,11 @@ class ImageProcessHelper(
         val encrypted = aesCipherHelper.encrypt("sudoku-$taskName")
         val outputFilename = "$taskName-$encrypted.jpg"
         val outputImageUrl = uploadTaskImage(outputFilename, sudokuImage)
+        log.info("Generated outputImageUrl for taskName: $taskName, outputImageUrl: $outputImageUrl")
 
         val thumbnailFilename = "$taskName-$encrypted-thumbnail.jpg"
         val thumbnailImageUrl = uploadTaskImage(thumbnailFilename, thumbnailImage)
+        log.info("Generated thumbnail outputImageUrl for taskName: $taskName, thumbnailImageUrl: $thumbnailImageUrl")
 
         return Pair(outputImageUrl, thumbnailImageUrl)
     }
