@@ -18,14 +18,12 @@ import javax.print.attribute.HashPrintRequestAttributeSet
 import javax.print.attribute.standard.JobName
 import javax.print.attribute.standard.MediaPrintableArea
 import javax.print.attribute.standard.OrientationRequested
+import javax.print.attribute.standard.PrinterInfo
 import javax.print.attribute.standard.PrinterIsAcceptingJobs
+import javax.print.attribute.standard.PrinterName
 
 @Component
 class PrintAdapter(
-    @param:Value("\${PRINTER_NAME:DNP DP-DS620}")
-    private val printerName: String,
-    @param:Value("\${PRINTER_SYSTEM_NAME:Dai_Nippon_Printing_DP_DS620}")
-    private val printerSystemName: String,
     @param:Value("\${PRINTER_PRINTING_MODE:PDF_BATCH}")
     private val printingMode: PrintingMode,
     @param:Value("\${PRINTER_PRINTING_BATCH_SIZE:2}")
@@ -33,74 +31,56 @@ class PrintAdapter(
     private val printingDataClient: PrintingDataClient,
     private val printJobCallback: PrintJobCallback
 ) {
-    private lateinit var printer: PrintService
+    private lateinit var printers: List<PrintService>
 
     @PostConstruct
     fun init() {
-        this.printer = findPrinter()
+        printers = findPrinters()
     }
 
-    private fun findPrinter(): PrintService {
-        val services = PrintServiceLookup.lookupPrintServices(null, null)
-        for (service in services) {
-            if (printerName == service.name) {
-                log.info("Printer found: ${service.name}")
-                return service
-            }
-        }
-        throw IllegalArgumentException("No printer found for $printerName")
+    private fun findPrinters(): List<PrintService> {
+        return PrintServiceLookup.lookupPrintServices(null, null).toList()
     }
 
     private fun fetchQueuedJobCount(): Int {
-        return try {
-            val os = System.getProperty("os.name").lowercase()
-            if (os.contains("win")) {
-                // Windows 使用 PowerShell 查询
-                val command = arrayOf(
-                    "powershell", "-Command",
-                    "Get-PrintJob -PrinterName \"${printerName}\" | Measure-Object | Select -ExpandProperty Count"
-                )
-                val output = ProcessBuilder(*command)
-                    .redirectErrorStream(true)
-                    .start()
-                    .inputStream.bufferedReader().readText().trim()
-                output.toIntOrNull() ?: 0
-            } else {
-                // 再用真实名字查队列
-                val command = arrayOf("sh", "-c", "lpstat -o \"$printerSystemName\" | wc -l")
-                val output = ProcessBuilder(*command)
-                    .redirectErrorStream(true)
-                    .start()
-                    .inputStream.bufferedReader().readText().trim()
-                output.toIntOrNull() ?: 0
-            }
-        } catch (e: Exception) {
-            log.error("Failed to get queued job count", e)
-            0
+        return printers.sumOf { printer ->
+            val printerSystemName = printer.getAttribute(PrinterName::class.java)
+            val command = arrayOf("sh", "-c", "lpstat -o \"$printerSystemName\" | wc -l")
+            val output = ProcessBuilder(*command)
+                .redirectErrorStream(true)
+                .start()
+                .inputStream.bufferedReader().readText().trim()
+            output.toIntOrNull() ?: 0
         }
     }
 
     fun tryFetchAndPrint() {
+        printers.forEach { printer ->
+            doFetchAndPrintForOnePrinter(printer)
+        }
+    }
+
+    fun doFetchAndPrintForOnePrinter(printer: PrintService) {
+        val printerName = printer.getAttribute(PrinterInfo::class.java).value
         val printerIsAcceptingJobs = printer.getAttribute(PrinterIsAcceptingJobs::class.java)
         if (printerIsAcceptingJobs.value < 1) {
-            log.warn("Printer is not accepting jobs, skip printing job.")
+            log.warn("Printer: ${printerName} is not accepting jobs, skip printing job.")
             return
         }
 
         val printings = printingDataClient.fetchPrinting(printingBatchSize)
-        log.info("FetchPrinting from queue, batchSize: $printingBatchSize, " +
-                "printings.size: ${printings.size}")
+        log.info("Printer: ${printerName} fetch job, batchSize: $printingBatchSize, printings.size: ${printings.size}")
         if (printings.isEmpty()) {
             return
         }
 
         when (printingMode) {
-            PrintingMode.EACH_ONE -> printings.forEach { printOne(it) }
-            PrintingMode.PDF_BATCH -> printBatchAsPDF(printings)
+            PrintingMode.EACH_ONE -> printings.forEach { printOne(printer, it) }
+            PrintingMode.PDF_BATCH -> printBatchAsPDF(printer, printings)
         }
     }
 
-    private fun printOne(printing: Printing) {
+    private fun printOne(printer: PrintService, printing: Printing) {
         val imageUrl = printing.task.outputs!!.url
 
         URL(imageUrl).openStream()
@@ -133,6 +113,7 @@ class PrintAdapter(
     }
 
     fun printBatchAsPDF(
+        printer: PrintService,
         printings: List<Printing>
     ) {
         log.debug("Starting PDF generation for ${printings.size} photos")
@@ -145,11 +126,14 @@ class PrintAdapter(
             outputPath = tempPdfPath
         )
 
-        printPdfFile(pdfPath, printings)
+        printPdfFile(printer, pdfPath, printings)
         cleanupTempFile(pdfPath)
     }
 
-    private fun printPdfFile(pdfPath: String, printings: List<Printing>) {
+    private fun printPdfFile(
+        printer: PrintService,
+        pdfPath: String,
+        printings: List<Printing>) {
         val file = File(pdfPath)
         if (!file.exists()) {
             throw IllegalArgumentException("PDF file does not exist: $pdfPath")
