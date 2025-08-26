@@ -13,7 +13,7 @@ class TaskRepository(
     fun setTask(task: Task): String {
         val taskValue = ObjectMapperUtils.toJSON(task)
         val result = jedis.set(task.name, taskValue)
-        log.info("Set task in Redis with name: ${task.name}, value: $taskValue, result: $result")
+        log.debug("Set task in Redis with name: ${task.name}, value: $taskValue, result: $result")
         return result
     }
 

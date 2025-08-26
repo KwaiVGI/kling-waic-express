@@ -19,12 +19,14 @@ object PhotoUtils {
     fun generateBatchAsOnePdf(
         printings: List<Printing>,
         outputPath: String,
+        extraScaleFactor: Float,
+        drawImageX: Float,
+        drawImageY: Float,
         pageWidthInches: Float = 6f,
         pageHeightInches: Float = 4f,
-        extraScale: Float = 1.02f
     ): String {
-        val pageWidthPt = pageWidthInches * 72f * extraScale
-        val pageHeightPt = pageHeightInches * 72f * extraScale
+        val pageWidthPt = pageWidthInches * 72f * extraScaleFactor
+        val pageHeightPt = pageHeightInches * 72f * extraScaleFactor
         val pageSize = PDRectangle(pageWidthPt, pageHeightPt)
 
         PDDocument().use { doc ->
@@ -40,7 +42,7 @@ object PhotoUtils {
                     val pdfImage = convertBufferedImageToPDImage(processedImage, doc)
 
                     PDPageContentStream(doc, page).use { contentStream ->
-                        contentStream.drawImage(pdfImage, 0f, 0f, pageWidthPt, pageHeightPt)
+                        contentStream.drawImage(pdfImage, drawImageX, drawImageY, pageWidthPt, pageHeightPt)
                     }
 
                 } catch (e: Exception) {
@@ -61,7 +63,7 @@ object PhotoUtils {
         val height = originalImage.height
         val isPortrait = height > width
         
-        log.info("Original image: ${width}x${height}, isPortrait: $isPortrait")
+        log.debug("Original image: ${width}x${height}, isPortrait: $isPortrait")
         return if (isPortrait) {
             log.info("Rotating portrait image 90 degrees clockwise")
             rotate90(originalImage)

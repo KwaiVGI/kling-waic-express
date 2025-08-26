@@ -104,7 +104,7 @@ class ImageTaskService(
                     if (result.code != 0) {
                         throw KlingOpenAPIException(result)
                     }
-                    log.info(
+                    log.debug(
                         "Query Image Task with result, taskId: {}, taskStatus: {}, result: {}",
                         result.data?.taskId ?: "null", result.data?.taskStatus ?: "null",
                         ObjectMapperUtils.toJSON(result)
@@ -134,7 +134,7 @@ class ImageTaskService(
         queryTaskContext: QueryTaskContext,
         locale: Locale
     ): Pair<String, String> {
-        log.info("Generating Sudoku image URL for task: $taskName")
+        log.debug("Generating Sudoku image URL for task: $taskName")
         val taskResponseMap = queryTaskContext.taskResponseMap
 
         val imageUrls: MutableList<String> = taskResponseMap.values

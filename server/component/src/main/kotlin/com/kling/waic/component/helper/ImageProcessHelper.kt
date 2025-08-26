@@ -102,8 +102,7 @@ class ImageProcessHelper(
                     "The file may be corrupted or in an unsupported format. File name: ${file.originalFilename}, Content type: ${file.contentType}")
         }
 
-        log.info("Successfully read image: ${originalImage.width}x${originalImage.height}, type: ${originalImage.type}")
-
+        log.debug("Successfully read image: ${originalImage.width}x${originalImage.height}, type: ${originalImage.type}")
         // Open the file as an InputStream to read EXIF data
         try {
             file.inputStream.use { exifInputStream ->
@@ -155,12 +154,13 @@ class ImageProcessHelper(
             imageUrls.mapIndexed { index, url ->
                 // Use current context instead of withContext(Dispatchers.IO)
                 async {
-                    log.info("Downloading image ${index} from $url")
+                    log.debug("Downloading image ${index} from $url")
                     readImage(url)
                 }
             }.awaitAll()
         }
 
+        log.info("Download images done, imageUrls.size: ${imageUrls.size}, images.size: ${images.size}")
         if (images.size != imageUrls.size) {
             throw IllegalStateException(
                 "Some images could not be downloaded. Expected: ${imageUrls.size}, Actual: ${images.size}"
@@ -173,9 +173,11 @@ class ImageProcessHelper(
         val encrypted = aesCipherHelper.encrypt("sudoku-$taskName")
         val outputFilename = "$taskName-$encrypted.jpg"
         val outputImageUrl = uploadTaskImage(outputFilename, sudokuImage)
+        log.info("Generated outputImageUrl for taskName: $taskName, outputImageUrl: $outputImageUrl")
 
         val thumbnailFilename = "$taskName-$encrypted-thumbnail.jpg"
         val thumbnailImageUrl = uploadTaskImage(thumbnailFilename, thumbnailImage)
+        log.info("Generated thumbnail outputImageUrl for taskName: $taskName, thumbnailImageUrl: $thumbnailImageUrl")
 
         return Pair(outputImageUrl, thumbnailImageUrl)
     }
@@ -189,11 +191,11 @@ class ImageProcessHelper(
     fun readImage(url: String): BufferedImage {
         val url = URL(url)
         val connection = if (useProxy) {
-            log.info("Proxy connect to $url via $proxyHost:$proxyPort")
+            log.debug("Proxy connect to $url via $proxyHost:$proxyPort")
             val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort))
             url.openConnection(proxy) as HttpURLConnection
         } else {
-            log.info("Direct connect to $url")
+            log.debug("Direct connect to $url")
             url.openConnection() as HttpURLConnection
         }
 
