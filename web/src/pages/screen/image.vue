@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { castingService } from '@/api/castingService'
 import type { CastingImage } from '@/api/castingService'
 import { fetchConfig } from '@/api/admin'
+import { STORAGE_ACTIVE_KEY } from '@/stores/mutation-type'
 
 import { useRoute } from 'vue-router'
 import LogoutButton from '@/components/LogoutButton.vue'
@@ -73,7 +74,7 @@ const imageStyle = computed(() => {
     width: '100%', // 与容器等宽
     height: '0', // 高度设为0，通过padding-bottom来撑开
     paddingBottom: `${paddingBottomPercent}%`, // 150%，相对于自身宽度
-    bottom: '2vh', // 距离容器底部2vh
+    bottom: isXiaozhaoActivity.value ? '0' : '2vh', // 校招活动时贴底，默认距离容器底部2vh
     left: '0',
   }
 })
@@ -225,6 +226,25 @@ watch([currentImage, nextImage], ([cur, next]) => {
 })
 const route = useRoute()
 
+// 活动主题配置
+const currentActivity = ref<string>('')
+const isXiaozhaoActivity = computed(() => currentActivity.value === 'xiaozhao')
+
+// 主题相关的图片和样式配置
+const themeConfig = computed(() => {
+  if (isXiaozhaoActivity.value) {
+    return {
+      topImage: 'https://tx.a.yximgs.com/kos/nlav12119/IpIGJduh_2025-08-27-15-03-39.png',
+      backgroundColor: '#FF4A07'
+    }
+  } else {
+    return {
+      topImage: 'https://ali.a.yximgs.com/kos/nlav12119/hquZnuZl_2025-07-24-16-50-11.png',
+      backgroundColor: '#000'
+    }
+  }
+})
+
 // 初始化容器宽高比
 async function initializeContainerAspectRatio() {
   try {
@@ -242,11 +262,26 @@ function handleResize() {
   // 触发重新计算，computed会自动更新
 }
 
+// 初始化活动信息
+function initializeActivity() {
+  // 优先从URL参数获取活动信息
+  if (route.query.activity) {
+    currentActivity.value = route.query.activity as string
+    localStorage.setItem(STORAGE_ACTIVE_KEY, currentActivity.value)
+  } else {
+    // 从本地存储获取活动信息
+    currentActivity.value = localStorage.getItem(STORAGE_ACTIVE_KEY) || ''
+  }
+}
+
 // 初始化加载
 onMounted(async () => {
   if (route.query.token) {
     // Token handling removed
   }
+
+  // 初始化活动信息
+  initializeActivity()
 
   // 先初始化容器宽高比
   await initializeContainerAspectRatio()
@@ -277,10 +312,10 @@ onUnmounted(() => {
     <LogoutButton :transparent="true" />
     <!-- 双图片容器实现无缝切换 -->
     <div class="ds-image-container" :style="imageContainerStyle">
-      <div class="w-full left-0 top-0 absolute z-50">
+      <div class="w-full left-0 absolute z-50" :style="{ top: isXiaozhaoActivity ? '1vh' : '0' }">
         <img
           class="w-full"
-          src="https://ali.a.yximgs.com/kos/nlav12119/hquZnuZl_2025-07-24-16-50-11.png"
+          :src="themeConfig.topImage"
           alt=""
         >
       </div>
@@ -338,7 +373,7 @@ onUnmounted(() => {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: #000;
+  background-color: v-bind('themeConfig.backgroundColor');
   display: flex;
   justify-content: center;
   align-items: center;
