@@ -89,6 +89,8 @@ async function initIndexedDB(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
+      
+      // 视频缓存存储
       if (!db.objectStoreNames.contains(indexedDBStoreName)) {
         const store = db.createObjectStore(indexedDBStoreName, {
           keyPath: "id",
@@ -112,17 +114,19 @@ async function initIndexedDB(): Promise<IDBDatabase> {
 async function loadCacheFromIndexedDB() {
   try {
     const db = await initIndexedDB();
-    const transaction = db.transaction(indexedDBStoreName, "readonly");
-    const store = transaction.objectStore(indexedDBStoreName);
-    const request = store.getAll();
+    
+    // 加载视频缓存
+    const videoTransaction = db.transaction(indexedDBStoreName, "readonly");
+    const videoStore = videoTransaction.objectStore(indexedDBStoreName);
+    const videoRequest = videoStore.getAll();
 
     await new Promise<void>((resolve, reject) => {
-      request.onsuccess = () => {
+      videoRequest.onsuccess = () => {
         let validCacheCount = 0;
-        request.result.forEach((item: VideoCacheItem) => {
+        videoRequest.result.forEach((item: VideoCacheItem) => {
           // 页面刷新后，所有blob URL都会失效，需要清理
           if (item.blobUrl && item.blobUrl.startsWith("blob:")) {
-            console.warn(`清理失效的Blob URL缓存: ${item.id}`);
+            console.warn(`清理失效的视频Blob URL缓存: ${item.id}`);
             // 不加载失效的blob URL缓存
             return;
           }
@@ -133,12 +137,12 @@ async function loadCacheFromIndexedDB() {
             validCacheCount++;
           }
         });
-        console.log(`从IndexedDB加载了 ${validCacheCount} 个有效缓存项`);
+        console.log(`从IndexedDB加载了 ${validCacheCount} 个有效视频缓存项`);
         resolve();
       };
 
-      request.onerror = () => {
-        reject(request.error);
+      videoRequest.onerror = () => {
+        reject(videoRequest.error);
       };
     });
 
@@ -288,18 +292,20 @@ async function cacheVideo(item: VideoCacheItem) {
 async function cleanInvalidCacheFromIndexedDB() {
   try {
     const db = await initIndexedDB();
-    const transaction = db.transaction(indexedDBStoreName, "readwrite");
-    const store = transaction.objectStore(indexedDBStoreName);
-    const request = store.getAll();
+    
+    // 清理视频缓存
+    const videoTransaction = db.transaction(indexedDBStoreName, "readwrite");
+    const videoStore = videoTransaction.objectStore(indexedDBStoreName);
+    const videoRequest = videoStore.getAll();
 
     await new Promise<void>((resolve, reject) => {
-      request.onsuccess = () => {
+      videoRequest.onsuccess = () => {
         const deletePromises: Promise<void>[] = [];
 
-        request.result.forEach((item: VideoCacheItem) => {
+        videoRequest.result.forEach((item: VideoCacheItem) => {
           // 删除所有blob URL缓存，因为页面刷新后都会失效
           if (item.blobUrl && item.blobUrl.startsWith("blob:")) {
-            const deleteRequest = store.delete(item.id);
+            const deleteRequest = videoStore.delete(item.id);
             deletePromises.push(
               new Promise((resolve) => {
                 deleteRequest.onsuccess = () => resolve();
@@ -310,13 +316,13 @@ async function cleanInvalidCacheFromIndexedDB() {
         });
 
         Promise.all(deletePromises).then(() => {
-          console.log(`清理了 ${deletePromises.length} 个失效的blob URL缓存`);
+          console.log(`清理了 ${deletePromises.length} 个失效的视频blob URL缓存`);
           resolve();
         });
       };
 
-      request.onerror = () => {
-        reject(request.error);
+      videoRequest.onerror = () => {
+        reject(videoRequest.error);
       };
     });
   } catch (error) {
@@ -354,7 +360,7 @@ async function initVideoCells() {
     if (!preloadLock.value) {
       schedulePreload();
     }
-  }, 3000); // 增加延迟时间，确保初始视频加载完成
+  }, 1000); // 减少延迟时间，更快开始预加载
 }
 
 // 预加载初始视频
@@ -497,19 +503,23 @@ function schedulePreload() {
   // 防抖：延迟执行，避免频繁调用
   schedulePreloadTimer.value = setTimeout(() => {
     doPreload();
-  }, 500);
+  }, 200); // 减少防抖延迟，更快响应预加载需求
 }
 
 // 实际执行预加载的函数
 function doPreload() {
   if (preloadLock.value) return;
 
-  // 计算需要预加载的数量
+  // 计算需要预加载的数量，优先考虑即将播放完的视频
   const emptySlots = videoCells.value.filter((cell) => !cell.next).length;
   if (emptySlots === 0) return;
 
+  // 按优先级排序：即将播放完的视频优先预加载
+  const prioritizedSlots = getPrioritizedEmptySlots();
+  if (prioritizedSlots.length === 0) return;
+
   preloadLock.value = true;
-  const preloadCount = Math.min(emptySlots, gridSize.value * gridSize.value);
+  const preloadCount = Math.min(prioritizedSlots.length, gridSize.value * gridSize.value);
 
   castingService
     .getCurrentCasting("VIDEO_EFFECT", preloadCount)
@@ -517,9 +527,8 @@ function doPreload() {
       const preloadTasks: Promise<void>[] = [];
       const actualVideos = videos || []; // 防止接口返回null/undefined
 
-      for (let i = 0; i < actualVideos.length; i++) {
-        const cellIndex = videoCells.value.findIndex((cell) => !cell.next);
-        if (cellIndex === -1) break;
+      for (let i = 0; i < Math.min(actualVideos.length, prioritizedSlots.length); i++) {
+        const cellIndex = prioritizedSlots[i];
 
         // 优先使用缓存
         const cached = getCachedVideo(actualVideos[i].id);
@@ -527,7 +536,7 @@ function doPreload() {
           videoCells.value[cellIndex].next = {
             ...actualVideos[i],
             ready: true,
-            blobUrl: cached.blobUrl,
+            blobUrl: cached.url || cached.blobUrl,
             startTime: undefined,
             hasPlayed: false,
           };
@@ -546,8 +555,8 @@ function doPreload() {
       }
 
       // 如果接口返回的视频不足，尝试从缓存中补充
-      if (actualVideos.length < emptySlots) {
-        const remainingSlots = emptySlots - actualVideos.length;
+      if (actualVideos.length < prioritizedSlots.length) {
+        const remainingSlots = prioritizedSlots.slice(actualVideos.length);
         const cachedVideos = Array.from(videoCache.value.values());
         const currentIds = videoCells.value
           .filter((cell) => cell.current || cell.next)
@@ -559,21 +568,16 @@ function doPreload() {
           (cached) => !currentIds.includes(cached.id)
         );
 
-        for (
-          let i = 0;
-          i < Math.min(remainingSlots, availableCached.length);
-          i++
-        ) {
-          const cellIndex = videoCells.value.findIndex((cell) => !cell.next);
-          if (cellIndex === -1) break;
-
+        for (let i = 0; i < Math.min(remainingSlots.length, availableCached.length); i++) {
+          const cellIndex = remainingSlots[i];
           const cachedVideo = availableCached[i];
+          
           videoCells.value[cellIndex].next = {
             id: cachedVideo.id,
-            url: cachedVideo.blobUrl,
+            url: cachedVideo.url || cachedVideo.blobUrl,
             poster: cachedVideo.poster,
             ready: true,
-            blobUrl: cachedVideo.blobUrl,
+            blobUrl: cachedVideo.url || cachedVideo.blobUrl,
             startTime: undefined,
             hasPlayed: false,
           };
@@ -593,12 +597,43 @@ function doPreload() {
           // 确保没有其他预加载在进行
           schedulePreload();
         }
-      }, 5000); // 增加到5秒
+      }, 3000); // 减少重试延迟
     })
     .finally(() => {
       preloadLock.value = false;
     });
 }
+
+// 获取按优先级排序的空槽位
+function getPrioritizedEmptySlots(): number[] {
+  const emptySlots: { index: number; priority: number }[] = [];
+  
+  videoCells.value.forEach((cell, index) => {
+    if (!cell.next) {
+      let priority = 0;
+      
+      // 如果当前视频正在播放，计算播放进度
+      const videoEl = currentVideos.value.find(
+        (el) => Number.parseInt(el.dataset.index || "0") === index
+      );
+      
+      if (videoEl && videoEl.duration && cell.current) {
+        const progress = videoEl.currentTime / videoEl.duration;
+        // 播放进度越高，优先级越高
+        priority = progress * 100;
+      }
+      
+      emptySlots.push({ index, priority });
+    }
+  });
+  
+  // 按优先级降序排序
+  return emptySlots
+    .sort((a, b) => b.priority - a.priority)
+    .map(slot => slot.index);
+}
+
+
 
 // 获取有效的视频源URL
 function getValidVideoSrc(videoItem: VideoItem): string {
@@ -681,61 +716,131 @@ function onVideoEnded(index: number) {
   currentVideo.hasPlayed = true;
   console.log(`视频 ${index} 正常播放完成，准备切换`);
 
+  // 尝试无缝切换到下一个视频
+  attemptSeamlessTransition(index);
+}
+
+// 尝试无缝切换到下一个视频
+function attemptSeamlessTransition(index: number) {
+  const cell = videoCells.value[index];
+  if (!cell) return;
+
   if (cell.next?.ready) {
-    // 触发切换动画
-    cell.transitioning = true;
+    // 下一个视频已准备好，执行无缝切换
+    performSeamlessTransition(index);
   } else {
-    // 尝试从缓存中随机获取一个视频
-    const randomCachedVideo = getRandomCachedVideo();
+    // 下一个视频未准备好，循环播放当前视频
+    console.log(`视频 ${index} 下一个视频未准备好，循环播放当前视频`);
+    loopCurrentVideo(index);
+    
+    // 触发预加载，确保尽快准备下一个视频
+    if (!preloadLock.value) {
+      schedulePreload();
+    }
+    
+    // 定期检查下一个视频是否准备好
+    checkNextVideoReady(index);
+  }
+}
 
-    if (randomCachedVideo) {
-      // 创建新的视频项
-      const newVideoItem: VideoItem = {
-        id: randomCachedVideo.id,
-        url: randomCachedVideo.blobUrl,
-        poster: randomCachedVideo.poster,
-        ready: true,
-        blobUrl: randomCachedVideo.blobUrl,
-        startTime: now,
-        hasPlayed: false,
-      };
+// 循环播放当前视频
+function loopCurrentVideo(index: number) {
+  const cell = videoCells.value[index];
+  const videoEl = currentVideos.value.find(
+    (el) => Number.parseInt(el.dataset.index || "0") === index
+  );
 
-      // 更新当前格子状态
-      cell.current = newVideoItem;
-      cell.next = null;
+  if (!cell?.current || !videoEl) return;
 
-      // 确保新视频播放
-      nextTick(() => {
-        const videoEl = currentVideos.value.find(
-          (el) => Number.parseInt(el.dataset.index || "0") === index
-        );
-        if (videoEl) {
-          videoEl.src = getValidVideoSrc(newVideoItem);
-          videoEl.currentTime = 0;
-          newVideoItem.startTime = Date.now();
-          safePlay(videoEl);
-        }
-      });
+  // 尝试从缓存中获取一个不同的视频来避免单调
+  const randomCachedVideo = getRandomCachedVideo();
+  
+  if (randomCachedVideo && randomCachedVideo.id !== cell.current.id) {
+    // 使用缓存中的不同视频
+    const newVideoItem: VideoItem = {
+      id: randomCachedVideo.id,
+      url: randomCachedVideo.url || randomCachedVideo.blobUrl,
+      poster: randomCachedVideo.poster,
+      ready: true,
+      blobUrl: randomCachedVideo.url || randomCachedVideo.blobUrl,
+      startTime: Date.now(),
+      hasPlayed: false,
+    };
 
-      // 更新缓存使用时间
-      randomCachedVideo.lastUsed = Date.now();
-    } else {
-      // 缓存中没有可用视频，重新播放当前视频
-      if (videoEl && cell.current?.ready) {
-        console.log(`视频 ${index} 无新视频可切换，重新播放当前视频`);
+    cell.current = newVideoItem;
+    
+    nextTick(() => {
+      if (videoEl) {
+        videoEl.src = getValidVideoSrc(newVideoItem);
         videoEl.currentTime = 0;
-        currentVideo.startTime = now;
         safePlay(videoEl);
       }
+    });
+
+    // 更新缓存使用时间
+    randomCachedVideo.lastUsed = Date.now();
+  } else {
+    // 重新播放当前视频
+    videoEl.currentTime = 0;
+    cell.current.startTime = Date.now();
+    cell.current.hasPlayed = false;
+    safePlay(videoEl);
+  }
+}
+
+// 定期检查下一个视频是否准备好
+function checkNextVideoReady(index: number) {
+  const checkInterval = setInterval(() => {
+    const cell = videoCells.value[index];
+    
+    if (!cell) {
+      clearInterval(checkInterval);
+      return;
     }
 
-    // 延迟触发预加载补充，避免频繁请求
-    setTimeout(() => {
-      if (!preloadLock.value) {
-        schedulePreload();
-      }
-    }, 2000); // 增加延迟时间
-  }
+    if (cell.next?.ready) {
+      // 下一个视频准备好了，执行无缝切换
+      console.log(`视频 ${index} 下一个视频已准备好，执行切换`);
+      clearInterval(checkInterval);
+      performSeamlessTransition(index);
+    }
+  }, 1000); // 每秒检查一次
+
+  // 最多检查30秒，避免无限检查
+  setTimeout(() => {
+    clearInterval(checkInterval);
+  }, 30000);
+}
+
+// 执行无缝切换
+function performSeamlessTransition(index: number) {
+  const cell = videoCells.value[index];
+  if (!cell?.next?.ready) return;
+
+  // 使用淡入淡出效果实现无缝切换
+  cell.transitioning = true;
+  
+  // 立即开始切换动画
+  nextTick(() => {
+    // 预加载下一个视频到播放状态
+    const nextVideoEl = nextVideos.value.find(
+      (el) => Number.parseInt(el.dataset.index || "0") === index
+    );
+    
+    if (nextVideoEl && cell.next) {
+      nextVideoEl.currentTime = 0;
+      cell.next.startTime = Date.now();
+      cell.next.hasPlayed = false;
+      
+      // 开始播放下一个视频（静音状态）
+      safePlay(nextVideoEl).then(() => {
+        // 视频开始播放后，触发切换动画
+        setTimeout(() => {
+          onTransitionEnd(index);
+        }, 300); // 300ms 后完成切换
+      });
+    }
+  });
 }
 
 // 过渡动画结束
@@ -747,12 +852,31 @@ function onTransitionEnd(index: number) {
 
   if (cell.next?.ready) {
     // 清理当前视频资源
-    if (cell.current?.blobUrl && !cell.current?.blobUrl.startsWith("blob:")) {
+    if (cell.current?.blobUrl && cell.current.blobUrl.startsWith("blob:")) {
       URL.revokeObjectURL(cell.current.blobUrl);
     }
 
     // 切换到预加载的视频
     const nextVideo = cell.next;
+    const currentVideoEl = currentVideos.value.find(
+      (el) => Number.parseInt(el.dataset.index || "0") === index
+    );
+    const nextVideoEl = nextVideos.value.find(
+      (el) => Number.parseInt(el.dataset.index || "0") === index
+    );
+
+    // 更新视频源到当前播放元素
+    if (currentVideoEl && nextVideo) {
+      currentVideoEl.src = getValidVideoSrc(nextVideo);
+      currentVideoEl.currentTime = 0;
+      
+      // 如果下一个视频元素已经在播放，同步时间
+      if (nextVideoEl && !nextVideoEl.paused) {
+        currentVideoEl.currentTime = nextVideoEl.currentTime;
+      }
+    }
+
+    // 更新状态
     cell.current = nextVideo;
     cell.next = null;
 
@@ -764,23 +888,20 @@ function onTransitionEnd(index: number) {
 
     // 确保新视频播放
     nextTick(() => {
-      const videoEl = currentVideos.value.find(
-        (el) => Number.parseInt(el.dataset.index || "0") === index
-      );
-      if (videoEl && nextVideo) {
-        console.log(`切换到新视频 ${index}`);
-        safePlay(videoEl).catch(() => {
+      if (currentVideoEl && nextVideo) {
+        console.log(`无缝切换到新视频 ${index}`);
+        safePlay(currentVideoEl).catch(() => {
           console.error(`切换后的视频播放失败: ${index}`);
         });
       }
     });
 
-    // 延迟触发新的预加载
+    // 立即触发新的预加载，确保下一个视频尽快准备
     setTimeout(() => {
       if (!preloadLock.value) {
         schedulePreload();
       }
-    }, 1000);
+    }, 500); // 减少延迟，更快预加载
   }
 }
 
@@ -808,6 +929,25 @@ function onVideoTimeUpdate(index: number) {
       console.log(
         `视频 ${index} 已正常播放 ${videoEl.currentTime.toFixed(1)}s`
       );
+    }
+  }
+
+  // 预加载优化：当视频播放到70%时，确保下一个视频已经准备好
+  if (videoEl && videoEl.duration && cell?.current) {
+    const progress = videoEl.currentTime / videoEl.duration;
+    
+    if (progress > 0.7 && !cell.next?.ready) {
+      // 视频播放到70%但下一个视频还没准备好，触发预加载
+      if (!preloadLock.value) {
+        console.log(`视频 ${index} 播放到70%，触发预加载`);
+        schedulePreload();
+      }
+    }
+    
+    // 当播放到90%时，如果下一个视频还没准备好，准备循环当前视频
+    if (progress > 0.9 && !cell.next?.ready) {
+      console.log(`视频 ${index} 播放到90%，下一个视频仍未准备好`);
+      // 可以在这里做一些准备工作，比如预先准备循环播放
     }
   }
 }
@@ -1068,6 +1208,8 @@ onUnmounted(() => {
       URL.revokeObjectURL(cell.next.blobUrl);
     }
   });
+
+  
 });
 </script>
 
@@ -1090,7 +1232,7 @@ onUnmounted(() => {
           autoplay
           muted
           playsinline
-          class="active video-element"
+          :class="['video-element', 'current', { 'transitioning-out': cell.transitioning }]"
           @ended="onVideoEnded(index)"
           @error="handleVideoError(index)"
           @canplay="handleVideoCanPlay(index)"
@@ -1106,20 +1248,21 @@ onUnmounted(() => {
           :src="getValidVideoSrc(cell.next)"
           muted
           playsinline
-          class="video-element next"
+          preload="auto"
+          :class="['video-element', 'next', { 'transitioning-in': cell.transitioning }]"
         />
 
-        <!-- 过渡遮罩 -->
+        <!-- 无缝切换遮罩 -->
         <div
           v-if="cell.transitioning"
-          class="transition-overlay"
+          class="seamless-transition-overlay"
           @animationend="onTransitionEnd(index)"
         />
 
         <!-- 加载指示器 -->
         <img
           v-if="!cell.current?.ready && cell.current?.poster"
-          class="h-full w-full"
+          class="h-full w-full object-cover"
           :src="cell.current.poster"
           alt=""
         />
@@ -1169,7 +1312,17 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.video-element.current {
+  opacity: 1;
+  z-index: 2;
+}
+
+.video-element.current.transitioning-out {
+  opacity: 0;
+  z-index: 1;
 }
 
 .video-element.next {
@@ -1177,24 +1330,24 @@ onUnmounted(() => {
   z-index: 1;
 }
 
-.video-element.active {
+.video-element.next.transitioning-in {
   opacity: 1;
   z-index: 2;
 }
 
-.transition-overlay {
+.seamless-transition-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: white;
-  z-index: 10;
-  opacity: 0;
-  animation: fadeTransition 0.3s ease-in-out;
+  background: transparent;
+  z-index: 3;
+  pointer-events: none;
+  animation: seamlessTransition 0.5s ease-in-out;
 }
 
-@keyframes fadeTransition {
+@keyframes seamlessTransition {
   0% {
     opacity: 0;
   }
