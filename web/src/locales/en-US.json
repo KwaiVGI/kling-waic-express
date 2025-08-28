@@ -23,6 +23,7 @@
     "videoScreenTip": "Generated videos will auto-display on the live screen."
   },
   "status": {
+    "imageGenerating": "Generating... Estimated wait: {time} seconds",
     "generating": "Generating... Estimated wait: {time} min",
     "processing": "Generating... Please wait",
     "preparingDownload": "File prepped. Saving now.",
