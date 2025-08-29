@@ -30,7 +30,7 @@ const visiblePages = computed(() => {
   const pages = []
   const maxVisible = 5
   let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
-  let end = Math.min(totalPages.value, start + maxVisible - 1)
+  const end = Math.min(totalPages.value, start + maxVisible - 1)
 
   if (end - start < maxVisible - 1) {
     start = Math.max(1, end - maxVisible + 1)
@@ -60,12 +60,10 @@ async function loadImages() {
     }))
     totalPages.value = Math.ceil(result.total / pageSize.value)
     totalImages.value = result.total
-  }
-  catch (error) {
+  } catch(error) {
     console.error('加载图片失败:', error)
     showToast(`加载图片失败，请重试${error}`)
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -95,8 +93,7 @@ async function deleteImage(imageId: string) {
       return
     await castingService.deleteImage(currentType, imageId)
     loadImages()
-  }
-  catch (error) {
+  } catch(error) {
     console.error('删除失败:', error)
   }
 }
@@ -167,11 +164,11 @@ watch(searchQuery, (newVal) => {
           <div class="image-container" @click="openPreview(idx)">
             <video
               class="h-full w-full"
-              :src="image.url"
+              :src="image.thumbnailUrl || image.url"
               :poster="image.poster"
               preload="metadata"
               muted
-              style="pointer-events: none;"
+              style="pointer-events: none"
             />
             <span class="image-id">{{ image.name }}</span>
 

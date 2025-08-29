@@ -9,8 +9,8 @@ export default antfu(
     // https://unocss.dev/integrations/vscode
     unocss: true,
     formatters: {
-      css: true,
-      html: true,
+      css: false,
+      html: false,
       markdown: 'prettier',
     },
   },
@@ -25,6 +25,14 @@ export default antfu(
       'style/quotes': ['error', 'single'],
       'style/indent': ['error', 2],
       'style/comma-dangle': ['error', 'always-multiline'],
+      'style/brace-style': ['error', '1tbs', { allowSingleLine: true }],
+      'style/object-curly-spacing': ['error', 'always'],
+      'style/array-bracket-spacing': ['error', 'never'],
+      'style/space-before-function-paren': ['error', 'never'],
+      'style/keyword-spacing': ['error', { before: true, after: true }],
+      'style/space-infix-ops': 'error',
+      'style/no-trailing-spaces': 'error',
+      'style/eol-last': ['error', 'always'],
     },
   },
   {

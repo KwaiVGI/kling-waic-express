@@ -21,6 +21,8 @@
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "never"
   },
+  "eslint.format.enable": true,
+  "eslint.codeActionsOnSave.mode": "all",
   "[javascript]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
