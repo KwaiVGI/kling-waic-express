@@ -379,7 +379,7 @@ onUnmounted(() => {
           </div>
         </van-uploader>
         <div
-          v-if="type === 'image' && adminConfig?.allowPrint !== false"
+          v-if="type === 'image'"
           class="h-124px w-360px bottom-0 left-0 absolute"
         >
           <img class="h-full w-full" :src="assets.imageTip" alt="" />
@@ -465,10 +465,7 @@ onUnmounted(() => {
       :style="{ zoom: step2Zoom }"
       class="result-section animate-slideUp px-18px py-40px flex flex-col w-full items-center box-border relative z-10"
     >
-      <div
-        v-if="type === 'image' && adminConfig?.allowPrint !== false"
-        class="rounded-8px h-570px w-380px relative"
-      >
+      <div v-if="type === 'image'" class="rounded-8px h-570px w-380px relative">
         <img
           :src="generatedResult"
           alt="生成的图片"
@@ -551,10 +548,7 @@ onUnmounted(() => {
         class="loading-bg-white p-24px rounded-16px flex flex-col gap-12px items-center justify-center backdrop-blur-24px"
       >
         <van-loading type="circular" color="#0B8A1B" />
-        <div
-          v-if="type === 'image' && adminConfig?.allowPrint !== false"
-          class="text-14px text-black"
-        >
+        <div v-if="type === 'image'" class="text-14px text-black">
           {{ $t("status.imageGenerating", { time: 30 }) }}
         </div>
         <div v-else class="text-14px text-black">
