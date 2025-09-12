@@ -1,139 +1,133 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { castingService } from '@/api/castingService'
-import type { CastingImage } from '@/api/castingService'
+import { computed, onMounted, ref, watch } from "vue";
+import { castingService } from "@/api/castingService";
+import type { CastingImage } from "@/api/castingService";
 
-import { confirmDelete } from '@/utils/confirm'
-import { showImagePreview, showToast } from 'vant'
-import { useRoute } from 'vue-router'
-import ImagePreview from '@/components/ImagePreview.vue'
+import { confirmDelete } from "@/utils/confirm";
+import { showImagePreview, showToast } from "vant";
+import { useRoute } from "vue-router";
+import ImagePreview from "@/components/ImagePreview.vue";
 
-const route = useRoute()
+const route = useRoute();
 // 数据状态
-const images = ref<CastingImage[]>([])
-const loading = ref(false)
-const currentPage = ref(1)
-const pageSize = ref(24)
-const totalPages = ref(1)
-const totalImages = ref(0)
-const searchQuery = ref('')
-const pinnedImageId = ref<string | null>(null)
-const promotedImageId = ref<string | null>(null)
+const images = ref<CastingImage[]>([]);
+const loading = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(24);
+const totalPages = ref(1);
+const totalImages = ref(0);
+const searchQuery = ref("");
+const pinnedImageId = ref<string | null>(null);
+const promotedImageId = ref<string | null>(null);
 
 // 图片预览相关状态
-const showPreview = ref(false)
-const currentPreviewIndex = ref(0)
+const showPreview = ref(false);
+const currentPreviewIndex = ref(0);
 
 // 计算可见的分页按钮
 const visiblePages = computed(() => {
-  const pages = []
-  const maxVisible = 5
-  let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
-  let end = Math.min(totalPages.value, start + maxVisible - 1)
+  const pages = [];
+  const maxVisible = 5;
+  let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2));
+  let end = Math.min(totalPages.value, start + maxVisible - 1);
 
   if (end - start < maxVisible - 1) {
-    start = Math.max(1, end - maxVisible + 1)
+    start = Math.max(1, end - maxVisible + 1);
   }
 
   for (let i = start; i <= end; i++) {
-    pages.push(i)
+    pages.push(i);
   }
 
-  return pages
-})
+  return pages;
+});
 
 // 加载图片
 async function loadImages() {
-  loading.value = true
+  loading.value = true;
   try {
     const result = await castingService.getCastingList({
       keyword: searchQuery.value,
-      type: 'STYLED_IMAGE',
+      type: "STYLED_IMAGE",
       page: currentPage.value,
       limit: pageSize.value,
-    })
-    images.value = result.items.map(img => ({
+    });
+    images.value = result.items.map((img) => ({
       ...img,
       isPinned: img.id === pinnedImageId.value,
       isPromoted: img.id === promotedImageId.value,
-    }))
-    totalPages.value = Math.ceil(result.total / pageSize.value)
-    totalImages.value = result.total
-    await getPinedImage()
-  }
-  catch (error) {
-    console.error('加载图片失败:', error)
-    showToast(`加载图片失败，请重试${error}`)
-  }
-  finally {
-    loading.value = false
+    }));
+    totalPages.value = Math.ceil(result.total / pageSize.value);
+    totalImages.value = result.total;
+    await getPinedImage();
+  } catch (error) {
+    if (error !== 401) {
+      showToast(`获取图片列表失败，请重试${error}`);
+    }
+  } finally {
+    loading.value = false;
   }
 }
 
 // 搜索图片
 function searchImages() {
-  currentPage.value = 1
-  loadImages()
+  currentPage.value = 1;
+  loadImages();
 }
 
 // 跳转到指定页
 function goToPage(page: number) {
-  if (page < 1 || page > totalPages.value)
-    return
-  currentPage.value = page
-  loadImages()
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+  loadImages();
 }
 
 // 置顶图片
 async function promoteImage(imageId: string) {
   try {
-    await castingService.promoteImage('STYLED_IMAGE', imageId)
-    promotedImageId.value = imageId
+    await castingService.promoteImage("STYLED_IMAGE", imageId);
+    promotedImageId.value = imageId;
     // loadImages();
-    showToast('操作成功')
-  }
-  catch (error) {
-    showToast('操作失败')
-    console.error('置顶图片失败:', error)
+    showToast("操作成功");
+  } catch (error) {
+    showToast("操作失败");
+    console.error("置顶图片失败:", error);
   }
 }
 
 async function getPinedImage() {
   try {
-    const res = await castingService.getPinedImage('STYLED_IMAGE')
-    pinnedImageId.value = res?.name
-  }
-  catch (error) {
-    console.error('获取固定图片失败:', error)
-    pinnedImageId.value = null
+    const res = await castingService.getPinedImage("STYLED_IMAGE");
+    pinnedImageId.value = res?.name;
+  } catch (error) {
+    console.error("获取固定图片失败:", error);
+    pinnedImageId.value = null;
   }
 }
 
 // 固定图片
 async function pinImage(imageId: string) {
   try {
-    await castingService.pinImage('STYLED_IMAGE', imageId)
+    await castingService.pinImage("STYLED_IMAGE", imageId);
     // loadImages();
-    getPinedImage()
-    showToast('操作成功')
-  }
-  catch (error) {
-    showToast('操作失败')
-    console.error('固定图片失败:', error)
+    getPinedImage();
+    showToast("操作成功");
+  } catch (error) {
+    showToast("操作失败");
+    console.error("固定图片失败:", error);
   }
 }
 
 // 取消固定
 async function unpinImage() {
   try {
-    await castingService.unpinImage('STYLED_IMAGE', pinnedImageId.value)
-    pinnedImageId.value = null
+    await castingService.unpinImage("STYLED_IMAGE", pinnedImageId.value);
+    pinnedImageId.value = null;
     // loadImages();
-    showToast('操作成功')
-  }
-  catch (error) {
-    showToast('操作失败')
-    console.error('取消固定失败:', error)
+    showToast("操作成功");
+  } catch (error) {
+    showToast("操作失败");
+    console.error("取消固定失败:", error);
   }
 }
 
@@ -141,40 +135,37 @@ async function unpinImage() {
 async function deleteImage(imageId: string) {
   try {
     const confirmed = await confirmDelete({
-      title: '删除确认',
-      message: '确定要删除吗？删除后不会在大屏幕上显示。',
-    })
-    if (!confirmed)
-      return
-    await castingService.deleteImage('STYLED_IMAGE', imageId)
-    loadImages()
-    showToast('操作成功')
-  }
-  catch (error) {
-    showToast('操作失败')
-    console.error('删除失败:', error)
+      title: "删除确认",
+      message: "确定要删除吗？删除后不会在大屏幕上显示。",
+    });
+    if (!confirmed) return;
+    await castingService.deleteImage("STYLED_IMAGE", imageId);
+    loadImages();
+    showToast("操作成功");
+  } catch (error) {
+    showToast("操作失败");
+    console.error("删除失败:", error);
   }
 }
 
 async function printImage(imageId: string) {
   try {
-    await castingService.printImage(imageId)
-    showToast('已发送打印任务，请排队领取')
-  }
-  catch (error) {
-    showToast('打印失败，请重试')
-    console.error('打印图片失败:', error)
+    await castingService.printImage(imageId);
+    showToast("已发送打印任务，请排队领取");
+  } catch (error) {
+    showToast("打印失败，请重试");
+    console.error("打印图片失败:", error);
   }
 }
 
 // 图片预览相关方法
 function openImagePreview(index: number) {
-  currentPreviewIndex.value = index
-  showPreview.value = true
+  currentPreviewIndex.value = index;
+  showPreview.value = true;
 }
 
 function closeImagePreview() {
-  showPreview.value = false
+  showPreview.value = false;
 }
 
 // 初始化加载图片
@@ -182,16 +173,16 @@ onMounted(() => {
   if (route.query.token) {
     // Token handling removed
   }
-  loadImages()
-})
+  loadImages();
+});
 
 // 监听搜索词变化
 watch(searchQuery, (newVal) => {
-  if (newVal === '') {
-    loadImages()
-    getPinedImage()
+  if (newVal === "") {
+    loadImages();
+    getPinedImage();
   }
-})
+});
 </script>
 
 <template>
@@ -204,10 +195,8 @@ watch(searchQuery, (newVal) => {
           placeholder="输入图片ID搜索..."
           class="search-input"
           @keyup.enter="searchImages"
-        >
-        <button class="search-button" @click="searchImages">
-          搜索
-        </button>
+        />
+        <button class="search-button" @click="searchImages">搜索</button>
       </div>
 
       <div class="display-status">
@@ -516,9 +505,7 @@ watch(searchQuery, (newVal) => {
   overflow: hidden;
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition:
-    transform 0.3s,
-    box-shadow 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s;
   background-color: #eee;
 }
 
@@ -650,6 +637,7 @@ watch(searchQuery, (newVal) => {
   color: #999;
   cursor: not-allowed;
 }
+
 .action-button.print {
   background-color: rgb(10, 150, 54);
   color: white;

@@ -1,112 +1,111 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { castingService } from '@/api/castingService'
-import type { CastingImage } from '@/api/castingService'
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { castingService } from "@/api/castingService";
+import type { CastingImage } from "@/api/castingService";
 
-import { confirmDelete } from '@/utils/confirm'
-import { showToast } from 'vant'
-import VideoPreview from '@/components/VideoPreview.vue'
+import { confirmDelete } from "@/utils/confirm";
+import { showToast } from "vant";
+import VideoPreview from "@/components/VideoPreview.vue";
 
-const route = useRoute()
+const route = useRoute();
 // 数据状态
-const images = ref<CastingImage[]>([])
-const loading = ref(false)
-const currentPage = ref(1)
-const pageSize = ref(24)
-const totalPages = ref(1)
-const totalImages = ref(0)
-const searchQuery = ref('')
-const pinnedImageId = ref<string | null>(null)
-const promotedImageId = ref<string | null>(null)
-const currentType = 'VIDEO_EFFECT'
+const images = ref<CastingImage[]>([]);
+const loading = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(24);
+const totalPages = ref(1);
+const totalImages = ref(0);
+const searchQuery = ref("");
+const pinnedImageId = ref<string | null>(null);
+const promotedImageId = ref<string | null>(null);
+const currentType = "VIDEO_EFFECT";
 
 // 预览相关状态
-const previewVisible = ref(false)
-const previewIndex = ref(0)
+const previewVisible = ref(false);
+const previewIndex = ref(0);
 
 // 计算可见的分页按钮
 const visiblePages = computed(() => {
-  const pages = []
-  const maxVisible = 5
-  let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
-  const end = Math.min(totalPages.value, start + maxVisible - 1)
+  const pages = [];
+  const maxVisible = 5;
+  let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2));
+  const end = Math.min(totalPages.value, start + maxVisible - 1);
 
   if (end - start < maxVisible - 1) {
-    start = Math.max(1, end - maxVisible + 1)
+    start = Math.max(1, end - maxVisible + 1);
   }
 
   for (let i = start; i <= end; i++) {
-    pages.push(i)
+    pages.push(i);
   }
 
-  return pages
-})
+  return pages;
+});
 
 // 加载图片
 async function loadImages() {
-  loading.value = true
+  loading.value = true;
   try {
     const result = await castingService.getCastingList({
       keyword: searchQuery.value,
       type: currentType,
       page: currentPage.value,
       limit: pageSize.value,
-    })
-    images.value = result.items.map(img => ({
+    });
+    images.value = result.items.map((img) => ({
       ...img,
       isPinned: img.id === pinnedImageId.value,
       isPromoted: img.id === promotedImageId.value,
-    }))
-    totalPages.value = Math.ceil(result.total / pageSize.value)
-    totalImages.value = result.total
-  } catch(error) {
-    console.error('加载图片失败:', error)
-    showToast(`加载图片失败，请重试${error}`)
+    }));
+    totalPages.value = Math.ceil(result.total / pageSize.value);
+    totalImages.value = result.total;
+  } catch (error) {
+    if (error !== 401) {
+      showToast(`获取视频列表失败，请重试${error}`);
+    }
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 // 搜索图片
 function searchImages() {
-  currentPage.value = 1
-  loadImages()
+  currentPage.value = 1;
+  loadImages();
 }
 
 // 跳转到指定页
 function goToPage(page: number) {
-  if (page < 1 || page > totalPages.value)
-    return
-  currentPage.value = page
-  loadImages()
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+  loadImages();
 }
 
 // 删除
 async function deleteImage(imageId: string) {
   try {
     const confirmed = await confirmDelete({
-      title: '删除确认',
-      message: '确定要删除吗？删除后不会在大屏幕上显示。',
-    })
-    if (!confirmed)
-      return
-    await castingService.deleteImage(currentType, imageId)
-    loadImages()
-  } catch(error) {
-    console.error('删除失败:', error)
+      title: "删除确认",
+      message: "确定要删除吗？删除后不会在大屏幕上显示。",
+    });
+    if (!confirmed) return;
+    await castingService.deleteImage(currentType, imageId);
+    loadImages();
+  } catch (error) {
+    console.error("删除失败:", error);
   }
 }
 
 // 打开预览
 function openPreview(index: number) {
-  previewIndex.value = index
-  previewVisible.value = true
+  previewIndex.value = index;
+  previewVisible.value = true;
 }
 
 // 关闭预览
 function closePreview() {
-  previewVisible.value = false
+  previewVisible.value = false;
 }
 
 // 初始化加载图片
@@ -114,15 +113,15 @@ onMounted(() => {
   if (route.query.token) {
     // Token handling removed
   }
-  loadImages()
-})
+  loadImages();
+});
 
 // 监听搜索词变化
 watch(searchQuery, (newVal) => {
-  if (newVal === '') {
-    loadImages()
+  if (newVal === "") {
+    loadImages();
   }
-})
+});
 </script>
 
 <template>
@@ -135,10 +134,8 @@ watch(searchQuery, (newVal) => {
           placeholder="输入视频ID搜索..."
           class="search-input"
           @keyup.enter="searchImages"
-        >
-        <button class="search-button" @click="searchImages">
-          搜索
-        </button>
+        />
+        <button class="search-button" @click="searchImages">搜索</button>
       </div>
     </div>
 
@@ -401,9 +398,7 @@ watch(searchQuery, (newVal) => {
   overflow: hidden;
   position: relative;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition:
-    transform 0.3s,
-    box-shadow 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s;
   background-color: #eee;
 }
 
