@@ -88,7 +88,7 @@ class PrintingDataClient(
                 val responseBody = resp.body?.string()
                     ?: throw IOException("Response body is empty")
 
-                log.info("update printing status response: $responseBody")
+                log.debug("update printing status response: $responseBody")
 
                 val response = Result.fromJSON<Printing?>(responseBody)
                 val printing = response.data

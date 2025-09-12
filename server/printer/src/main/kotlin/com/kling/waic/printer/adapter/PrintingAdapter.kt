@@ -105,10 +105,7 @@ class PrintAdapter(
         URL(imageUrl).openStream()
             .use { imageStream ->
                 val flavor = DocFlavor.INPUT_STREAM.JPEG
-
-                // Create document attributes - keep it simple to avoid ClassCastException
                 val docAttrs = HashDocAttributeSet()
-
                 val doc: Doc = SimpleDoc(imageStream, flavor, docAttrs)
 
                 val attrs = HashPrintRequestAttributeSet()
@@ -117,10 +114,7 @@ class PrintAdapter(
                 attrs.add(JobName(printing.name, Locale.getDefault()))
 
                 val job: DocPrintJob = printer.createPrintJob()
-
-                // Add job listener
                 job.addPrintJobListener(printJobCallback)
-
                 job.print(doc, attrs)
             }
     }
@@ -161,10 +155,9 @@ class PrintAdapter(
             throw IllegalArgumentException("PDF file does not exist: $pdfPath")
         }
 
-        val flavor = DocFlavor.INPUT_STREAM.PDF
-        val docAttrs = HashDocAttributeSet()
-
         file.inputStream().use { pdfStream ->
+            val flavor = DocFlavor.INPUT_STREAM.PDF
+            val docAttrs = HashDocAttributeSet()
             val doc: Doc = SimpleDoc(pdfStream, flavor, docAttrs)
 
             val attrs = HashPrintRequestAttributeSet()
@@ -175,7 +168,7 @@ class PrintAdapter(
             val jobName = "Batch:$jointName"
             attrs.add(JobName(jobName, Locale.getDefault()))
 
-            val job = printer.createPrintJob()
+            val job: DocPrintJob = printer.createPrintJob()
             job.addPrintJobListener(printJobCallback)
             job.print(doc, attrs)
         }
