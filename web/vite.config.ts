@@ -13,17 +13,17 @@ export default ({ mode }: ConfigEnv): UserConfig => {
     base: env.VITE_APP_BASE_URL || '/',
     plugins: createVitePlugins(mode),
 
-    server: {
-      host: true,
-      port: 3000,
-      proxy: {
-        '/api': {
-          // target: "https://waic.staging.kuaishou.com",
-          target: 'https://waic-api.klingai.com',
-          changeOrigin: true,
-        },
-      },
-    },
+    // server: {
+    //   host: true,
+    //   port: 3000,
+    //   proxy: {
+    //     '/api': {
+    //       // target: "https://waic.staging.kuaishou.com",
+    //       target: 'https://waic-api.klingai.com',
+    //       changeOrigin: true,
+    //     },
+    //   },
+    // },
 
     resolve: {
       alias: {

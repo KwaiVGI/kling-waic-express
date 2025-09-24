@@ -7,16 +7,28 @@ import {
   STORAGE_USER_TOKEN_KEY,
 } from '@/stores/mutation-type'
 
+declare global {
+    interface Window {
+        APP_CONFIG?: {
+            API_SERVER_BASE_URL: string;
+        };
+    }
+}
+
 // 这里是用于设定请求后端时，所用的 Token KEY
 export const REQUEST_TOKEN_KEY = 'Authorization'
 console.log(import.meta.env)
-// 创建 axios 实例
+
+// 兼容处理：优先 runtime 配置，fallback 到 Vite 编译时环境变量
+const baseURL =
+    window.APP_CONFIG?.API_SERVER_BASE_URL ||
+    import.meta.env.VITE_API_SERVER_BASE_URL ||
+    '/';
+
 const request = axios.create({
-  // API 请求的默认前缀
-  // baseURL: "https://waic-api.klingai.com/",
-  baseURL: import.meta.env.DEV ? '/' : 'https://waic-api.klingai.com/',
-  timeout: 600 * 1000, // 请求超时时间
-})
+    baseURL,
+    timeout: 600 * 1000,
+});
 
 export type RequestError = AxiosError<{
   message?: string

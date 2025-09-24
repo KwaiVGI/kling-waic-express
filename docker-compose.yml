@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+      - API_SERVER_BASE_URL=https://waic-api.klingai.com/
+    restart: always
+    container_name: kling-waic-web

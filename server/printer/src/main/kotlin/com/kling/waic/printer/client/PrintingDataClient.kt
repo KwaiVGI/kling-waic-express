@@ -14,8 +14,8 @@ import java.io.IOException
 @Component
 class PrintingDataClient(
     private val okHttpClient: OkHttpClient,
-    @Value("\${SERVER_BASE_URI:https://waic-api.klingai.com}")
-    private val serverBaseURI: String,
+    @Value("\${API_SERVER_BASE_URL}")
+    private val serverBaseURL: String,
     @Value("\${WAIC_MANAGEMENT_ACTIVITY:}")
     private val waicManagementActivity: String,
     @Value("\${WAIC_MANAGEMENT_TOKEN}")
@@ -26,7 +26,7 @@ class PrintingDataClient(
     }
 
     fun fetchPrinting(count: Int): List<Printing> {
-        val url = "$serverBaseURI/api/printings/batch_fetch"
+        val url = "$serverBaseURL/api/printings/batch_fetch"
 
         val body = ObjectMapperUtils.toJSON(
             BatchFetchPrintingRequest(
@@ -64,7 +64,7 @@ class PrintingDataClient(
     }
 
     fun updatePrintingStatus(printingName: String, status: PrintingStatus): Printing {
-        val url = "$serverBaseURI/api/printings/${printingName}/update"
+        val url = "$serverBaseURL/api/printings/${printingName}/update"
 
         val body = ObjectMapperUtils.toJSON(
             PrintingUpdateInput(
@@ -104,7 +104,7 @@ class PrintingDataClient(
     fun setPrinterQueuedJobCount(
         printerQueuedJobCount: Int
     ): String {
-        val url = "$serverBaseURI/api/printings/setPrinterQueuedJobCount"
+        val url = "$serverBaseURL/api/printings/setPrinterQueuedJobCount"
 
         val body = ObjectMapperUtils.toJSON(
             SetPrinterQueuedJobCountRequest(
