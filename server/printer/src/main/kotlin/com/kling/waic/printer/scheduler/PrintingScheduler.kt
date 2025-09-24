@@ -49,7 +49,7 @@ class PrintingScheduler(
             .flatMap { it.source.entries }
 
         allProperties.forEach { (key, value) ->
-            println("$key = $value")
+            log.info("$key = $value")
         }
     }
 }

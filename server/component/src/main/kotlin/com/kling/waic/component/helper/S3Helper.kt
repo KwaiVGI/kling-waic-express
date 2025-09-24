@@ -3,6 +3,7 @@ package com.kling.waic.component.helper
 import com.kling.waic.component.utils.ActivityUtils
 import com.kling.waic.component.utils.ActivityUtils.SLASH
 import com.kling.waic.component.utils.Slf4j.Companion.log
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.core.sync.RequestBody
@@ -18,7 +19,10 @@ import javax.imageio.ImageIO
 
 @Component
 class S3Helper(
-    private val s3Client: S3Client
+    private val s3Client: S3Client,
+    @param:Value("\${S3_ENDPOINT:}") private val s3Endpoint: String,
+    @param:Value("\${S3_BUCKET_NAME:kling-waic}") private val bucket: String,
+    @param:Value("\${S3_FILE_PREFIX:}") private val s3FilePrefix: String
 ) {
 
     fun upload(bucket: String, key: String, file: File): String {
@@ -63,11 +67,14 @@ class S3Helper(
             .build()
 
         val response = s3Client.putObject(putRequest, requestBody)
-        val fileUrl = "https://cdn-${bucket}-aws-cn-staging.klingai.com/$newKey"
+
+        val realS3FilePrefix = s3FilePrefix.ifEmpty {
+            "${s3Endpoint}/${bucket}"
+        }
+        val fileUrl = "${realS3FilePrefix}/$newKey"
         log.debug("File uploaded to S3, bucket: $bucket, key: $newKey, fileUrl: $fileUrl, response: $response")
         return fileUrl
     }
-
 
     @Throws(IOException::class)
     private fun bufferedImageToBytes(image: BufferedImage, format: String): ByteArray {

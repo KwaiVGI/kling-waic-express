@@ -4,7 +4,6 @@ services:
     ports:
       - "3000:80"
     environment:
-#      - NODE_ENV=${NODE_ENV}
       - API_SERVER_BASE_URL=${API_SERVER_BASE_URL}
     restart: always
     container_name: kling-express-web

@@ -14,6 +14,10 @@ class FileUtils {
         val BASE64_ENCODER: Base64.Encoder = Base64.getEncoder()
 
         fun readTextFromResources(filePath: String): String {
+            val absoluteFile = File("/app/$filePath")
+            if (absoluteFile.exists()) {
+                return absoluteFile.readText()
+            }
             return this::class.java.classLoader.getResource(filePath)?.readText()
                 ?: throw IllegalArgumentException("File not found: $filePath")
         }
