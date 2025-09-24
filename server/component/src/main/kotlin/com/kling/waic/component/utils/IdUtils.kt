@@ -8,5 +8,9 @@ class IdUtils {
         fun generateId(): Long {
             return UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
         }
+
+        fun simpleUUID(): String {
+            return UUID.randomUUID().toString().replace("-", "")
+        }
     }
 }

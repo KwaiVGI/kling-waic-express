@@ -1,23 +1,11 @@
 package com.kling.waic.component.service
 
 import com.google.errorprone.annotations.concurrent.LazyInit
-import com.kling.waic.component.helper.S3Helper
-import com.kling.waic.component.repository.CodeGenerateRepository
-import com.kling.waic.component.entity.Locale
-import com.kling.waic.component.entity.OpenApiRecord
-import com.kling.waic.component.entity.Printing
-import com.kling.waic.component.entity.Task
-import com.kling.waic.component.entity.TaskInput
-import com.kling.waic.component.entity.TaskOutput
-import com.kling.waic.component.entity.TaskOutputType
-import com.kling.waic.component.entity.TaskStatus
-import com.kling.waic.component.entity.TaskType
+import com.kling.waic.component.entity.*
 import com.kling.waic.component.external.model.QueryTaskContext
-import com.kling.waic.component.helper.AESCipherHelper
-import com.kling.waic.component.helper.AdminConfigHelper
-import com.kling.waic.component.helper.ImageCropHelper
-import com.kling.waic.component.helper.ImageProcessHelper
+import com.kling.waic.component.helper.*
 import com.kling.waic.component.repository.CastingRepository
+import com.kling.waic.component.repository.CodeGenerateRepository
 import com.kling.waic.component.repository.PrintingRepository
 import com.kling.waic.component.repository.TaskRepository
 import com.kling.waic.component.utils.IdUtils
@@ -47,8 +35,6 @@ abstract class TaskService {
 //    @Value("\${WAIC_CROP_IMAGE_WITH_OPENCV:true}")
 //    private lateinit var cropImageWithOpenCV: String
     @Autowired
-    private lateinit var aesCipherHelper: AESCipherHelper
-    @Autowired
     private lateinit var adminConfigHelper: AdminConfigHelper
 
     @Autowired(required = false)
@@ -68,7 +54,8 @@ abstract class TaskService {
             inputImage
         }
 
-        val requestFilename = taskName + "-" + aesCipherHelper.encrypt("sudoku-${taskName}") + ".jpg"
+        val suffix = IdUtils.simpleUUID()
+        val requestFilename = "$taskName-$suffix.jpg"
         val requestImageUrl = s3Helper.uploadBufferedImage(
             bucket,
             "request-images/$requestFilename",

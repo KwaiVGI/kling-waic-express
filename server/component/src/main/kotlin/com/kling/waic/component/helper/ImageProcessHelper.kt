@@ -5,6 +5,7 @@ import com.drew.metadata.exif.ExifIFD0Directory
 import com.kling.waic.component.entity.Locale
 import com.kling.waic.component.exception.ImageFormatNotSupportedException
 import com.kling.waic.component.selector.ActivityHandlerSelector
+import com.kling.waic.component.utils.IdUtils
 import com.kling.waic.component.utils.ImageUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import kotlinx.coroutines.async
@@ -33,7 +34,6 @@ class ImageProcessHelper(
     @param:Value("\${WAIC_KLING_USE_PROXY:false}") private val useProxy: Boolean,
     @param:Value("\${S3_BUCKET_NAME:kling-waic}") private val bucket: String,
     private val s3Helper: S3Helper,
-    private val aesCipherHelper: AESCipherHelper,
     private val activityHandlerSelector: ActivityHandlerSelector
 ) {
 
@@ -170,12 +170,12 @@ class ImageProcessHelper(
         val sudokuImage = createKlingWAICSudokuImage(taskName, images, locale)
         val thumbnailImage = ImageUtils.resizeAndCropToRatio(sudokuImage, 400, 600)
 
-        val encrypted = aesCipherHelper.encrypt("sudoku-$taskName")
-        val outputFilename = "$taskName-$encrypted.jpg"
+        val suffix = IdUtils.simpleUUID()
+        val outputFilename = "$taskName-$suffix.jpg"
         val outputImageUrl = uploadTaskImage(outputFilename, sudokuImage)
         log.info("Generated outputImageUrl for taskName: $taskName, outputImageUrl: $outputImageUrl")
 
-        val thumbnailFilename = "$taskName-$encrypted-thumbnail.jpg"
+        val thumbnailFilename = "$taskName-$suffix-thumbnail.jpg"
         val thumbnailImageUrl = uploadTaskImage(thumbnailFilename, thumbnailImage)
         log.info("Generated thumbnail outputImageUrl for taskName: $taskName, thumbnailImageUrl: $thumbnailImageUrl")
 

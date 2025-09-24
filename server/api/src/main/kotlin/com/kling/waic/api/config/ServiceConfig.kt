@@ -5,14 +5,12 @@ import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.bytedeco.javacpp.Loader
 import org.bytedeco.opencv.opencv_java
-import org.opencv.core.Core
 import org.opencv.objdetect.CascadeClassifier
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.config.Config
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -24,6 +22,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import java.io.File
 import java.io.FileOutputStream
+import java.lang.reflect.Proxy
 
 
 @Configuration
@@ -41,11 +40,10 @@ open class ServiceConfig(
 
     @Bean
     open fun jedis(): JedisCommands {
-
         val jedisCommands = if (jedisClusterMode) {
             createJedisCluster()
         } else {
-            createStandaloneJedis()
+            createStandaloneJedisProxy()
         }
         return jedisCommands
     }
@@ -66,10 +64,30 @@ open class ServiceConfig(
         return jedisCluster
     }
 
-    private fun createStandaloneJedis(): Jedis {
-        val jedis = Jedis(jedisHost, jedisPort)
-        jedis.auth(jedisPassword)
-        return jedis
+    private fun createStandaloneJedisProxy(): JedisCommands {
+        val poolConfig = JedisPoolConfig().apply {
+            maxTotal = 50
+            minIdle = 5
+            maxIdle = 20
+            maxWaitMillis = 5000
+            testOnBorrow = true
+            testOnReturn = true
+            testWhileIdle = true
+            timeBetweenEvictionRunsMillis = 30000
+            minEvictableIdleTimeMillis = 60000
+            numTestsPerEvictionRun = 3
+        }
+
+        val pool = JedisPool(poolConfig, jedisHost, jedisPort, 3000, jedisPassword)
+
+        return Proxy.newProxyInstance(
+            JedisCommands::class.java.classLoader,
+            arrayOf(JedisCommands::class.java)
+        ) { _, method, args ->
+            pool.resource.use { jedis ->
+                method.invoke(jedis, *(args ?: emptyArray()))
+            }
+        } as JedisCommands
     }
 
     @Bean

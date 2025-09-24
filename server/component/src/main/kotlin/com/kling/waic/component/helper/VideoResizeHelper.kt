@@ -1,6 +1,7 @@
 package com.kling.waic.component.helper
 
 import com.kling.waic.component.utils.FrameUtils
+import com.kling.waic.component.utils.IdUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.bytedeco.ffmpeg.global.avcodec
 import org.bytedeco.javacv.FFmpegFrameGrabber
@@ -22,7 +23,6 @@ enum class ResizeMode {
 @Component
 class VideoResizeHelper(
     private val s3Helper: S3Helper,
-    private val aesCipherHelper: AESCipherHelper,
     @param:Value("\${S3_BUCKET_NAME:kling-waic}")
     private val bucket: String,
 ) {
@@ -48,8 +48,8 @@ class VideoResizeHelper(
             resizeVideo(inputFile.absolutePath, outputFile.absolutePath, targetWidth, targetHeight, mode)
             
             // 3. 上传处理后的视频到S3
-            val encrypted = aesCipherHelper.encrypt("resized-$taskName")
-            val outputFilename = "$taskName-$encrypted.mp4"
+            val suffix = IdUtils.simpleUUID()
+            val outputFilename = "$taskName-$suffix.mp4"
 
             val s3Key = "resized-videos/${outputFilename}"
             log.debug("Uploading resized video to S3, bucket: $bucket, key: $s3Key")
