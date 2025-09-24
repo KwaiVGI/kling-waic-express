@@ -44,8 +44,8 @@ abstract class TaskService {
     private lateinit var printingRepository: PrintingRepository
     @Value("\${S3_BUCKET_NAME:kling-waic}")
     private lateinit var bucket: String
-    @Value("\${WAIC_CROP_IMAGE_WITH_OPENCV:true}")
-    private lateinit var cropImageWithOpenCV: String
+//    @Value("\${WAIC_CROP_IMAGE_WITH_OPENCV:true}")
+//    private lateinit var cropImageWithOpenCV: String
     @Autowired
     private lateinit var aesCipherHelper: AESCipherHelper
     @Autowired
@@ -59,7 +59,7 @@ abstract class TaskService {
         val taskName = codeGenerateRepository.nextCode(type)
         val inputImage = imageProcessHelper.multipartFileToBufferedImage(file)
 
-        val requestImage = if (cropImageWithOpenCV.toBoolean() && imageCropHelper != null) {
+        val requestImage = if (true && imageCropHelper != null) {
             log.debug("OpenCV face cropping is enabled, processing image with face detection")
             val cropRatio = getCropRatio(type)
             imageCropHelper!!.cropFaceToAspectRatio(inputImage, taskName, cropRatio)

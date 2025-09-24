@@ -14,11 +14,11 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 @Component
-@ConditionalOnProperty(
-    name = ["WAIC_CROP_IMAGE_WITH_OPENCV"],
-    havingValue = "true",
-    matchIfMissing = true
-)
+//@ConditionalOnProperty(
+//    name = ["WAIC_CROP_IMAGE_WITH_OPENCV"],
+//    havingValue = "true",
+//    matchIfMissing = true
+//)
 class ImageCropHelper(
     private val cascadeClassifiers: List<CascadeClassifier>,
 ) {

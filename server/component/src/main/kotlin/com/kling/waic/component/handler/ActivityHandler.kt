@@ -9,19 +9,13 @@ import com.kling.waic.component.utils.ImageUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.component.utils.ThreadContextUtils
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
-import java.lang.IllegalStateException
 
 abstract class ActivityHandler {
 
-    @Value("\${WAIC_OPENAPI_ACCESS_KEY}")
-    private lateinit var waicOpenApiAccessKey: String
-    @Value("\${WAIC_OPENAPI_SECRET_KEY}")
-    private lateinit var waicOpenApiSecretKey: String
     @Autowired
     private lateinit var activityConfigProps: ActivityConfigProps
 
@@ -43,11 +37,11 @@ abstract class ActivityHandler {
 
     fun getAksk(): Pair<String, String> {
         val activity = ThreadContextUtils.getActivity()
-        if (activity.isEmpty()) {
-            return Pair(waicOpenApiAccessKey, waicOpenApiSecretKey)
+        val activityToUse = activity.ifEmpty {
+            Constants.DEFAULT_ACTIVITY
         }
 
-        val activityConfig = activityConfigProps.map[activity]
+        val activityConfig = activityConfigProps.map[activityToUse]
             ?: throw IllegalStateException("Activity config not found: $activity")
         return Pair(activityConfig.accessKey, activityConfig.secretKey)
     }

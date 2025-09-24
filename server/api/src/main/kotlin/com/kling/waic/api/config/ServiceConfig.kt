@@ -3,6 +3,8 @@ package com.kling.waic.api.config
 import com.kling.waic.component.handler.ActivityHandler
 import com.kling.waic.component.utils.FileUtils
 import com.kling.waic.component.utils.Slf4j.Companion.log
+import org.bytedeco.javacpp.Loader
+import org.bytedeco.opencv.opencv_java
 import org.opencv.core.Core
 import org.opencv.objdetect.CascadeClassifier
 import org.redisson.Redisson
@@ -23,12 +25,13 @@ import software.amazon.awssdk.services.s3.S3Client
 import java.io.File
 import java.io.FileOutputStream
 
+
 @Configuration
 open class ServiceConfig(
     @param:Value("\${REDIS_CLUSTER_MODE_WAIC:false}") private val jedisClusterMode: Boolean,
     @param:Value("\${REDIS_HOST_WAIC:}") private val jedisHost: String,
-    @param:Value("\${REDIS_PORT_WAIC:}") private val jedisPort: Int,
-    @param:Value("\${REDIS_PASS_WAIC:}") private val jedisPassword: String,
+    @param:Value("\${REDIS_PORT_WAIC:6379}") private val jedisPort: Int,
+    @param:Value("\${REDIS_PASSWORD_WAIC:}") private val jedisPassword: String,
     @param:Value("\${S3_PROFILE_NAME:}") private val s3ProfileName: String,
     @param:Value("\${REDISSON_PROTOCOL:rediss}") private val redisProtocol: String
 ) {
@@ -90,13 +93,14 @@ open class ServiceConfig(
     }
 
     @Bean
-    @ConditionalOnProperty(
-        name = ["WAIC_CROP_IMAGE_WITH_OPENCV"],
-        havingValue = "true",
-        matchIfMissing = true
-    )
+//    @ConditionalOnProperty(
+//        name = ["WAIC_CROP_IMAGE_WITH_OPENCV"],
+//        havingValue = "true",
+//        matchIfMissing = true
+//    )
     open fun loadCascadeClassifiersFromResources(): List<CascadeClassifier> {
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
+        Loader.load(opencv_java::class.java)
+//        System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
         
         // Try to load multiple classifiers in order of priority
         val classifierFiles = listOf(

@@ -10,7 +10,7 @@ import javax.crypto.spec.SecretKeySpec
 
 @Component
 class AESCipherHelper(
-    @Value("\${WAIC_OPENAPI_ACCESS_KEY}")
+    @Value("\${WAIC_CIPHER_KEY:KlingAI}")
     private val cipherKey: String,
     @Value("\${WAIC_CIPHER_IV:KlingAIWAICBest!}")
     private val cipherIV: String,

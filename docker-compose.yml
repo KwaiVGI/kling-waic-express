@@ -1,12 +1,52 @@
-version: '3.8'
-
 services:
   web:
     image: akang943578/kling-express-web:latest
     ports:
       - "3000:80"
     environment:
-      - NODE_ENV=production
-      - API_SERVER_BASE_URL=https://waic-api.klingai.com/
+#      - NODE_ENV=${NODE_ENV}
+      - API_SERVER_BASE_URL=${API_SERVER_BASE_URL}
     restart: always
     container_name: kling-express-web
+#    depends_on:
+#      - api
+
+#  api:
+#    build:
+#      context: ./server/api
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8538:8538"
+#    volumes:
+#      - ./application-env.properties:/app/application-env.properties
+#    restart: always
+#    container_name: kling-express-api
+#    depends_on:
+#      - redis
+#      - s3-server
+
+  redis:
+    image: redis:latest
+    container_name: kling-express-redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - ./logs:/logs
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  s3-server:
+    image: minio/minio
+    container_name: s3-server
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ACCESS_KEY: ${WAIC_OPENAPI_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${WAIC_OPENAPI_SECRET_KEY}
+    volumes:
+      - ./data:/data
+    command: server /data
+    restart: always
+

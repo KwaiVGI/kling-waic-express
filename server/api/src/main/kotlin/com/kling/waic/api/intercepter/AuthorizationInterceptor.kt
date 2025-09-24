@@ -4,19 +4,17 @@ import com.kling.waic.component.auth.Authorization
 import com.kling.waic.component.auth.AuthorizationType
 import com.kling.waic.component.entity.ActivityConfigProps
 import com.kling.waic.component.helper.TokenHelper
+import com.kling.waic.component.utils.Constants
 import com.kling.waic.component.utils.Slf4j.Companion.log
 import com.kling.waic.component.utils.ThreadContextUtils
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
 
 @Component
 class AuthorizationInterceptor(
-    @Value("\${WAIC_MANAGEMENT_TOKEN}")
-    private val waicManagementToken: String,
     private val tokenHelper: TokenHelper,
     private val activityConfigProps: ActivityConfigProps
 ) : HandlerInterceptor {
@@ -85,7 +83,7 @@ class AuthorizationInterceptor(
             }
             AuthorizationType.MANAGEMENT -> {
                 val manageToken = if (activity.isEmpty()) {
-                    waicManagementToken
+                    activityConfigProps.map[Constants.DEFAULT_ACTIVITY]!!.token
                 } else {
                     activityConfigProps.map[activity]!!.token
                 }
