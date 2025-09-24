@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   web:
-    image: akang943578/kling-express-web:latest
+    build:
+      context: ./web
+      dockerfile: Dockerfile
     ports:
       - "3000:80"
     environment:
