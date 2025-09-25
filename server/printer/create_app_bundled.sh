@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP_NAME="Printer"
+APP_NAME="KlingExpressPrinter"
 APP_DIR="${APP_NAME}.app"
 CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
@@ -25,6 +25,12 @@ export PATH="$JAVA_HOME/bin:$PATH"
 # 复制 JAR 文件
 cp target/printer-0.0.1-SNAPSHOT.jar "${RESOURCES_DIR}/app.jar"
 
+# 复制应用图标
+if [ -f "klingai-printer-logo.icns" ]; then
+    cp klingai-printer-logo.icns "${RESOURCES_DIR}/"
+    echo "📎 复制应用图标..."
+fi
+
 echo "☕ 复制 Java 17 运行时..."
 cp -R "$JAVA_17_HOME"/* "${JAVA_DIR}/"
 
@@ -44,7 +50,8 @@ fi
 
 # 显示配置弹窗
 CONFIG=$(osascript << 'APPLESCRIPT'
-set defaultConfig to "WAIC_MANAGEMENT_ACTIVITY=
+set defaultConfig to "API_SERVER_BASE_URL=https://waic-api.klingai.com
+WAIC_MANAGEMENT_ACTIVITY=
 WAIC_MANAGEMENT_TOKEN=
 PRINTER_PRINTING_MODE=PDF_BATCH
 PRINTER_EXTRA_SCALE_FACTOR=1.00
@@ -112,6 +119,8 @@ cat > "${CONTENTS_DIR}/Info.plist" << EOF
     <string>1.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleIconFile</key>
+    <string>klingai-printer-logo</string>
     <key>LSMinimumSystemVersion</key>
     <string>10.9</string>
 </dict>
