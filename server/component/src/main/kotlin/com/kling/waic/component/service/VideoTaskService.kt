@@ -57,6 +57,10 @@ class VideoTaskService(
             result.data?.taskStatus ?: "null",
             ObjectMapperUtils.toJSON(result)
         )
+        if (result.data?.taskStatus == KlingOpenAPITaskStatus.failed) {
+            log.error("Video Task failed, taskId: $taskId, " +
+                    "result: ${ObjectMapperUtils.toJSON(result)}")
+        }
 
         val taskStatus = result.data!!.taskStatus
         val convertedStatus = calculateStatus(taskStatus)

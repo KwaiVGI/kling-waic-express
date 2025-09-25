@@ -1,6 +1,5 @@
 package com.kling.waic.component.utils
 
-import com.kling.waic.component.utils.Slf4j.Companion.log
 import org.springframework.web.multipart.MultipartFile
 import java.awt.Image
 import java.awt.image.BufferedImage
@@ -74,7 +73,6 @@ class FileUtils {
         }
 
         fun convertFileAsImage(filePath: String): Image {
-            log.info("Converting file to image: $filePath")
             val inputStream = this::class.java.classLoader.getResourceAsStream(filePath)
                 ?: throw IllegalArgumentException("File not found: $filePath")
             return inputStream.use { stream ->

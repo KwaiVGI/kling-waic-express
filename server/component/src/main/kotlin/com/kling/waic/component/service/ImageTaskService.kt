@@ -63,9 +63,9 @@ class ImageTaskService(
                             if (result.code != 0) {
                                 throw KlingOpenAPIException(result)
                             }
-                            log.debug(
+                            log.info(
                                 "Create Image Task with image: $requestImageUrl, " +
-                                        "prompt: $prompt, taskId: ${result.data?.taskId ?: "null"}"
+                                        "prompt: $prompt, taskId: ${result.data?.taskId}"
                             )
                             result.data?.taskId?.let { taskId ->
                                 OpenApiRecord(
@@ -106,9 +106,13 @@ class ImageTaskService(
                     }
                     log.debug(
                         "Query Image Task with result, taskId: {}, taskStatus: {}, result: {}",
-                        result.data?.taskId ?: "null", result.data?.taskStatus ?: "null",
+                        result.data?.taskId, result.data?.taskStatus,
                         ObjectMapperUtils.toJSON(result)
                     )
+                    if (result.data?.taskStatus == KlingOpenAPITaskStatus.failed) {
+                        log.error("Image Task failed, taskId: $taskId, " +
+                                "result: ${ObjectMapperUtils.toJSON(result)}")
+                    }
                     taskId to result.data
                 }
             }
@@ -204,7 +208,8 @@ class ImageTaskService(
             TaskStatus.PROCESSING -> "Tasks are still processing, " +
                     "submitted: ${summaryMap[KlingOpenAPITaskStatus.submitted]?.size ?: 0} / $totalCount, " +
                     "processing: ${summaryMap[KlingOpenAPITaskStatus.processing]?.size ?: 0} / $totalCount, " +
-                    "succeed: ${summaryMap[KlingOpenAPITaskStatus.succeed]?.size ?: 0} / $totalCount."
+                    "succeed: ${summaryMap[KlingOpenAPITaskStatus.succeed]?.size ?: 0} / $totalCount, " +
+                    "submitted taskIds: ${summaryMap[KlingOpenAPITaskStatus.submitted]?.joinToString(", ") ?: "none"}."
         }
     }
 
