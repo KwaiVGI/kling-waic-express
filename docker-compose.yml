@@ -29,9 +29,9 @@ services:
     ports:
       - '6379:6379'
     volumes:
-      - ./data:/data
+      - ./redis_data:/data
       - ./redis.conf:/usr/local/etc/redis/redis.conf
-      - ./logs:/logs
+      - ./redis_logs:/logs
     command: redis-server /usr/local/etc/redis/redis.conf
 
   s3-server:
@@ -43,7 +43,7 @@ services:
       MINIO_ACCESS_KEY: ${WAIC_OPENAPI_ACCESS_KEY}
       MINIO_SECRET_KEY: ${WAIC_OPENAPI_SECRET_KEY}
     volumes:
-      - ./data:/data
+      - ./minio_data:/data
     command: server /data
     restart: always
 
