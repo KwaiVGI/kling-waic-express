@@ -1,8 +1,11 @@
 package com.kling.waic.api.controller
 
 import com.kling.waic.component.entity.Result
+import com.kling.waic.component.utils.FileUtils
+import com.kling.waic.component.utils.ObjectMapperUtils
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.Instant
 
@@ -27,5 +30,12 @@ class HealthController {
             "timestamp" to Instant.now().toString()
         )
         return Result(response)
+    }
+
+    // todo: remove this api, it's only for debug purpose
+    @GetMapping("/file-read")
+    fun fileRead(@RequestParam file: String = ""): Result<String> {
+        val image = FileUtils.convertFileAsImage(file)
+        return Result(ObjectMapperUtils.toJSON(image))
     }
 }
