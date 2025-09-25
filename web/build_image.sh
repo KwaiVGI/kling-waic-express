@@ -1,8 +1,7 @@
 #!/bin/sh
 
-# 创建并使用 buildx builder（如果不存在）
-docker buildx create --name multiarch --use 2>/dev/null || docker buildx use multiarch
+docker build -t kling-express-web .
 
-# 构建并推送多架构镜像
 docker login
-docker buildx build --platform linux/amd64,linux/arm64 -t akang943578/kling-express-web:latest --push .
+docker tag kling-express-web:latest akang943578/kling-express-web:latest
+docker push akang943578/kling-express-web:latest
