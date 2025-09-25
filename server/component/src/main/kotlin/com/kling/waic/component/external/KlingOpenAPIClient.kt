@@ -24,7 +24,7 @@ import java.io.IOException
 
 @Component
 class KlingOpenAPIClient(
-    @Value("\${kling.open-api.base-url}") private val baseUrl: String,
+    @param:Value("\${KLING_OPEN_BASE_URL:https://api-beijing.klingai.com}") private val baseUrl: String,
     private val jwtHelper: JWTHelper,
     private val okHttpClient: OkHttpClient,
 ) {
