@@ -35,7 +35,7 @@ class FileUtils {
         fun getFileFromResources(filePath: String): File {
             val resource = this::class.java.classLoader.getResource(filePath)
                 ?: throw IllegalArgumentException("File not found: $filePath")
-            return File(resource.file)
+            return File(resource.toURI())
         }
 
         fun getImageFromResources(filePath: String): BufferedImage {
@@ -52,9 +52,11 @@ class FileUtils {
         }
 
         fun convertImageToBase64(filePath: String): String {
-            val file = this::class.java.classLoader.getResource(filePath)?.file
+            val inputStream = this::class.java.classLoader.getResourceAsStream(filePath)
                 ?: throw IllegalArgumentException("File not found: $filePath")
-            return BASE64_ENCODER.encodeToString(File(file).readBytes())
+            return inputStream.use { stream ->
+                BASE64_ENCODER.encodeToString(stream.readBytes())
+            }
         }
 
         fun convertImageToBase64(file: File): String {
@@ -72,12 +74,12 @@ class FileUtils {
         }
 
         fun convertFileAsImage(filePath: String): Image {
-            val file = this::class.java.classLoader.getResource(filePath)?.file
+            log.info("Converting file to image: $filePath")
+            val inputStream = this::class.java.classLoader.getResourceAsStream(filePath)
                 ?: throw IllegalArgumentException("File not found: $filePath")
-            log.info("file: $file")
-            val actualFile = File(file)
-            log.info("actualFile: $actualFile, exists: ${actualFile.exists()}")
-            return ImageIO.read(File(file))
+            return inputStream.use { stream ->
+                ImageIO.read(stream) ?: throw IOException("Can't read input file!")
+            }
         }
     }
 }

@@ -36,6 +36,6 @@ class HealthController {
     @GetMapping("/file-read")
     fun fileRead(@RequestParam file: String = ""): Result<String> {
         val image = FileUtils.convertFileAsImage(file)
-        return Result(ObjectMapperUtils.toJSON(image))
+        return Result(image.toString())
     }
 }
