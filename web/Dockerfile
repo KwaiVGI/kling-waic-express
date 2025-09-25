@@ -2,6 +2,10 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# 设置环境变量避免构建时的问题
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV VITE_BUILD_TARGET="production"
+
 COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm
 RUN pnpm install --frozen-lockfile
