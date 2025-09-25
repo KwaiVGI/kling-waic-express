@@ -7,22 +7,20 @@ services:
       - API_SERVER_BASE_URL=${API_SERVER_BASE_URL}
     restart: always
     container_name: kling-express-web
-#    depends_on:
-#      - api
+    depends_on:
+      - api
 
-#  api:
-#    build:
-#      context: ./server/api
-#      dockerfile: Dockerfile
-#    ports:
-#      - "8538:8538"
-#    volumes:
-#      - ./application-env.properties:/app/application-env.properties
-#    restart: always
-#    container_name: kling-express-api
-#    depends_on:
-#      - redis
-#      - s3-server
+  api:
+    image: akang943578/kling-express-api:latest
+    ports:
+      - "8538:8538"
+    volumes:
+      - ./application-env.properties:/app/application-env.properties
+    restart: always
+    container_name: kling-express-api
+    depends_on:
+      - redis
+      - s3-server
 
   redis:
     image: redis:latest
