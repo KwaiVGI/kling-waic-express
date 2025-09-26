@@ -240,7 +240,7 @@ DRAW_IMAGE_Y=5.0                        # 打印偏移 Y（旋转90度后正数�
 ### 9.1 前置准备
 
 1. **注册可灵开放平台账号**
-   - 🇨🇳 国内：https://app.klingai.com/cn/dev/document-api/quickStart/userManual
+   - 🇨🇳 中国：https://app.klingai.com/cn/dev/document-api/quickStart/userManual
    - 🌍 海外：https://app.klingai.com/global/dev/document-api/quickStart/userManual
    
 2. **获取 API 密钥**
@@ -288,7 +288,7 @@ S3_ACCESS_KEY=AK_MinioXXXXXXXXX
 S3_SECRET_KEY=SK_MinioXXXXXXXXX
 
 # 可灵 API 配置
-KLING_OPEN_BASE_URL=https://api-beijing.klingai.com  # 国内地址
+KLING_OPEN_BASE_URL=https://api-beijing.klingai.com  # 中国地址
 
 # 活动配置
 config.activity.map[default].token=your_activity_password
@@ -349,17 +349,43 @@ KLING_OPEN_BASE_URL=https://api-beijing.klingai.com
 S3_FILE_PREFIX=  # S3 文件前缀或 CDN 地址
 
 config.activity.map[default].token=your_activity_password
-config.activity.map[default].accessKey=YDd8adFkPAEHDNQhkbTJCNKkKFfpTepN
+config.activity.map[default].accessKey=AK_KlingAIXXXXXX
 config.activity.map[default].secretKey=SK_KlingAIXXXXXX
 ```
 
-### 9.4 安全建议
+### 9.4 构建资产
+
+如需自行构建项目资产，可使用以下命令：
+
+#### Docker 镜像构建
+
+**构建 Web 镜像：**
+```bash
+cd web
+sh build_image.sh
+```
+
+**构建 API 镜像：**
+```bash
+cd server
+sh build_api_image.sh
+```
+
+#### 打印程序构建
+
+**构建 KlingExpressPrinter Mac 应用：**
+```bash
+cd server/printer
+sh create_app_bundled.sh
+```
+
+### 9.5 安全建议
 
 🔒 **推荐启用 HTTPS** 确保用户上传图片和视频的隐私安全：
 - 使用 Cloudflare 免费 CDN 和 SSL 服务
 - 或使用 Nginx 反向代理 + Let's Encrypt 免费证书
 
-### 9.5 自定义配置
+### 9.6 自定义配置
 
 可通过挂载自定义配置文件来定制风格和特效：
 
@@ -373,7 +399,7 @@ api:
 
 > 📚 **配置格式：** 请参考可灵 API 开放平台文档
 
-### 9.6 开发计划
+### 9.7 开发计划
 
 **TODO：**
 - [ ] 界面支持多语言

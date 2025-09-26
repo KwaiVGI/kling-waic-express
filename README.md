@@ -240,8 +240,8 @@ If toolbar obstruction occurs:
 ### 9.1 Prerequisites
 
 1. **Register Kling Open Platform Account**
-   - 🇨🇳 Domestic: https://app.klingai.com/cn/dev/document-api/quickStart/userManual
-   - 🌍 International: https://app.klingai.com/global/dev/document-api/quickStart/userManual
+   - 🇨🇳 China: https://app.klingai.com/cn/dev/document-api/quickStart/userManual
+   - 🌍 Global: https://app.klingai.com/global/dev/document-api/quickStart/userManual
    
 2. **Get API Keys**
    - Enable API Key and top up
@@ -288,7 +288,7 @@ S3_ACCESS_KEY=AK_MinioXXXXXXXXX
 S3_SECRET_KEY=SK_MinioXXXXXXXXX
 
 # Kling API Configuration
-KLING_OPEN_BASE_URL=https://api-beijing.klingai.com  # Domestic address
+KLING_OPEN_BASE_URL=https://api-singapore.klingai.com  # Global address
 
 # Activity Configuration
 config.activity.map[default].token=your_activity_password
@@ -349,17 +349,43 @@ KLING_OPEN_BASE_URL=https://api-beijing.klingai.com
 S3_FILE_PREFIX=  # S3 file prefix or CDN address
 
 config.activity.map[default].token=your_activity_password
-config.activity.map[default].accessKey=YDd8adFkPAEHDNQhkbTJCNKkKFfpTepN
+config.activity.map[default].accessKey=AK_KlingAIXXXXXX
 config.activity.map[default].secretKey=SK_KlingAIXXXXXX
 ```
 
-### 9.4 Security Recommendations
+### 9.4 Build Assets
+
+If you need to build project assets yourself, use the following commands:
+
+#### Docker Image Building
+
+**Build Web Image:**
+```bash
+cd web
+sh build_image.sh
+```
+
+**Build API Image:**
+```bash
+cd server
+sh build_api_image.sh
+```
+
+#### Printer Program Building
+
+**Build KlingExpressPrinter Mac Application:**
+```bash
+cd server/printer
+sh create_app_bundled.sh
+```
+
+### 9.5 Security Recommendations
 
 🔒 **HTTPS Recommended** to ensure privacy and security of user uploaded images and videos:
 - Use Cloudflare free CDN and SSL services
 - Or use Nginx reverse proxy + Let's Encrypt free certificates
 
-### 9.5 Custom Configuration
+### 9.6 Custom Configuration
 
 Customize styles and effects by mounting custom configuration files:
 
@@ -373,7 +399,7 @@ api:
 
 > 📚 **Configuration Format:** Please refer to Kling API Open Platform documentation
 
-### 9.6 Development Roadmap
+### 9.7 Development Roadmap
 
 **TODO:**
 - [ ] Multi-language interface support
