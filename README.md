@@ -210,6 +210,7 @@ If toolbar obstruction occurs:
 3. **Install Program**
    - Download and extract [Printer Program](https://github.com/KwaiVGI/kling-waic-express/releases/download/0.0.1/KlingExpressPrinter.zip)
    - Move to "Applications" folder
+   - Or run from source code (requires Java17 + Maven3), please research on your own
 
 4. **Configure Parameters**
    - Open KlingExpressPrinter program
@@ -303,6 +304,8 @@ config.activity.map[default].secretKey=SK_KlingAIXXXXXX
 
 #### Step 3: Start Services
 Place the project's `docker-compose.yml` file in the directory, then start:
+* Note: Both kling-express-web and kling-express-api images only support arm64 architecture. For x86_64 architecture, please build images yourself.
+* Or instead of Docker Compose, run web and api services directly from source code, please research on your own.
 ```bash
 docker-compose up -d
 ```
