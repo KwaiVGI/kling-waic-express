@@ -405,12 +405,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
----
-
-**Third-party Component License Notice:**
-
-- **InsightFace** code is released under the MIT License
-- **InsightFace** models are for non-commercial research purposes only
-
-> ⚠️ **Commercial Use Notice:** If you want to use the LivePortrait project for commercial purposes, you should remove and replace InsightFace's detection models to fully comply with the MIT license requirements.
